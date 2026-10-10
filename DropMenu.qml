@@ -13,7 +13,8 @@ import "bridge" as Bridge
 // groups.
 // Submenus open inside it (‹ goes back); typing searches the whole tree and
 // the installed apps. Keys: ↑↓ select · PgUp/PgDn page · Enter/→ open ·
-// ←/Backspace back · Esc clears or closes.
+// ←/Backspace back · Esc clears or closes · Delete or a right-click on an
+// app uninstalls it (after a question).
 //
 // Nested like the native menu, so a pick never ends in the centred one:
 // - the lists the shell fills in open as levels here: Apps (the shell's
@@ -100,7 +101,9 @@ KeyboardPanel {
     if (levelRequest && levelRequest.maxHeight > 0) cap = Math.min(cap, Style.space(levelRequest.maxHeight))
     return Math.max(rowH, cap)
   }
-  contentHeight: menu.fittedContentHeight(headerH + (listCap > 0 ? Math.min(listHeight, listCap) : listHeight))
+  // (the uninstall question needs room even over a one-row search)
+  contentHeight: menu.fittedContentHeight(Math.max(deleteConfirmOpen ? Style.space(170) : 0,
+    headerH + (listCap > 0 ? Math.min(listHeight, listCap) : listHeight)))
   Behavior on contentWidth { NumberAnimation { duration: Style.duration(160); easing.type: Easing.OutCubic } }
   Behavior on contentHeight { NumberAnimation { duration: Style.duration(160); easing.type: Easing.OutCubic } }
 
@@ -244,6 +247,30 @@ KeyboardPanel {
     else if (r.kind === "choice") answer(r.answer)
     else if (r.kind === "input") answer(query)
     else if (r.kind === "own" && typeof r.run === "function") finish(r.run)
+  }
+
+  // ---------------------------------------------------------------- uninstall
+  // Right-click or Delete on an app (also in search results) asks first, then
+  // hands the desktop id to the shell, which runs omarchy-remove-launcher-entry:
+  // web apps and terminal apps lose their launcher, packages and Flatpaks open
+  // a terminal for the usual confirmation (as in the native menu).
+  property var deleteTarget: null
+  readonly property bool deleteConfirmOpen: !!deleteTarget
+  // true when the row is an app and the question opened
+  function requestDelete(r) {
+    if (!r || r.kind !== "app" || !appLibrary || !r.appId) return false
+    // Cancel is preselected (the native menu preselects Uninstall): a stray
+    // Enter right after Delete must not remove anything
+    deleteConfirm.selectedIndex = 0
+    deleteTarget = { appId: r.appId, label: r.label }
+    return true
+  }
+  function cancelDelete() { deleteTarget = null }
+  function confirmDelete() {
+    var target = deleteTarget, lib = appLibrary
+    deleteTarget = null
+    if (!target || !lib) return
+    finish(function() { lib.remove(target.appId, target.label) })
   }
 
   // ---------------------------------------------------------------- lists the shell fills in
@@ -475,7 +502,7 @@ KeyboardPanel {
       target: menu
       function onOpenChanged() {
         if (!menu.open) { menu.searchMode = false; menu.dropClosed(); return }
-        menu.stack = []; menu.query = ""; menu.current = -1
+        menu.stack = []; menu.query = ""; menu.current = -1; menu.deleteTarget = null
         keys.keyboard = false; keys.pointerKnown = false
         menu.slideX = 0
         source.evaluate()
@@ -538,7 +565,10 @@ KeyboardPanel {
     Keys.onPressed: function(e) {
       var plain = !(e.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))
       var input = menu.inputLevel
-      if (e.key === Qt.Key_Escape) { if (menu.query) menu.query = ""; else menu.close() }
+      // the uninstall question is modal: it takes every key
+      if (menu.deleteConfirmOpen) { deleteConfirm.handleKey(e); e.accepted = true; return }
+      if (e.key === Qt.Key_Delete) { keys.keyboard = true; if (!menu.requestDelete(menu.rows[menu.current])) return }
+      else if (e.key === Qt.Key_Escape) { if (menu.query) menu.query = ""; else menu.close() }
       else if (e.key === Qt.Key_Down || e.key === Qt.Key_Tab) { keys.keyboard = true; menu.move(1) }
       else if (e.key === Qt.Key_Up || e.key === Qt.Key_Backtab) { keys.keyboard = true; menu.move(-1) }
       else if (e.key === Qt.Key_PageDown) { keys.keyboard = true; menu.page(1) }
@@ -725,7 +755,7 @@ KeyboardPanel {
               // a long subtext never squeezes the label away
               width: Math.min(implicitWidth, row.width * 0.45)
               elide: Text.ElideRight
-              text: row.r.note || (menu.query ? (row.r.path || "") : "")
+              text: row.r.note || (row.hot && row.isApp ? "Del · uninstall" : menu.query ? (row.r.path || "") : "")
               font.pixelSize: Style.font.caption
               color: row.hot && menu.inverting ? Util.alpha(menu.src.text, 0.75) : Util.alpha(menu.ink, 0.5)
             }
@@ -751,10 +781,34 @@ KeyboardPanel {
             cursorShape: Qt.PointingHandCursor
             onPositionChanged: function(mouse) { if (keys.pointerMoved(this, mouse)) menu.current = row.index }
             onEntered: if (!keys.keyboard) menu.current = row.index
-            onClicked: menu.activate(row.r)
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
+            onClicked: function(mouse) {
+              if (mouse.button === Qt.RightButton) { menu.current = row.index; menu.requestDelete(row.r) }
+              else menu.activate(row.r)
+            }
           }
         }
       }
+    }
+
+    // Uninstall question (right-click or Delete on an app), the native
+    // menu's dialog: Enter confirms, Esc / ← / → / Tab as there.
+    ConfirmDialog {
+      id: deleteConfirm
+      anchors.fill: parent
+      z: 10
+      opened: menu.deleteConfirmOpen
+      message: "Do you want to uninstall " + (menu.deleteTarget ? menu.deleteTarget.label : "") + "?"
+      confirmText: "Uninstall"
+      background: Commons.Color.popups.background
+      foreground: menu.ink
+      scrim: Util.alpha(Commons.Color.popups.background, 0.78)
+      selectedBackground: Util.alpha(menu.ink, 0.1)
+      selectedText: menu.ink
+      fontFamily: menu.labelFamily
+      cornerRadius: menu.rowRadius
+      onCanceled: menu.cancelDelete()
+      onConfirmed: menu.confirmDelete()
     }
   }
 }

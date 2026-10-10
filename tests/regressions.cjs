@@ -1292,3 +1292,20 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
     assert.match(fs.readFileSync(isl, 'utf8'), /onLoaded: \{ materialFile\.reload\(\); themeColorsFile\.reload\(\) \}/, 'the island\'s green/orange follow a theme switch');
   console.log('PASS: theme colours reload on theme switch (theme.name)');
 }
+
+// Uninstall from the drop-down: right-click or Delete on an app asks first
+// (the native menu's ConfirmDialog), then the shell's appLibrary.remove runs
+// omarchy-remove-launcher-entry; nothing else ever offers it.
+{
+  const dm = fs.readFileSync(path.join(root, 'DropMenu.qml'), 'utf8');
+  assert(/function requestDelete\(r\) \{\s*if \(!r \|\| r\.kind !== "app" \|\| !appLibrary \|\| !r\.appId\) return false/.test(dm), 'only apps can be uninstalled');
+  assert(dm.includes('finish(function() { lib.remove(target.appId, target.label) })'), 'the shell\'s remove does the work');
+  assert(dm.includes('acceptedButtons: Qt.LeftButton | Qt.RightButton') && dm.includes('mouse.button === Qt.RightButton'), 'right-click on a row');
+  assert(dm.includes('e.key === Qt.Key_Delete'), 'Delete key');
+  assert(/if \(menu\.deleteConfirmOpen\) \{ deleteConfirm\.handleKey\(e\); e\.accepted = true; return \}/.test(dm), 'the question takes every key');
+  assert(/ConfirmDialog \{\s*id: deleteConfirm/.test(dm) && dm.includes('confirmText: "Uninstall"') && dm.includes('import qs.Ui'));
+  assert(dm.includes('menu.deleteTarget = null'), 'a new opening drops a pending question');
+  assert(dm.includes('"Del · uninstall"'), 'hint on the hovered app row');
+  assert(dm.includes('deleteConfirm.selectedIndex = 0'), 'Cancel is preselected');
+  console.log('PASS: uninstall an app from the drop-down (right-click, Delete, question, shell remove)');
+}
