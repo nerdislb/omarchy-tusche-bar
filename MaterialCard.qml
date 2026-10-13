@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Effects
 import qs.Commons
 import qs.Commons as Commons
+import "GlassMath.js" as GlassMath
 
 // The theme material for an Omarchy KeyboardPanel's card. With a theme
 // material (edge option "theme": the theme's bar-material.json, Tusche &
@@ -85,8 +86,17 @@ Item {
   readonly property bool rolls: matOn && mat.roll !== false && panel.barPos === "top"
   // metal family: a chrome rim around the card
   readonly property var metalSpec: material && material.metal ? material.metal : null
-  readonly property bool metalOn: matOn && !!metalSpec
+  readonly property bool metalOn: matOn && !!metalSpec && !glassOn
+  readonly property var glassSpec: material && material.glass ? material.glass : null
+  readonly property bool glassOn: matOn && !!glassSpec && glassSpec.enabled !== false
+  readonly property bool springOn: rolls && !!glassSpec && glassSpec.spring !== false
   property real roll: 0      // 0 = rolled up into the bar, 1 = open
+  property real rollVelocity: 0
+  property real rollTarget: 0
+  property bool springRunning: false
+  // Geometry consumers use [0,1], the spring itself retains its overshoot
+  // and velocity so a close/reopen never restarts from an endpoint.
+  readonly property real reveal: Math.max(0, Math.min(1, roll))
   // only while it is out or on its way, and on closing until the rolled-in
   // card has faded: released earlier, the whole card flashed up at full
   // height for the panel's fade (closed, the card and its mask need no layer)
@@ -151,6 +161,8 @@ Item {
   Binding { target: fp.card; property: "opacity"; value: Math.max(fp.ink, fp.grow > 0.001 ? 0.004 : 0); when: fp.active }
   // metal: the chrome rim replaces the card's own frame
   Binding { target: fp.card; property: "borderSpec"; value: Border.flat("transparent", Math.max(1, Style.space(2))); when: fp.metalOn }
+  Binding { target: fp.card; property: "color"; value: "transparent"; when: fp.glassOn }
+  Binding { target: fp.card; property: "borderSpec"; value: Border.flat("transparent", Math.max(1, Style.space(2))); when: fp.glassOn && !fp.metalOn }
   // Rolling (material): the card stays up while it rolls back into the bar;
   // a mask on the card's layer shows only the rolled-out part.
   Binding { target: fp.card; property: "opacity"; value: fp.panel && (fp.panel.open || fp.roll > 0.001) ? 1 : 0; when: fp.rolls }
@@ -164,6 +176,17 @@ Item {
   }
   NumberAnimation { id: rollOut; target: fp; property: "roll"; to: 1; duration: 260; easing.type: Easing.OutCubic }
   NumberAnimation { id: rollIn; target: fp; property: "roll"; to: 0; duration: 200; easing.type: Easing.InCubic }
+  FrameAnimation {
+    running: fp.springRunning && fp.springOn && !fp.reduced
+    onTriggered: {
+      var s = GlassMath.step(fp.roll, fp.rollVelocity, fp.rollTarget, frameTime,
+                             fp.glassSpec.omega || 22, fp.glassSpec.damping || 0.82)
+      fp.roll = s.x; fp.rollVelocity = s.v
+      if (GlassMath.settled(fp.roll, fp.rollVelocity, fp.rollTarget)) {
+        fp.roll = fp.rollTarget; fp.rollVelocity = 0; fp.springRunning = false
+      }
+    }
+  }
 
   function blobRect() {
     if (!card) return { x: 0, y: 0, w: 0, h: 0 }
@@ -208,6 +231,14 @@ Item {
     // Same rule as the bloom below: when rolling stops applying, only stop –
     // never write roll through a Binding that is about to be released.
     if (!rolls) { rollOut.stop(); rollIn.stop(); return }
+    if (springOn) {
+      rollOut.stop(); rollIn.stop()
+      rollTarget = panel.open ? 1 : 0
+      if (reduced || panel.popoutSwitchClosing || (roll <= 0 && !panel.open)) {
+        springRunning = false; rollVelocity = 0; roll = rollTarget
+      } else springRunning = true
+      return
+    }
     if (panel.open) {
       rollIn.stop()
       if (reduced) { rollOut.stop(); roll = 1; return }
@@ -219,11 +250,13 @@ Item {
     }
   }
   // becoming a rolling card: take the state without animating (open = out, closed = in)
-  onRollsChanged: { rollOut.stop(); rollIn.stop(); if (rolls) roll = panel && panel.open ? 1 : 0 }
+  onRollsChanged: { rollOut.stop(); rollIn.stop(); springRunning = false; rollVelocity = 0; if (rolls) roll = panel && panel.open ? 1 : 0 }
+  onSpringOnChanged: { springRunning = false; rollVelocity = 0; if (rolls) followRoll() }
+  onGlassOnChanged: if (!glassOn && glassBody) glassBody.stop()
   // Reduced Motion switched on mid-roll or mid-bloom: jump to where it is going
   onReducedChanged: {
     if (!reduced) return
-    if (rolls && (rollOut.running || rollIn.running)) followRoll()
+    if (rolls && (rollOut.running || rollIn.running || springRunning)) followRoll()
     if (active && (opening.running || closing.running)) { opening.stop(); closing.stop(); follow() }
     if (wetting.running) settle()
   }
@@ -259,7 +292,10 @@ Item {
   }
   Connections {
     target: fp.panel
-    function onOpenChanged() { fp.keepSnap(); fp.follow(); fp.glintPending = fp.panel.open; fp.glint() }
+    function onOpenChanged() {
+      fp.keepSnap(); fp.follow(); fp.glintPending = fp.panel.open; fp.glint()
+      if (fp.glassBody) { if (fp.panel.open) fp.glassBody.play(); else fp.glassBody.stop() }
+    }
   }
   onActiveChanged: follow()
 
@@ -346,7 +382,7 @@ Item {
         y: parent.spread + (shade.spec ? shade.spec.dy : 8)
         width: parent.width - 2 * parent.spread - (shade.spec ? 0 : 4)
         // rolls with the card
-        height: (parent.height - 2 * parent.spread - (shade.spec ? 0 : 6)) * (fp.rolls ? fp.roll : 1)
+        height: (parent.height - 2 * parent.spread - (shade.spec ? 0 : 6)) * (fp.rolls ? fp.reveal : 1)
         radius: fp.card ? fp.card.radius : 0
         color: shade.spec ? shade.spec.color : Qt.rgba(0, 0, 0, fp.shadowOpacity)
       }
@@ -363,7 +399,7 @@ Item {
       y: fp.card ? fp.card.y : 0
       width: fp.card ? fp.card.width : 1
       height: fp.card ? fp.card.height : 1
-      Rectangle { width: parent.width; height: parent.height * fp.roll; color: "white" }
+      Rectangle { width: parent.width; height: parent.height * fp.reveal; color: "white" }
     }
   }
   // the snapshot: follows the open card (clipped to nothing), frozen on
@@ -376,7 +412,7 @@ Item {
       x: fp.snapX
       y: fp.snapY
       width: fp.snapW
-      height: fp.rollingIn ? fp.snapH * fp.roll : 0
+      height: fp.rollingIn ? fp.snapH * fp.reveal : 0
       clip: true
       ShaderEffectSource {
         width: fp.snapW
@@ -408,7 +444,7 @@ Item {
       x: fp.frameX - pad
       y: fp.frameY - pad
       width: fp.frameW + 2 * pad
-      height: fp.frameH * (fp.rolls ? fp.roll : 1) + 2 * pad
+      height: fp.frameH * (fp.rolls ? fp.reveal : 1) + 2 * pad
       onVisibleChanged: fp.glint()
     }
   }
@@ -425,6 +461,34 @@ Item {
     }
   }
 
+  property Item glassBody: null
+  function stateObject() {
+    return { glass: glassOn, spring: springOn, rolling: springRunning,
+             reveal: reveal, velocity: rollVelocity,
+             radius: card ? card.radius : null, size: [frameW, frameH],
+             open: !!panel && panel.open, backing: glassSpec ? glassSpec.backing : null,
+             captureBlocked: glassBody ? glassBody.captureBlocked : true,
+             captures: glassBody ? glassBody.capturedWindows : 0,
+             lightRunning: glassBody ? glassBody.glintRunning : false }
+  }
+  Component {
+    id: glassBodyComponent
+    GlassSurface {
+      spec: fp.glassSpec
+      visible: fp.glassOn && !!fp.card && fp.card.opacity > 0.001
+      active: visible
+      live: !!fp.panel && fp.panel.open
+      opacity: fp.card ? fp.card.opacity : 0
+      x: fp.frameX
+      y: fp.frameY
+      width: fp.frameW
+      height: fp.frameH
+      radius: fp.card ? fp.card.radius : 0
+      reveal: fp.rolls ? fp.reveal : 1
+      onVisibleChanged: if (visible && fp.panel && fp.panel.open) play()
+    }
+  }
+
   Component.onCompleted: {
     if (surface) {
       cardShadow = cardShadowComponent.createObject(surface, { z: card.z - 2 })
@@ -432,6 +496,7 @@ Item {
       rollMask = rollMaskComponent.createObject(surface, { z: card.z - 3 })
       rollSnap = rollSnapComponent.createObject(surface, { z: card.z + 1 })
       metalRim = metalRimComponent.createObject(surface, { z: card.z + 2 })
+      glassBody = glassBodyComponent.createObject(surface, { z: card.z - 0.5 })
     }
     keepSnap()
     if (card) cardLine = cardLineComponent.createObject(card)
@@ -444,5 +509,6 @@ Item {
     if (rollMask) rollMask.destroy()
     if (rollSnap) rollSnap.destroy()
     if (metalRim) metalRim.destroy()
+    if (glassBody) glassBody.destroy()
   }
 }

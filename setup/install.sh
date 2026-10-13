@@ -54,7 +54,7 @@ done
 
 theme="${theme:-$(jq -r '.theme // "papier"' "$look")}"
 combo="${combo:-$(jq -r '.barCombination // "paper"' "$look")}"
-themes=(tusche papier tusche-lavur papier-lavur chrom platin)
+themes=(tusche papier tusche-lavur papier-lavur chrom platin frost smoke)
 repos=(omarchy-tusche-bar omarchy-tusche-island)
 $card_picker && repos+=(omarchy-card-picker)
 plugins_dir="$HOME/.config/omarchy/plugins"
@@ -73,7 +73,7 @@ step "Preflight"
 for cmd in omarchy omarchy-shell git jq python3 rsync; do
   command -v "$cmd" >/dev/null || die "$cmd is missing"
 done
-[[ $theme =~ ^(tusche|papier|tusche-lavur|papier-lavur|chrom|platin)$ ]] || die "--theme must be one of: ${themes[*]}"
+[[ $theme =~ ^(tusche|papier|tusche-lavur|papier-lavur|chrom|platin|frost|smoke)$ ]] || die "--theme must be one of: ${themes[*]}"
 jq -e --arg c "$combo" '.barCombinations | any(.name == $c)' "$look" >/dev/null || die "no saved combination named '$combo' in look.json"
 note "user $USER · Omarchy at ${OMARCHY_PATH:-?} · $(omarchy version 2>/dev/null | head -1 || echo 'version unknown')"
 pgrep -x quickshell >/dev/null || $dry || die "run this inside the desktop session (the Omarchy shell is not running)"

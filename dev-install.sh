@@ -1,11 +1,11 @@
 #!/bin/bash
-# Copy the working tree into Omarchy's plugin folder (the shell hot-reloads
-# plugin files). Re-run after every edit.
+# Publish the working tree as immutable code URLs and rescan plugins without
+# restarting the shell or its lock client. Re-run after every edit.
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 id="$(jq -r .id "$here/manifest.json")"
 target="$HOME/.config/omarchy/plugins/$id"
-mkdir -p "$target"
-rsync -a --delete --exclude .git --exclude tests --exclude dev-install.sh --exclude __pycache__ --exclude README.md --exclude themes --exclude setup --exclude docs --exclude preview.png "$here/" "$target/"
+generation="$(python3 "$here/bin/install-generation.py" "$here" "$target")"
 omarchy plugin validate "$target"
-echo "synced to $target"
+omarchy-shell -q shell rescanPlugins
+echo "installed $target (code generation $generation)"

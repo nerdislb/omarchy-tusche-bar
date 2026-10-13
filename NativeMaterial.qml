@@ -16,6 +16,7 @@ QtObject {
   property bool enabled: true
   // panels that already carry a MaterialCard
   property var dressed: []
+  property var decorations: []
   readonly property Component cardComponent: Component { MaterialCard {} }
 
   // A KeyboardPanel (Omarchy's Ui/KeyboardPanel.qml), recognised by its API.
@@ -51,7 +52,7 @@ QtObject {
         edge: false,
         material: Qt.binding(function() { return Bridge.ModuleBus.material })
       })
-      if (mc) added.push(p)
+      if (mc) { added.push(p); decorations = decorations.concat([{ panel: p, card: mc }]) }
     }
     if (added.length) dressed = dressed.concat(added)
     return added.length
@@ -98,10 +99,12 @@ QtObject {
                  holders: panels.filter(function(p) { return !!holderOf(p) }).length,
                  dressed: panels.filter(function(p) { return dressed.indexOf(p) !== -1 }).length })
     }
-    return { slots: slots.length, natives: out, dressedTotal: dressed.length }
+    return { slots: slots.length, natives: out, dressedTotal: dressed.length,
+             cards: decorations.filter(function(d) { return !!d.panel && !!d.card }).map(function(d) { return d.card.stateObject() }) }
   }
   // a destroyed widget takes its panels (and their MaterialCards) along: forget them
   function forget() {
     dressed = dressed.filter(function(p) { return !!p && p.borderSpec !== undefined })
+    decorations = decorations.filter(function(d) { return !!d.panel && !!d.card })
   }
 }

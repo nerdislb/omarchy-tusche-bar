@@ -1,0 +1,36 @@
+# Frost — Bevel Lens glass family. Red is the signal colour.
+mode = "light"
+accent = "#0f1113"
+selection = "#c8d1dc"
+muted = "#515b69"
+
+background = "#e9edf0"
+dark_background = "#d8dfe7"
+darker_background = "#c8d1dc"
+lighter_background = "#f0f5fa"
+
+foreground = "#171c24"
+dark_foreground = "#444c59"
+light_foreground = "#11151b"
+bright_foreground = "#000000"
+
+red = "#b32525"
+orange = "#353739"
+yellow = "#000000"
+green = "#000000"
+blue = "#353739"
+cyan = "#535457"
+magenta = "#444c59"
+purple = "#444c59"
+brown = "#818488"
+
+bright_red = "#b32525"
+bright_orange = "#2e2f32"
+bright_yellow = "#000000"
+bright_green = "#000000"
+bright_blue = "#2e2f32"
+bright_cyan = "#494a4d"
+bright_magenta = "#383a3d"
+
+hyprland_active_border = "rgba(5a5d62ff) rgba(d6d9ddff) rgba(8a8d92ff) rgba(1a1b1dff) rgba(2e3034ff) rgba(cdd0d4ff) rgba(7a7d82ff) rgba(1a1b1dff) rgba(4a4d52ff) rgba(d6d9ddff) 45deg"
+hyprland_inactive_border = "rgba(b0b3b8ff)"

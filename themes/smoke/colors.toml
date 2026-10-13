@@ -1,0 +1,36 @@
+# Smoke — Bevel Lens glass family. Red is the signal colour.
+mode = "dark"
+accent = "#ffffff"
+selection = "#303c4c"
+muted = "#a0abb9"
+
+background = "#111419"
+dark_background = "#0b1017"
+darker_background = "#080c12"
+lighter_background = "#1b222c"
+
+foreground = "#f0f3f7"
+dark_foreground = "#b0bac8"
+light_foreground = "#ececec"
+bright_foreground = "#ffffff"
+
+red = "#ff6969"
+orange = "#bcbdbf"
+yellow = "#ffffff"
+green = "#ffffff"
+blue = "#afb0b2"
+cyan = "#929497"
+magenta = "#c3c4c5"
+purple = "#c3c4c5"
+brown = "#5a5c60"
+
+bright_red = "#ff7d7d"
+bright_orange = "#cfd0d1"
+bright_yellow = "#ffffff"
+bright_green = "#ffffff"
+bright_blue = "#c7c8c9"
+bright_cyan = "#abacae"
+bright_magenta = "#d7d8d9"
+
+hyprland_active_border = "rgba(3b3c41ff) rgba(f2f3f7ff) rgba(6a6c72ff) rgba(1c1d20ff) rgba(2a2b2fff) rgba(e8e9edff) rgba(8a8c92ff) rgba(1c1d20ff) rgba(5a5c62ff) rgba(f2f3f7ff) 45deg"
+hyprland_inactive_border = "rgba(26272aff)"

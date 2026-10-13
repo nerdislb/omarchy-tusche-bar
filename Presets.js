@@ -58,6 +58,14 @@ var ELEMENTS = {
       { id: "orbit", label: "Chrome glint once round the window (metal themes)" }
     ]
   },
+  glass: {
+    label: "Glass material (Frost / Smoke)",
+    variants: [ { id: "on", label: "Bevel Lens" }, { id: "off", label: "Solid surface" } ]
+  },
+  glassMotion: {
+    label: "Glass motion (Frost / Smoke)",
+    variants: [ { id: "on", label: "Soft spring" }, { id: "off", label: "Classic roll" } ]
+  },
   // not a layout option: Super+Space opens the bar's menu (bin/keybinds.py)
   keys: {
     label: "Super+Space",
@@ -70,7 +78,7 @@ var ELEMENTS = {
 
 // Look options that sit on top of any preset: presets keep the current
 // value, and preset matching ignores them.
-var LOOK = ["edge", "keys", "frames"]
+var LOOK = ["edge", "keys", "frames", "glass", "glassMotion"]
 
 // Presets.
 var PRESETS = [

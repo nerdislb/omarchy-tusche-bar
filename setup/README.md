@@ -2,7 +2,7 @@
 
 Brings the Tusche look (the author's setup) to an Omarchy machine:
 
-- the themes **Tusche, Papier, Tusche Lavur, Papier Lavur** (`themes/`);
+- the themes **Tusche, Papier, Tusche Lavur, Papier Lavur, Chrom, Platin, Frost, Smoke** (`themes/`);
 - the **Tusche Bar** and the **Tusche Island** with all their motion (logo
   arrival, seal tab, rolling cards, wet bloom, dried rim, system chip …);
 - the **card picker** for themes and backgrounds (Style menu);
@@ -37,7 +37,7 @@ tusche-look/omarchy-tusche-bar/setup/install.sh
 
 | Option | Effect |
 |---|---|
-| `--theme papier\|tusche\|papier-lavur\|tusche-lavur` | Theme to switch to (default `papier`). |
+| `--theme papier\|tusche\|papier-lavur\|tusche-lavur\|chrom\|platin\|frost\|smoke` | Theme to switch to (default `papier`). |
 | `--combination NAME` | Saved bar combination to load (default `paper`; after a carry-over from the Amiga Bar only when given, so the bar keeps its arrangement). |
 | `--no-card-picker` | Leave the card picker out. |
 | `--animated` | Also install the moving backgrounds (quiet 60 s loops, downloaded from the GitHub release and checksummed; `setup/motion-backgrounds.sh` does the same on its own). |
@@ -47,11 +47,11 @@ tusche-look/omarchy-tusche-bar/setup/install.sh
 
 ## What it does
 
-1. **Backup:** shell.json, the menu extension, `bindings.lua`, the saved combinations and base layout, the six themes and the plugin folders (if present), saved to `~/.local/state/tusche-look/backup-<time>/`.
+1. **Backup:** shell.json, the menu extension, `bindings.lua`, the saved combinations and base layout, the eight themes and the plugin folders (if present), saved to `~/.local/state/tusche-look/backup-<time>/`.
 2. **Repositories:** clones them into `~/src` or fast-forwards them there (from beside this folder, else from GitHub). It stops on local changes.
 3. **From the Amiga Bar** (only when one is found): the old extras undo what they changed outside the plugin (fastfetch logo, desktop font profile, the A500 bar form); `migrate-from-amiga.py` moves the options, saved combinations, base layout, island settings and state to the Tusche names and turns the old "Amiga Bar (managed)" key block into the Tusche Bar's; the old plugin folders are removed (they stay in the backup).
 4. **Plugins:** installs each with its `dev-install.sh`.
-5. **Themes:** copies the six themes (Tusche, Papier, their Lavur variants, Chrom and Platin).
+5. **Themes:** copies the eight themes (Tusche, Papier, their Lavur variants, Chrom and Platin).
 6. **Settings:**
    - merges the saved combinations;
    - puts the island in the place of Omarchy's clock (it is the clock), or merges the settings into its entry;

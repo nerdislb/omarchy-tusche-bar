@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+"""Build Frost / Smoke from the existing Platin / Chrom assets and frames.
+
+The glass lives only in shell cards, not in every application window.
+Window border geometry, font sizes, compositor blur and hardware settings
+are deliberately absent from this generator's overrides.
+"""
+import json
+import re
+import shutil
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+PAIRS = {
+    'frost': ('platin', {
+        '#dde0e4': '#e9edf0', '#cdd0d4': '#d8dfe7', '#c0c3c7': '#c8d1dc',
+        '#eaedf1': '#f0f5fa', '#27292b': '#171c24', '#414346': '#444c59',
+        '#17191b': '#11151b', '#b02614': '#b32525', '#646568': '#515b69',
+    }),
+    'smoke': ('chrom', {
+        '#000000': '#111419', '#090a0b': '#0b1017', '#050505': '#080c12',
+        '#111214': '#1b222c', '#e0e0e1': '#f0f3f7', '#a5a6a8': '#b0bac8',
+        '#747679': '#a0abb9', '#2c2e32': '#303c4c', '#ff4a2b': '#ff6969',
+        '#ff6b50': '#ff7d7d',
+    }),
+}
+
+
+def build(name, base, colors):
+    src = ROOT / 'themes' / base
+    dst = ROOT / 'themes' / name
+    shutil.copytree(src, dst, dirs_exist_ok=True)
+    for p in dst.iterdir():
+        # Frames are literally retained from the mature metal family.
+        if p.name == 'hyprland.lua' or p.suffix not in ('.toml', '.lua'):
+            continue
+        txt = re.sub(r'#[a-fA-F0-9]{6}\b', lambda m: colors.get(m[0].lower(), m[0]), p.read_text())
+        if p.name == 'colors.toml':
+            txt = re.sub(r'^#.*\n', f'# {name.title()} — Bevel Lens glass family. Red is the signal colour.\n', txt, count=1)
+        p.write_text(txt)
+    light = name == 'frost'
+    mat = json.loads((src / 'bar-material.json').read_text())
+    mat['family'] = 'glass'
+    mat['glass'] = {
+        'enabled': True, 'spring': True, 'light': light,
+        'tint': '#f0f5fa' if light else '#0e1116',
+        'backing': 0.62 if light else 0.66, 'blur': 18 if light else 22,
+        'bevel': 9, 'bend': 4, 'omega': 24.5, 'damping': 0.78,
+    }
+    mat['edge'] = {
+        'kind': 'dry',
+        'line': {'color': '#ffffff' if light else '#c3cedd', 'alpha': 0.55 if light else 0.22, 'width': 1},
+        'haze': {'color': '#17202d', 'height': 16, 'stops': [[0, 0.18], [0.5, 0.06], [1, 0]]},
+    }
+    mat['card'] = {'roll': True, 'halo': {'color': '#101722', 'alpha': 0.23 if light else 0.5, 'blur': 24}}
+    mat['tones'] = {'strong': '#171c24' if light else '#f0f3f7'}
+    mat['source'] = {'fill': '#171c24' if light else '#f0f3f7', 'text': '#e9edf0' if light else '#111419'}
+    # Keep the existing quota rings, meters and window glint. GlassSurface
+    # replaces only the popup rim; it does not round or animate windows.
+    mat['metal']['hoverRadius'] = 0
+    (dst / 'bar-material.json').write_text(json.dumps(mat, indent=2) + '\n')
+    (dst / '.tusche-papier').write_text('built by tools/build-glass-themes.py (Frost / Smoke)\n')
+
+
+if __name__ == '__main__':
+    for name, (base, colors) in PAIRS.items():
+        build(name, base, colors)
+        print(f'{name}: Bevel Lens, existing {base} frame and wallpaper')

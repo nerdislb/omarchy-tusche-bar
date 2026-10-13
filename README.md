@@ -1,13 +1,22 @@
 # Tusche Bar
 
-Presets, modules and motion for the **native** Omarchy bar, made for the Tusche & Papier themes and the metal pair Chrom & Platin (all included). It adds:
+Presets, modules and motion for the **native** Omarchy bar, made for Tusche & Papier, the metal pair Chrom & Platin, and the glass pair Frost & Smoke (all included). It adds:
 
 - **Logo and workspaces:** a compact workspace row with your own logo (Omarchy, the Arch mark or the Nerdibeard seal);
 - **Status:** AI quota gauges and status groups (network, phone, system);
 - **Menu:** a drop-down logo menu that holds the whole Omarchy menu, searchable;
 - **Popups:** your popups and Omarchy's own ones (volume, battery, Wi-Fi …) in the theme's material: rolling cards on Papier and Tusche, an ink bloom with a dried rim on the Lavur themes, thin liquid-chrome rims on Chrom and Platin.
 
-Everything is switchable in its own Control Center. The bar stays Omarchy's own: every widget keeps its own service. It works with any Omarchy theme; the material comes with themes that ship a `bar-material.json` (the six themes in `themes/`).
+Everything is switchable in its own Control Center. The bar stays Omarchy's own: every widget keeps its own service. It works with any Omarchy theme; the material comes with themes that ship a `bar-material.json` (the eight themes in `themes/`).
+
+### Frost & Smoke
+
+Light **Frost** and dark **Smoke** add Bevel Lens glass to menus, native
+popups and Island notes. Existing frame geometry is retained — no rounded
+window override. Glass and the interruptible spring are independently
+switchable; Reduced Motion removes the spring and light sweep. See
+[Glass material](docs/glass-material.md) for capture boundaries, verification
+and limitations. Existing themes remain unchanged.
 
 ![The bar in Tusche Lavur](docs/screenshots/bar-tusche-lavur.png)
 ![The bar in Papier](docs/screenshots/bar-papier.png)
@@ -38,7 +47,7 @@ Companions: [Tusche Island](https://github.com/nerdislb/omarchy-tusche-island) (
 
 ### The whole look
 
-Installs the six themes (Tusche & Papier with their Lavur variants, Chrom & Platin), this bar, the Tusche Island and the Card Picker, with the author's bar combination `paper`:
+Installs the eight themes (Tusche & Papier with their Lavur variants, Chrom & Platin, Frost & Smoke), this bar, the Tusche Island and the Card Picker, with the author's bar combination `paper`:
 
 ```sh
 git clone https://github.com/nerdislb/omarchy-tusche-bar.git ~/src/omarchy-tusche-bar
@@ -53,7 +62,7 @@ The script:
 - puts the island in the place of Omarchy's clock;
 - restarts the shell and switches to Papier.
 
-Options: `--theme tusche|papier-lavur|tusche-lavur|chrom|platin`, `--no-card-picker` and `--boot-logo` (the seal on the boot screen, asks for sudo). Details are in [setup/README.md](setup/README.md). Undo with `setup/revert.sh <backup folder>`, which the script names at the end.
+Options: `--theme tusche|papier-lavur|tusche-lavur|chrom|platin|frost|smoke`, `--no-card-picker` and `--boot-logo` (the seal on the boot screen, asks for sudo). Details are in [setup/README.md](setup/README.md). Undo with `setup/revert.sh <backup folder>`, which the script names at the end.
 
 ### Only the bar
 
@@ -147,7 +156,7 @@ The sections below are the reference: how it is built, every option, IPC and tes
 Presets: `today` (your bar), `tidy` (pips · gauge · groups), `focus` (stack · on demand · deviations).
 
 **Edge from the theme** (`edge: theme`) reads `bar-material.json` from the
-current Omarchy theme (the six themes here ship one; other themes show
+current Omarchy theme (the eight themes here ship one; other themes show
 no edge) and follows theme switches. `edge.kind` `dry`: a line over the bar's
 lower edge on Overlay (light in Tusche, ink in Papier), and under it a short
 hard shadow, a glow and a still haze on the Top layer — while the workspace
@@ -324,7 +333,7 @@ group may differ) and `state` reports it in `lastResult`.
 
 ## Develop
 
-`OMARCHY_PATH=/path/to/omarchy ./dev-install.sh`. Custom modules and the `.pragma library` Presets.js are cached by the running shell: after code changes run `omarchy restart shell`, then re-apply a preset. Each preset change rebuilds the bar (widgets such as AI usage need 2–3 s). A changed `kinds` list in `manifest.json` also needs the restart: the shell builds a plugin's scoped facade (and the app library in it) when it loads the plugin.
+`OMARCHY_PATH=/path/to/omarchy ./dev-install.sh`. Custom modules and `.pragma library` code can be cached by the running shell. `dev-install.sh` now publishes immutable code generations and updates only this plugin's owned source URLs before a plugin rescan; layout order and options stay intact. Verify the loaded `moduleDir` and `glass` state via IPC. Each preset change rebuilds the bar (widgets such as AI usage need 2–3 s). Do not restart or kill a secure lock client to apply UI changes. Older installers or native shell/facade changes may still require a full shell restart after unlocking.
 
 Tests: `node tests/regressions.cjs` (with the Tusche Island checkout next to this repository) and `python3 tests/boot_logo.py`.
 

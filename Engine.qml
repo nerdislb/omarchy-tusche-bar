@@ -6,6 +6,7 @@ import Quickshell.Wayland
 import qs.Commons
 import qs.Ui
 import "Presets.js" as Presets
+import "GlassMath.js" as GlassMath
 import "ControlCenter.js" as CCModel
 import "bridge" as Bridge
 
@@ -80,6 +81,7 @@ Item {
     onLoaded: { root.themeStamp++; materialFile.reload() }
   }
   readonly property bool materialOn: options.edge === "theme" && !!material
+  readonly property var presentationMaterial: GlassMath.material(material, options.glass, options.glassMotion)
   readonly property bool themeEdgeVisible: materialOn && !!material.edge && barReady
   Variants {
     model: root.themeEdgeVisible ? Quickshell.screens : []
@@ -228,7 +230,7 @@ Item {
 
   // ---------------------------------------------------------------- modules' shared state
   Binding { target: Bridge.ModuleBus; property: "engine"; value: root }
-  Binding { target: Bridge.ModuleBus; property: "material"; value: root.materialOn ? root.material : null }
+  Binding { target: Bridge.ModuleBus; property: "material"; value: root.materialOn ? root.presentationMaterial : null }
   Binding { target: Bridge.ModuleBus; property: "themeDir"; value: root.themeDir }
   Binding { target: Bridge.ModuleBus; property: "themeStamp"; value: root.themeStamp }
   // Metal family: only a workspace switch counts as a change. Focus moves too
@@ -623,6 +625,7 @@ Item {
                               keys: { option: root.keysOption, bindings: root.keysState },
                               edge: { option: root.options.edge, material: root.material ? (root.material.edge ? root.material.edge.kind : "no edge") : null, themeEdge: root.themeEdgeVisible, barReady: root.barReady },
                               frames: { option: root.options.frames, glint: windowGlint.enabled, style: windowGlint.style, running: windowGlint.running, durationMs: windowGlint.orbit ? windowGlint.durationMs : windowGlint.sweepMs, sweep: windowGlint.sweep, amount: windowGlint.amount, frame: [windowGlint.gx, windowGlint.gy, windowGlint.fw, windowGlint.fh], tube: windowGlint.tube },
+                              glass: { available: !!(root.material && root.material.glass), enabled: root.options.glass !== "off", spring: root.options.glassMotion !== "off", family: root.material ? root.material.family : null },
                               usage: { folded: root.usageFolded, intervalSec: root.usageIntervalSec, running: usageUpdate.running, command: usageUpdate.command },
                               ask: root.askState(),
                               natives: (function() { var s = Bridge.ModuleBus.pick("status"); return s && s.nativeReport ? s.nativeReport() : null })(),

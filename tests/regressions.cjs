@@ -4,7 +4,7 @@ const vm = require('node:vm');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 // The Tusche Island next to the bar (its folder before the rename as the fallback).
-const islandDir = ['../omarchy-tusche-island', '../omarchy-amiga-island'].map(d => path.resolve(root, d)).find(d => fs.existsSync(d));
+const islandDir = process.env.TUSCHE_ISLAND_DIR || ['../omarchy-tusche-island', '../omarchy-amiga-island'].map(d => path.resolve(root, d)).find(d => fs.existsSync(d));
 assert(islandDir, 'the Tusche Island repository next to the bar (../omarchy-tusche-island)');
 const ctx = {};
 vm.createContext(ctx);
@@ -119,7 +119,7 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
 
 // The edge (and the Super+Space keys, the window frames) are look options: presets keep them, preset matching ignores them.
 {
-  assert.deepEqual(plain(ctx.LOOK), ['edge', 'keys', 'frames']);
+  assert.deepEqual(plain(ctx.LOOK), ['edge', 'keys', 'frames', 'glass', 'glassMotion']);
   assert.equal(ctx.matchPreset(Object.assign({}, ctx.presetById('tidy').options, {frames: 'glint'})), 'tidy');
   assert.equal(ctx.layoutDiffers(Object.assign({}, ctx.presetById('tidy').options, {frames: 'glint'}), ctx.presetById('tidy').options), false, 'the frame glint never rebuilds the bar');
   const tidy = ctx.presetById('tidy').options;
@@ -189,13 +189,13 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
   assert.match(mc, /property: "gap"; value: 0; when: fp\.rolls/, 'the rolling card hangs flush from the bar');
   assert.match(mc, /rolling: rolls && roll < 0\.999 && \(panel\.open \|\| roll > 0\.001 \|\| \(!!card && card\.opacity > 0\.001\)\)/,
     'the roll mask stays until the rolled-in card has faded (no full-height flash on closing)');
-  assert.match(mc, /height: parent\.height \* fp\.roll; color: "white"/, 'a rolled-in card shows nothing (no 1 px rest)');
+  assert.match(mc, /height: parent\.height \* fp\.reveal; color: "white"/, 'a rolled-in card shows nothing (no 1 px rest), spring overshoot stays out of the mask');
   assert.match(mc, /presence: rolls \? roll : active \? grow : \(card \? card\.opacity : 0\)/, 'how far the card is out');
   // a panel that drops content on closing (Omarchy's audio panel) rolls in as it was while open
   assert.match(mc, /rollingIn: rolls && !panel\.open && roll > 0\.001/);
   assert.match(mc, /function keepSnap\(\) \{ Qt\.callLater\(fp\.takeSnap\) \}/, 'the snapshot geometry settles before it is taken');
   assert.match(mc, /live: !!fp\.panel && fp\.panel\.open\n\s*hideSource: fp\.rollingIn/, 'the snapshot freezes on closing and stands in for the card');
-  assert.match(mc, /height: fp\.rollingIn \? fp\.snapH \* fp\.roll : 0\n\s*clip: true/, 'cut to the part that is still out');
+  assert.match(mc, /height: fp\.rollingIn \? fp\.snapH \* fp\.reveal : 0\n\s*clip: true/, 'cut to the part that is still out');
   assert.match(mc, /x: fp\.frameX - spread/, 'the shadow follows the frozen frame');
   const wsTab = fs.readFileSync(path.join(root, 'modules/Workspaces.qml'), 'utf8');
   assert.match(wsTab, /inverted: !!source && \(root\.dropOpen \|\| \(!!dropLoader\.item && dropLoader\.item\.cardPresence > 0\.01\)\)/,
@@ -214,7 +214,7 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
   assert.match(engine, /current\/theme\.name/, 'reloads the material on theme switch');
   assert.match(engine, /materialOn: options\.edge === "theme" && !!material\n/);
   assert.match(engine, /themeEdgeVisible: materialOn && !!material\.edge && barReady\n/);
-  assert.match(engine, /property: "material"; value: root\.materialOn \? root\.material : null/);
+  assert.match(engine, /property: "material"; value: root\.materialOn \? root\.presentationMaterial : null/);
   assert.match(mc, /bloomWanted: !!material && !!material\.card && material\.card\.bloom === true/, 'Lavur cards bloom');
   assert.match(mc, /readonly property bool bloom: active\n/);
   assert.doesNotMatch(mc, /scallop/, 'no scallops: the dried rim replaced them (frame round, recommendation 6)');
@@ -1082,7 +1082,7 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
   assert(ws.includes('m.searchMode = true') && ws.includes('function openApps()'));
   assert(engine.includes('function search(): void { root.toggleMenu("search") }') && engine.includes('function apps(): void { root.toggleMenu("apps") }'));
   assert(engine.includes('keysProc.action = keysOption === "bar" ? "bar" : "omarchy"'), 'the bindings follow the option');
-  assert.deepEqual(plain(ctx.LOOK), ['edge', 'keys', 'frames']);
+  assert.deepEqual(plain(ctx.LOOK), ['edge', 'keys', 'frames', 'glass', 'glassMotion']);
   assert.equal(ctx.normalizeOptions({}).keys, 'omarchy', 'plugin alone: Omarchy\'s keys stay');
   assert.equal(ctx.keepLook(ctx.presetById('tidy').options, {keys: 'bar'}).keys, 'bar', 'presets keep the keys');
   // look options only: the options are saved, the bar keeps its arrangement
@@ -1204,15 +1204,15 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
     const reds = [...colors.matchAll(/"#([0-9a-f]{6})"/g)].map(m => m[1]).filter(h => parseInt(h.slice(0, 2), 16) - Math.max(parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)) > 60);
     assert.ok(reds.length >= 1 && new Set(reds).size <= 2, `${t}: red is the one signal colour`);
   }
-  assert.match(read('setup/install.sh'), /themes=\(tusche papier tusche-lavur papier-lavur chrom platin\)/);
+  assert.match(read('setup/install.sh'), /themes=\(tusche papier tusche-lavur papier-lavur chrom platin frost smoke\)/);
   // the wiring
   const edge = read('ThemeEdge.qml');
   assert.match(edge, /readonly property var metal: !!spec && spec\.kind === "metal" \? Bridge\.ModuleBus\.metal : null/);
   assert.match(edge, /MetalShape \{\n\s*id: edgeMetal/);
   const mc = read('MaterialCard.qml');
   assert.match(mc, /readonly property bool metalOn: matOn && !!metalSpec/);
-  assert.match(mc, /height: fp\.frameH \* \(fp\.rolls \? fp\.roll : 1\) \+ 2 \* pad/, 'the rim rolls out with the card');
-  assert.match(mc, /function onOpenChanged\(\) \{ fp\.keepSnap\(\); fp\.follow\(\); fp\.glintPending = fp\.panel\.open; fp\.glint\(\) \}/, 'a card glints as it opens');
+  assert.match(mc, /height: fp\.frameH \* \(fp\.rolls \? fp\.reveal : 1\) \+ 2 \* pad/, 'the rim rolls out with the card');
+  assert.match(mc, /function onOpenChanged\(\) \{\s*fp\.keepSnap\(\); fp\.follow\(\); fp\.glintPending = fp\.panel\.open; fp\.glint\(\)/, 'a card glints as it opens');
   assert.match(mc, /onVisibleChanged: fp\.glint\(\)/, '… once its rim is visible (the card starts at opacity 0)');
   assert.match(frag, /g = gl > 1e-4 \? g \/ gl : vec2\(0\.0, -1\.0\);/, 'no atan(0, 0) on a bar\'s centre line');
   assert.match(frag, /col = mix\(track\.rgb, col, filled\);\n\s*alphaMul = mix\(track\.a, 1\.0, filled\);/, '0 % = the track only');
