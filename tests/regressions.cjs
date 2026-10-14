@@ -977,9 +977,10 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
 // like the battery; only the fill warns (CPU > 85 % or RAM > 90 %); a single-icon cell.
 {
   const st = fs.readFileSync(path.join(root, 'modules/Status.qml'), 'utf8');
+  const shared = fs.readFileSync(path.join(root, 'modules/StatusFace.qml'), 'utf8');
   const chipCtx = {};
   vm.createContext(chipCtx);
-  vm.runInContext(functionSource(st, 'chipLevel'), chipCtx);
+  vm.runInContext(functionSource(shared, 'chipLevel'), chipCtx);
   const lv = x => chipCtx.chipLevel(x);
   assert.deepEqual([0, 0.01, 0.02, 0.03, 0.08, 0.17, 0.45, 0.5, 0.51, 0.93, 1, 1.4, -1, NaN].map(lv),
                    [0, 0, 0, 1, 1, 2, 3, 3, 4, 6, 6, 6, 0, 0]);
@@ -987,10 +988,11 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
   assert(st.includes('if (id === "bitr0t.system-monitor") return sysHot'));
   assert(st.includes('if (sysHot) out.push({ chip: true, color: Commons.Color.urgent, member: "bitr0t.system-monitor" })'));
   assert(st.includes('width: modelData.id === "phone" ? Style.space(58) : root.barSize + Style.space(2)'), 'the system group is a single-icon cell');
-  const face = st.slice(st.indexOf('component GroupFace'), st.indexOf('component ChipFace'));
+  assert(st.includes('StatusFace {'), 'the production row uses the same inert renderer as its preview');
+  const face = shared.slice(0, shared.indexOf('component ChipFace'));
   assert(!face.includes('\\u{f061a}') && face.includes('ChipFace {'), 'no filled chip glyph, no meters');
-  const chip = st.slice(st.indexOf('component ChipFace'));
-  assert(/readonly property color ink: root\.fg/.test(chip) && /readonly property color fillInk: root\.sysHot \? Commons\.Color\.urgent : root\.fg/.test(chip),
+  const chip = shared.slice(shared.indexOf('component ChipFace'));
+  assert(/readonly property color ink: root\.ink/.test(chip) && /readonly property color fillInk: root\.sysHot \? root\.urgent : root\.ink/.test(chip),
          'the outline stays the bar ink; only the fill takes the alarm tone');
   assert(/border\.width: 2 \* chip\.u/.test(chip) && /model: 12/.test(chip), '2 px stroke, three pins per side');
   console.log('PASS: system face (chip outline, fill rows, warning, single cell)');

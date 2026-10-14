@@ -1,9 +1,11 @@
 import QtQuick
 import "../bridge" as Bridge
 import ".." as Root
+import "../StatusHints.js" as Hints
 import Quickshell
 import Quickshell.Io
 import Quickshell.Bluetooth
+import Quickshell.Hyprland
 import qs.Commons
 import qs.Commons as Commons
 import qs.Ui
@@ -19,7 +21,12 @@ import qs.Ui
 // and opened as its own window.
 Item {
   id: root
-  Component.onCompleted: { stableMountIds = mountIds; Bridge.ModuleBus.register("status", root) }
+  Component.onCompleted: {
+    stableMountIds = mountIds
+    Bridge.ModuleBus.register("status", root)
+    hintsMounted = true
+    configureHints()
+  }
   Component.onDestruction: Bridge.ModuleBus.unregister("status", root)
 
   property var bar: null
@@ -27,7 +34,7 @@ Item {
   property var settings: ({})
   function setting(key, fallback) { var v = settings ? settings[key] : undefined; return v === undefined || v === null ? fallback : v }
 
-  readonly property string variant: String(setting("variant", "groups"))
+  readonly property string variant: String(Bridge.ModuleBus.optionFor(root, "right", setting("variant", "groups")))
   readonly property var embeds: setting("embeds", {})
   readonly property int barSize: bar && bar.barSize ? bar.barSize : Style.bar.sizeHorizontal
   readonly property color fg: bar && bar.barForeground ? bar.barForeground : Commons.Color.bar.text
@@ -159,12 +166,15 @@ Item {
 
   // ---------------------------------------------------------------- live state
   property bool wifiUp: true
+  property bool wifiKnown: false
   property string wifiName: ""
   property bool vpnUp: false
   property string vpnName: ""
   property bool tailscaleUp: false
   property real cpu: 0
+  property bool cpuKnown: false
   property real mem: 0
+  property bool memKnown: false
   property var phone: null
   readonly property var btConnected: {
     var d = Bluetooth.devices ? Bluetooth.devices.values : []
@@ -184,7 +194,7 @@ Item {
           if ((p[1] === "802-11-wireless" || p[1] === "802-3-ethernet") && !wifi) wifi = p[0]
           if ((p[1] === "vpn" || p[1] === "wireguard") && !vpn) vpn = p[0]
         })
-        root.wifiUp = wifi !== ""; root.wifiName = wifi
+        root.wifiUp = wifi !== ""; root.wifiName = wifi; root.wifiKnown = true
         root.vpnUp = vpn !== ""; root.vpnName = vpn
       }
     }
@@ -219,6 +229,7 @@ Item {
       if (root.lastCpu) {
         var dt = total - root.lastCpu.total, di = idle - root.lastCpu.idle
         root.cpu = dt > 0 ? Math.max(0, Math.min(1, 1 - di / dt)) : root.cpu
+        if (dt > 0) root.cpuKnown = true
       }
       root.lastCpu = { total: total, idle: idle }
     }
@@ -228,12 +239,126 @@ Item {
     path: "/proc/meminfo"
     onLoaded: {
       var t = String(text()), tot = /MemTotal:\s+(\d+)/.exec(t), av = /MemAvailable:\s+(\d+)/.exec(t)
-      if (tot && av) root.mem = 1 - Number(av[1]) / Number(tot[1])
+      if (tot && av) { root.mem = 1 - Number(av[1]) / Number(tot[1]); root.memKnown = true }
     }
   }
   Timer { interval: 3000; running: true; repeat: true; triggeredOnStart: true; onTriggered: { stat.reload(); meminfo.reload() } }
   Timer { interval: 5000; running: true; repeat: true; triggeredOnStart: true; onTriggered: if (!nm.running) nm.running = true }
   Timer { interval: 20000; running: true; repeat: true; triggeredOnStart: true; onTriggered: { if (!ts.running) ts.running = true; if (!flux.running) flux.running = true } }
+
+  // ---------------------------------------------------------------- brief status hints
+  // The native widgets stay the source of truth (including audio's physical
+  // output behind a DSP sink). Observe their public presentation properties;
+  // never create another audio/brightness service or change any device state.
+  readonly property bool hintsEnabled: String(Bridge.ModuleBus.optionFor(root, "statusHints", setting("statusHints", "off"))) === "on"
+  property bool hintsMounted: false
+  property var hintState: Hints.initial(false)
+  property var hintAudio: null
+  property var hintMonitor: null
+  readonly property bool hintFocused: !Hyprland.focusedMonitor || !root.QsWindow.window || !root.QsWindow.window.screen
+    || root.QsWindow.window.screen.name === Hyprland.focusedMonitor.name
+  readonly property var hintOwners: Hints.islandOwners(Bridge.ModuleBus.engine ? Bridge.ModuleBus.engine.config : null)
+  readonly property var hintAudioSample: {
+    var a = hintsEnabled ? hintAudio : null
+    var sink = a && a.volumeSink ? a.volumeSink : null
+    return { ready: !!(a && a.hasOutput && sink && sink.audio),
+      id: sink ? String(sink.name || "output") : "", name: sink ? String(sink.description || sink.name || "Output") : "",
+      percent: a ? a.outputVolume * 100 : -1, muted: a ? a.outputMuted : false }
+  }
+  readonly property var hintBrightnessSample: {
+    var m = hintsEnabled ? hintMonitor : null
+    return { ready: !!(m && m.brightnessAvailable), id: m ? String(m.focusedMonitor || "display") : "",
+      percent: m ? m.brightnessPercent : -1 }
+  }
+  readonly property var hintBluetoothSample: {
+    var a = hintsEnabled ? Bluetooth.defaultAdapter : null
+    var devices = hintsEnabled && Bluetooth.devices ? Bluetooth.devices.values : []
+    return { ready: !!a, id: a ? String(a.adapterId || a.name || "adapter") : "", on: !!(a && a.enabled),
+      devices: devices.filter(function(d) { return !!d }).map(function(d) {
+        return { id: String(d.address || d.name || ""), name: String(d.name || d.deviceName || "Bluetooth device"), connected: !!d.connected }
+      }) }
+  }
+  onHintsEnabledChanged: if (hintsMounted) configureHints()
+  onHintAudioSampleChanged: scheduleHintSample()
+  onHintBrightnessSampleChanged: scheduleHintSample()
+  onHintBluetoothSampleChanged: scheduleHintSample()
+  onHintOwnersChanged: scheduleHintSample()
+  onHintFocusedChanged: scheduleHintSample()
+  onMountedChanged: if (hintsMounted && hintsEnabled) refreshHintSources()
+
+  function configureHints() {
+    hintState = Hints.configure(hintState, hintsEnabled)
+    hintExpiry.stop()
+    hintSampleTimer.stop()
+    if (hintsEnabled) { refreshHintSources(); scheduleHintSample() }
+    else { hintAudio = null; hintMonitor = null }
+  }
+  function refreshHintSources() {
+    if (!hintsEnabled) return
+    // Same narrowly-scoped visual slot discovery already used for popup
+    // materials. Do not walk host services or widen a PluginBarApi facade.
+    var top = root
+    for (var i = 0; i < 24 && top.parent; i++) top = top.parent
+    var slots = nativeMaterial.slotsIn(top, 0, []), audio = null
+    var monitor = root.mounted["nerdibeard.monitor"] || null
+    for (var j = 0; j < slots.length; j++) {
+      if (slots[j].moduleName === "omarchy.audio") audio = slots[j].activeItem
+      if (!monitor && (slots[j].moduleName === "omarchy.monitor" || slots[j].moduleName === "nerdibeard.monitor")) monitor = slots[j].activeItem
+    }
+    hintAudio = audio
+    hintMonitor = monitor
+    scheduleHintSample()
+  }
+  Connections {
+    target: dressTimer
+    function onTriggered() { if (root.hintsEnabled) root.refreshHintSources() }
+  }
+  function scheduleHintSample() {
+    // Coalesce related native properties (volume+mute, availability+value,
+    // device name+connection) before taking a primitive snapshot.
+    if (hintsMounted && hintsEnabled) hintSampleTimer.restart()
+  }
+  function sampleHints() {
+    if (!hintsEnabled) return
+    var now = Date.now(), state = Hints.configure(hintState, true)
+    state = Hints.observe(state, "audio", hintAudioSample, now, hintOwners.audio || !hintFocused)
+    state = Hints.observe(state, "brightness", hintBrightnessSample, now, hintOwners.brightness || !hintFocused)
+    state = Hints.observe(state, "bluetooth", hintBluetoothSample, now, hintOwners.bluetooth || !hintFocused)
+    hintState = state
+    armHintExpiry()
+  }
+  function armHintExpiry() {
+    hintExpiry.stop()
+    if (!hintsEnabled || !hintState.hint) return
+    hintExpiry.interval = Math.max(1, hintState.hint.until - Date.now())
+    hintExpiry.start()
+  }
+  Timer { id: hintSampleTimer; interval: 35; onTriggered: root.sampleHints() }
+  Timer {
+    id: hintExpiry
+    onTriggered: { root.hintState = Hints.expire(root.hintState, Date.now()); root.armHintExpiry() }
+  }
+  // The monitor backend otherwise reads only on popup-open. Reuse its guarded
+  // read-only refresh for external brightness keys; never poll when disabled,
+  // off the focused monitor, or when the Island already owns that channel.
+  Timer {
+    interval: 2000
+    repeat: true
+    running: root.hintsEnabled && root.hintFocused && !root.hintOwners.brightness
+      && !!root.hintMonitor && root.hintMonitor.opened !== true && root.hintMonitor.layoutPending !== true
+    onTriggered: if (root.hintMonitor && typeof root.hintMonitor.refresh === "function") root.hintMonitor.refresh()
+  }
+
+  // Inert snapshots for the visual editor. It must not instantiate this module
+  // or its native backends merely to draw an option tile.
+  function previewData() {
+    return { wifiUp: wifiUp, wifiKnown: wifiKnown, vpnUp: vpnUp, tailscaleUp: tailscaleUp,
+      bluetoothConnected: btConnected.length > 0, phone: phone ? Object.assign({}, phone) : null,
+      cpu: cpu, mem: mem, cpuKnown: cpuKnown, memKnown: memKnown, sysHot: sysHot,
+      groups: shownGroups.map(function(g) { return g.id }),
+      deviations: deviations.map(function(d) { return { glyph: d.glyph || "", chip: !!d.chip, color: String(d.color), member: d.member } }),
+      hint: hintState.hint ? { kind: hintState.hint.kind, text: hintState.hint.text } : null }
+  }
 
   function memberState(id) {
     if (id === "omarchy.network") return wifiUp ? "connected · " + wifiName : "disconnected"
@@ -251,13 +376,6 @@ Item {
   }
   // The system's warning: CPU near its limit or memory nearly full.
   readonly property bool sysHot: cpu > 0.85 || mem > 0.9
-  // The chip's fill (system group face): CPU load in 6 rows; any load above 2 % shows at least one
-  // row, so a quiet machine does not read as switched off.
-  function chipLevel(load) {
-    var l = Math.min(1, Math.max(0, Number(load) || 0))
-    return l > 0.02 ? Math.max(1, Math.ceil(l * 6 - 1e-4)) : 0
-  }
-
   // Deviations: what is worth showing right now.
   readonly property var deviations: {
     var out = []
@@ -289,7 +407,12 @@ Item {
         onClicked: root.openGroup(modelData.id, groupCell)
         onRightClicked: { root.popupAnchor = groupCell; root.openMember(modelData.members[0]) }
         width: modelData.id === "phone" ? Style.space(58) : root.barSize + Style.space(2)
-        GroupFace { anchors.fill: parent; group: modelData.id }
+        StatusFace {
+          anchors.fill: parent; group: modelData.id
+          ink: root.fg; accent: Commons.Color.accent; urgent: Commons.Color.urgent; linkInk: Commons.Color.popups.border || root.fg
+          barSize: root.barSize; wifiUp: root.wifiUp; vpnUp: root.vpnUp; tailscaleUp: root.tailscaleUp
+          bluetoothConnected: root.btConnected.length > 0; phone: root.phone; cpu: root.cpu; sysHot: root.sysHot
+        }
       }
     }
 
@@ -301,8 +424,11 @@ Item {
         required property var modelData
         onClicked: { root.popupAnchor = devCell; root.openMember(modelData.member) }
         width: root.barSize
-        Glyph { visible: !modelData.chip; anchors.centerIn: parent; text: modelData.glyph || ""; color: modelData.color }
-        ChipFace { visible: !!modelData.chip; anchors.centerIn: parent; level: root.cpu }
+        StatusFace {
+          anchors.fill: parent; glyph: modelData.glyph || ""; chip: !!modelData.chip
+          ink: root.fg; glyphInk: modelData.color; urgent: Commons.Color.urgent
+          barSize: root.barSize; cpu: root.cpu; sysHot: root.sysHot
+        }
       }
     }
 
@@ -313,7 +439,17 @@ Item {
       active: root.popupGroup === "all" && root.popupOpen
       width: root.barSize + Style.space(2)
       onClicked: root.openGroup("all", moreCell)
-      Glyph { anchors.centerIn: parent; text: "\u{f01d8}"; color: Util.alpha(root.fg, 0.7) }
+      StatusFace { anchors.fill: parent; glyph: "\u{f01d8}"; ink: root.fg; glyphInk: Util.alpha(root.fg, 0.7); barSize: root.barSize }
+    }
+    StatusHint {
+      id: hintFace
+      visible: root.hintsEnabled
+      width: root.hintsEnabled ? implicitWidth : 0
+      height: root.barSize
+      barSize: root.barSize
+      ink: root.fg
+      text: root.hintState.hint ? root.hintState.hint.text : ""
+      kind: root.hintState.hint ? root.hintState.hint.kind : ""
     }
   }
 
@@ -339,87 +475,6 @@ Item {
       acceptedButtons: Qt.LeftButton | Qt.RightButton
       cursorShape: Qt.PointingHandCursor
       onClicked: function(m) { if (m.button === Qt.RightButton) cell.rightClicked(); else cell.clicked() }
-    }
-  }
-
-  component Glyph: Text { renderType: Text.NativeRendering; textFormat: Text.PlainText;
-    font.family: Style.font.family
-    font.pixelSize: Style.font.icon + 2
-    color: root.fg
-  }
-
-  component GroupFace: Item {
-    property string group: ""
-    Glyph {
-      visible: parent.group === "net"
-      anchors.centerIn: parent; anchors.verticalCenterOffset: -Style.space(2)
-      text: root.wifiUp ? "\u{f0928}" : "\u{f05aa}"
-      color: root.wifiUp ? root.fg : Commons.Color.urgent
-    }
-    Row {
-      visible: parent.group === "net"
-      anchors.horizontalCenter: parent.horizontalCenter
-      y: root.barSize - Style.space(7)
-      spacing: Style.space(2)
-      Rectangle { width: Style.space(3); height: width; color: root.vpnUp ? Commons.Color.accent : Util.alpha(root.fg, 0.25) }
-      Rectangle { width: Style.space(3); height: width; color: root.tailscaleUp ? (Commons.Color.popups.border || root.fg) : Util.alpha(root.fg, 0.25) }
-      Rectangle { width: Style.space(3); height: width; color: root.btConnected.length ? root.fg : Util.alpha(root.fg, 0.25) }
-    }
-    Row {
-      visible: parent.group === "phone"
-      anchors.centerIn: parent
-      spacing: Style.space(3)
-      Glyph { text: "\u{f011c}"; color: root.phone && root.phone.online ? root.fg : Util.alpha(root.fg, 0.45) }
-      Text { renderType: Text.NativeRendering; textFormat: Text.PlainText;
-        anchors.verticalCenter: parent.verticalCenter
-        text: root.phone && root.phone.charge >= 0 ? root.phone.charge + "%" : "–"
-        font.family: Style.font.family; font.pixelSize: Style.font.bodySmall
-        color: root.phone && root.phone.charge >= 0 && root.phone.charge <= 20 && !root.phone.charging ? Commons.Color.urgent : Util.alpha(root.fg, 0.75)
-      }
-    }
-    ChipFace {
-      visible: parent.group === "system"
-      anchors.centerIn: parent
-      level: root.cpu
-    }
-  }
-
-  // The system group's face (design round 04.10., recommendation 6): a chip drawn as an outline on
-  // whole pixels – 12 × 12 with the phone glyph's 2 px stroke, three pins per side – that fills from
-  // below like the battery beside it (CPU, chipLevel). Under the warning (sysHot) only the fill takes
-  // the alarm tone; the outline stays the bar's ink, so it never becomes a red block. Scales by whole
-  // pixels with the icon size (16 px at the 18 px glyph).
-  component ChipFace: Item {
-    id: chip
-    property real level: 0
-    readonly property int u: Math.max(1, Math.round((Style.font.icon + 2) / 18))
-    readonly property color ink: root.fg
-    readonly property color fillInk: root.sysHot ? Commons.Color.urgent : root.fg
-    width: 16 * u; height: 16 * u
-    Repeater {
-      model: 12
-      Rectangle {
-        required property int index
-        readonly property int side: Math.floor(index / 3)
-        readonly property int k: index % 3
-        color: chip.ink
-        antialiasing: false
-        width: (side < 2 ? 2 : 1) * chip.u; height: (side < 2 ? 1 : 2) * chip.u
-        x: (side === 0 ? 0 : side === 1 ? 14 : 4 + k * 3) * chip.u
-        y: (side === 2 ? 0 : side === 3 ? 14 : 4 + k * 3) * chip.u
-      }
-    }
-    Rectangle {
-      x: 2 * chip.u; y: 2 * chip.u; width: 12 * chip.u; height: 12 * chip.u
-      color: "transparent"; border.width: 2 * chip.u; border.color: chip.ink; radius: chip.u
-      Rectangle {
-        readonly property int rows: root.chipLevel(chip.level)
-        x: 3 * chip.u; width: 6 * chip.u
-        height: rows * chip.u; y: (9 - rows) * chip.u
-        visible: rows > 0
-        color: chip.fillInk
-        antialiasing: false
-      }
     }
   }
 
@@ -449,7 +504,7 @@ Item {
   function stateJson() {
     return JSON.stringify({variant: variant, mounted: Object.keys(mounted), wifi: wifiName,
       vpn: vpnUp, tailscale: tailscaleUp, phone: phone, cpu: cpu, mem: mem,
-      open: popupOpen, group: popupGroup, monitor: root.QsWindow.window ? root.QsWindow.window.screen.name : ""})
+      open: popupOpen, group: popupGroup, statusHints: hintsEnabled, hint: hintState.hint, hintSources: {audio: !!hintAudio, brightness: !!hintMonitor}, hintOwners: hintOwners, monitor: root.QsWindow.window ? root.QsWindow.window.screen.name : ""})
   }
 
   KeyboardPanel {
