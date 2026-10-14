@@ -26,7 +26,7 @@ Item {
   property var settings: ({})
   function setting(key, fallback) { var v = settings ? settings[key] : undefined; return v === undefined || v === null ? fallback : v }
 
-  readonly property string variant: String(setting("variant", "gauge"))
+  readonly property string variant: String(Bridge.ModuleBus.optionFor(root, "ai", setting("variant", "gauge")))
   readonly property int barSize: bar && bar.barSize ? bar.barSize : Style.bar.sizeHorizontal
   readonly property color fg: bar && bar.barForeground ? bar.barForeground : Commons.Color.bar.text
   readonly property string home: Quickshell.env("HOME")
@@ -283,17 +283,25 @@ Item {
   }
 
   // ---------------------------------------------------------------- layout
+  function previewData() { return { items: items, ringItems: ringItems, pal: pal } }
   readonly property bool hidden: variant === "ondemand" && !(tightest && tightest.percent >= 0.75)
   visible: !hidden
   implicitHeight: barSize
-  implicitWidth: hidden ? 0 : (loader.item ? loader.item.implicitWidth : 0) + Style.space(8)
+  implicitWidth: hidden ? 0 : quotaFace.implicitWidth + Style.space(8)
 
-  Loader {
-    id: loader
+  QuotaFace {
+    id: quotaFace
     x: Style.space(4)
     height: root.barSize
-    sourceComponent: root.variant === "vu" ? vuView : root.variant === "rings" ? ringsView
-      : root.variant === "ondemand" ? chipView : gaugeView
+    variant: root.variant
+    barSize: root.barSize
+    fg: root.fg
+    pal: root.pal
+    metal: Bridge.ModuleBus.metal
+    items: root.items
+    ringItems: root.ringItems
+    hoverBoost: area.containsMouse ? 0.35 : 0
+    Connections { target: Bridge.ModuleBus; function onMetalPulse() { quotaFace.play() } }
   }
 
   MouseArea {
@@ -305,74 +313,6 @@ Item {
     onClicked: function(m) {
       if (m.button === Qt.MiddleButton) { if (root.bar) root.bar.run("omarchy-agent-usage-update --force"); return }
       root.togglePopup()
-    }
-  }
-
-  // Gauge: the tightest limit, coloured by level.
-  Component {
-    id: gaugeView
-    Row {
-      spacing: Style.space(5)
-      height: root.barSize
-      Text { renderType: Text.NativeRendering;
-        anchors.verticalCenter: parent.verticalCenter
-        text: "\u{f04c5}"
-        font.family: Style.font.family; font.pixelSize: Style.font.icon + 2
-        color: root.tightest ? root.tone(root.tightest.percent) : root.fg
-      }
-      Column {
-        anchors.verticalCenter: parent.verticalCenter
-        spacing: Style.space(2)
-        Row {
-          spacing: Style.space(4)
-          Text { renderType: Text.NativeRendering; text: root.tightest ? root.tightest.name : "AI"; font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.caption; color: Util.alpha(root.fg, 0.65) }
-          Text { renderType: Text.NativeRendering; text: root.tightest ? Math.round(root.tightest.percent * 100) + "%" : "–"; font.family: Style.font.family; font.pixelSize: Style.font.bodySmall; color: root.fg }
-        }
-        Rectangle {
-          width: Style.space(62); height: Math.max(2, Style.space(4))
-          color: Util.alpha(root.fg, 0.15)
-          Rectangle { width: parent.width * (root.tightest ? Math.min(1, root.tightest.percent) : 0); height: parent.height; color: root.tightest ? root.tone(root.tightest.percent) : root.fg }
-        }
-      }
-    }
-  }
-
-  // Tracker VU: one channel per tracked quota, 8 segments.
-  Component {
-    id: vuView
-    Row {
-      spacing: Style.space(6)
-      height: root.barSize
-      Repeater {
-        model: root.quotaItems
-        Row {
-          required property var modelData
-          spacing: Style.space(2)
-          anchors.verticalCenter: parent.verticalCenter
-          Text { renderType: Text.NativeRendering; anchors.verticalCenter: parent.verticalCenter; text: root.letters[modelData.provider] || "?"; font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.caption; color: Util.alpha(root.fg, 0.65) }
-          Column {
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 1
-            Repeater {
-              model: 8
-              Rectangle {
-                required property int index
-                readonly property int seg: 7 - index
-                width: Style.space(7); height: Math.max(1, Math.round(root.barSize * 0.055))
-                color: parent.parent.modelData.percent * 8 > seg + 0.001 || (seg === 0 && parent.parent.modelData.percent > 0)
-                  ? (seg >= 7 ? Commons.Color.urgent : seg >= 5 ? (root.pal.yellow || Commons.Color.accent) : (root.pal.green || root.fg))
-                  : Util.alpha(root.fg, 0.12)
-              }
-            }
-          }
-        }
-      }
-      Text { renderType: Text.NativeRendering;
-        visible: !!root.balance
-        anchors.verticalCenter: parent.verticalCenter
-        text: root.balance ? root.balance.value.replace(/^USD\s*/, "$") : ""
-        font.family: Style.font.family; font.pixelSize: Style.font.caption; color: Util.alpha(root.fg, 0.75)
-      }
     }
   }
 
@@ -428,47 +368,6 @@ Item {
       ink: ring.percent >= 0.9 ? Commons.Color.urgent : (ring.metal && ring.metal.light ? "#1d1e21" : "#e6e7eb")
     }
     Text { renderType: Text.NativeRendering; anchors.centerIn: parent; text: ring.letter; font.family: Style.font.family; font.bold: true; font.pixelSize: ring.letterPx; color: Util.alpha(ring.ink, ring.percent < 0 ? 0.45 : 1) }
-  }
-
-  // Rings: one arc per tracked quota, provider initial inside.
-  Component {
-    id: ringsView
-    Row {
-      spacing: Style.space(5)
-      height: root.barSize
-      Repeater {
-        model: root.ringItems
-        Ring {
-          id: barRing
-          required property var modelData
-          anchors.verticalCenter: parent.verticalCenter
-          width: Bridge.ModuleBus.metal && Number(Bridge.ModuleBus.metal.ringSize) > 0 ? Number(Bridge.ModuleBus.metal.ringSize) : Math.round(root.barSize * 0.66); height: width
-          percent: modelData.missing ? -1 : modelData.percent
-          letter: root.letters[modelData.provider] || "?"
-          boost: area.containsMouse ? 0.35 : 0
-          Connections { target: Bridge.ModuleBus; function onMetalPulse() { barRing.play() } }
-        }
-      }
-    }
-  }
-
-  // On demand: a chip only from 75 %.
-  Component {
-    id: chipView
-    Rectangle {
-      implicitWidth: chipRow.implicitWidth + Style.space(12)
-      height: Math.round(root.barSize * 0.72)
-      y: Math.round((root.barSize - height) / 2)
-      radius: Math.min(Style.cornerRadius, 3)
-      color: Util.alpha(root.tightest ? root.tone(root.tightest.percent) : Commons.Color.accent, 0.16)
-      Row {
-        id: chipRow
-        anchors.centerIn: parent
-        spacing: Style.space(5)
-        Text { renderType: Text.NativeRendering; text: "\u{f04c5}"; font.family: Style.font.family; font.pixelSize: Style.font.icon; color: root.tightest ? root.tone(root.tightest.percent) : root.fg }
-        Text { renderType: Text.NativeRendering; text: root.tightest ? root.tightest.name + " " + root.shortLabel(root.tightest.label) + " " + Math.round(root.tightest.percent * 100) + "%" : ""; font.family: Style.font.family; font.pixelSize: Style.font.bodySmall; color: root.fg }
-      }
-    }
   }
 
   // ---------------------------------------------------------------- popup
