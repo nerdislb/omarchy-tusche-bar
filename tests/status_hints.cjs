@@ -241,6 +241,24 @@ test('live readout is plain text, fixed-width, motion-independent and has no cli
   assert(status.includes('typeof root.hintMonitor.refresh === "function"'));
   assert(!/reduceMotion/.test(fs.readFileSync(path.join(root, 'StatusHints.js'), 'utf8')));
 });
+test('missing native focused-monitor metadata still selects only one status observer', () => {
+  const status = fs.readFileSync(path.join(root, 'modules/Status.qml'), 'utf8');
+  const bus = fs.readFileSync(path.join(root, 'bridge/ModuleBus.qml'), 'utf8');
+  const match = bus.match(/function pick\(kind\) \{([\s\S]*?)\n  \}/);
+  assert(match, 'actual ModuleBus picker exists');
+  const one = {QsWindow: {window: {visible: true, screen: {name: 'eDP-1'}}}};
+  const two = {QsWindow: {window: {visible: true, screen: {name: 'DP-1'}}}};
+  const context = {instances: {status: [one, two]}, Hyprland: {focusedMonitor: null}, focusedScreenName: () => ''};
+  vm.createContext(context);
+  vm.runInContext('function pick(kind) {' + match[1] + '\n}', context);
+  const expression = status.match(/readonly property bool hintFocused: ([^\n]+)/)[1];
+  function chosen(root) { return vm.runInNewContext(expression, {Bridge: {ModuleBus: context}, root}); }
+  assert.equal(chosen(one), true);
+  assert.equal(chosen(two), false);
+  one.QsWindow.window.visible = false;
+  assert.equal(chosen(one), false);
+  assert.equal(chosen(two), true);
+});
 console.log(`${passed} status-hint checks passed`);
 
 // Optional real-Qt smoke. Only Commons palette/spacing is a fixture; the two

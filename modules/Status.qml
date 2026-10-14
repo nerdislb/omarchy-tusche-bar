@@ -5,7 +5,6 @@ import "../StatusHints.js" as Hints
 import Quickshell
 import Quickshell.Io
 import Quickshell.Bluetooth
-import Quickshell.Hyprland
 import qs.Commons
 import qs.Commons as Commons
 import qs.Ui
@@ -255,8 +254,7 @@ Item {
   property var hintState: Hints.initial(false)
   property var hintAudio: null
   property var hintMonitor: null
-  readonly property bool hintFocused: !Hyprland.focusedMonitor || !root.QsWindow.window || !root.QsWindow.window.screen
-    || root.QsWindow.window.screen.name === Hyprland.focusedMonitor.name
+  readonly property bool hintFocused: Bridge.ModuleBus.pick("status") === root
   readonly property var hintOwners: Hints.islandOwners(Bridge.ModuleBus.engine ? Bridge.ModuleBus.engine.config : null)
   readonly property var hintAudioSample: {
     var a = hintsEnabled ? hintAudio : null
