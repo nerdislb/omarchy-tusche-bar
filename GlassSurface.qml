@@ -18,10 +18,17 @@ Item {
   property real screenY: origin.y
   property url testBackground: ""
   readonly property var window: QsWindow.window
+  // KeyboardPanel/PopupCard shadow window.contentItem with a children list.
+  // Walk the visual parents instead: mapToItem/TransformWatcher need an Item.
+  readonly property Item sceneRoot: {
+    var item = root
+    while (item.parent) item = item.parent
+    return item
+  }
   readonly property point origin: {
     originWatcher.transform
-    if (!window || !window.contentItem) return Qt.point(0, 0)
-    var p = root.mapToItem(window.contentItem, 0, 0)
+    if (!window || !sceneRoot) return Qt.point(0, 0)
+    var p = root.mapToItem(sceneRoot, 0, 0)
     // PanelWindow card positions are screen-local. Note columns start below
     // the bar; include their anchored margins without assuming output (0,0).
     var m = window.margins
@@ -37,7 +44,7 @@ Item {
   readonly property bool glintRunning: glint.running
   property real sweep: 0
   property real strength: 0
-  TransformWatcher { id: originWatcher; a: root; b: root.window ? root.window.contentItem : null }
+  TransformWatcher { id: originWatcher; a: root.sceneRoot; b: root }
 
   function play() {
     if (!active || Style.reduceMotion) return

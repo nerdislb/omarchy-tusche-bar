@@ -49,20 +49,31 @@ QtObject { property bool reduceMotion: false; property int cornerRadius: 0; func
         svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="900"><defs><linearGradient id="g"><stop stop-color="#648bbe"/><stop offset=".5" stop-color="#b7c9d5"/><stop offset="1" stop-color="#142431"/></linearGradient><pattern id="lines" width="150" height="36" patternUnits="userSpaceOnUse"><text x="5" y="24" font-size="18" fill="#151b24">Behind the glass</text></pattern></defs><rect width="1100" height="900" fill="url(#g)"/><rect x="60" y="120" width="630" height="720" fill="url(#lines)"/><circle cx="450" cy="370" r="210" fill="#6b91bb" opacity=".35"/></svg>'''
         (tmp / 'backdrop.svg').write_text(svg)
         materials = {t: json.loads((ROOT / f'themes/{t}/bar-material.json').read_text()) for t in ['frost', 'smoke']}
+        # Native KeyboardPanel/PopupCard shadow QsWindow.contentItem with a
+        # list. A plain FloatingWindow alone hid coordinate-target bugs.
+        (tmp / 'PopupHost.qml').write_text('''import QtQuick
+import Quickshell
+FloatingWindow {
+ default property alias contentItem: holder.data
+ Item { id: holder; anchors.fill: parent }
+}
+''')
         qml = r'''import QtQuick
 import Quickshell
 import qs.Commons
 import qs.Commons as Commons
 import "GlassMath.js" as GlassMath
-FloatingWindow {
+PopupHost {
  id: root
  visible: true; implicitWidth: 1100; implicitHeight: 900
  property var materials: MATERIALS
  property string theme: "frost"
  property int count: 0
  property var snapshots: []
+ property real offsetX: 0
+ property real offsetY: 0
  QtObject { id: panel; property bool open: false; property string barPos: "top"; property real gap: 0; property bool centerOnBar: false; property point anchorScreenPos: Qt.point(40, 0); property real anchorW: 20; property bool popoutSwitchClosing: false }
- Item { id: canvas; anchors.fill: parent
+ Item { id: canvas; x: root.offsetX; y: root.offsetY; width: root.width; height: root.height
  Image { z: -10; anchors.fill: parent; source: "backdrop.svg" }
  Rectangle { z: -5; x: 60; y: 45; width: 630; height: 38; color: root.theme === "frost" ? "#e9edf0" : "#111419" }
  Rectangle {
@@ -100,9 +111,6 @@ FloatingWindow {
   console.log("GLASS_DIAG " + JSON.stringify({card:!!materialCard.card,surface:!!materialCard.surface,parent:String(materialCard.parent),ancestor:String(materialCard.parent.parent),glass:!!materialCard.glassBody}))
   check(!!materialCard.glassBody, "native material created")
   materialCard.glassBody.testBackground=Qt.resolvedUrl("backdrop.svg")
-  // The authored background has the full output dimensions, including when
-  // FloatingWindow uses no layer-shell origin.
-  materialCard.glassBody.screenX=60; materialCard.glassBody.screenY=83
   shot(theme + "-rest", function() {
    panel.open=true
    schedule(100, function() {
@@ -171,7 +179,20 @@ FloatingWindow {
    })
   })
  }
- Component.onCompleted: schedule(300,begin)
+ function checkOrigin(x, y, label) {
+  var body = materialCard.glassBody
+  check(!!body && Math.abs(body.screenX-x)<.001 && Math.abs(body.screenY-y)<.001,
+        label + " " + (body ? JSON.stringify({x:body.screenX,y:body.screenY}) : "missing surface"))
+ }
+ Component.onCompleted: schedule(300,function() {
+  checkOrigin(60,83,"popup-list host maps to actual scene root")
+  offsetX=11; offsetY=17
+  schedule(50,function() {
+   checkOrigin(71,100,"origin follows ancestor position")
+   offsetX=0; offsetY=0
+   schedule(50,function() { checkOrigin(60,83,"origin restored"); begin() })
+  })
+ })
 }
 '''
         qml = qml.replace('MATERIALS', json.dumps(materials)).replace('OUT', json.dumps(str(out))).replace('Color.', 'Commons.Color.')
@@ -187,6 +208,7 @@ FloatingWindow {
         text = (out / 'runtime.log').read_text()
         print(text)
         assert process.returncode == 0 and 'GLASS_RESULT ' in text, f'native acceptance failed ({process.returncode})'
+        assert 'QQmlListReference' not in text and 'Passing incompatible arguments' not in text, 'invalid popup coordinate target'
         summary = next(line.split('GLASS_RESULT ',1)[1] for line in text.splitlines() if 'GLASS_RESULT ' in line)
         (out / 'runtime.json').write_text(json.dumps(json.loads(summary), indent=2) + '\n')
 

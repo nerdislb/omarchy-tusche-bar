@@ -125,6 +125,13 @@ independent switches and Reduced Motion. Rest and returned-rest images must
 be pixel-identical. This is native Qt render/lifecycle evidence, **not live
 compositor-capture or GPU/battery certification**.
 
+The popup host fixture deliberately shadows `contentItem` with a children
+list, like Omarchy's KeyboardPanel/PopupCard. GlassSurface maps to the actual
+visual scene root, not that alias. The test checks the real origin without
+overriding screen coordinates, including ancestor-position updates. This
+guards against a live-only type error that previously left the backdrop at
+(0, 0). Keep the Island's `views/GlassSurface.qml` copy identical.
+
 `omarchy-shell tusche-bar state` reports effective options and native cards'
 radius, dimensions, reveal, spring/light activity and capture count. Verify
 the loaded generation, not only file hashes. Omarchy preserves its lock
