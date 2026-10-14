@@ -54,10 +54,16 @@ const bus=fs.readFileSync(path.join(root,'bridge/ModuleBus.qml'),'utf8');
 const mk=name=>({QsWindow:{window:{visible:true,screen:{name}}}});
 const a=mk('eDP-1'), b=mk('HDMI-A-1');
 const bc={instances:{status:[a,b]},Hyprland:{focusedMonitor:{name:'HDMI-A-1'}}};
-vm.createContext(bc); vm.runInContext(functionSource(bus,'pick'),bc);
+vm.createContext(bc); vm.runInContext(functionSource(bus,'focusedScreenName')+'\n'+functionSource(bus,'pick'),bc);
 assert.equal(bc.pick('status'),b);
 b.QsWindow.window.visible=false;
 assert.equal(bc.pick('status'),a);
+bc.Hyprland.focusedMonitor = null;
+bc.instances.workspaces = [{snapshot:{active:{id:3},workspaces:[{id:3,monitor:'HDMI-A-1'}]}}];
+b.QsWindow.window.visible = true;
+assert.equal(bc.pick('status'),b,'Lua monitor fallback reuses the existing workspace snapshot');
+bc.instances.workspaces = [];
+assert.equal(bc.pick('status'),a,'unknown focus chooses one visible owner, never all monitors');
 console.log('PASS: presets, native-widget preservation, embedded settings round-trip, startup alarms, shell quoting, focused-output routing');
 // Layout-induced hover events at a stationary global position must not take
 // selection away from keyboard navigation in the drop-down. Local coordinates may change.
@@ -119,7 +125,7 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
 
 // The edge (and the Super+Space keys, the window frames) are look options: presets keep them, preset matching ignores them.
 {
-  assert.deepEqual(plain(ctx.LOOK), ['edge', 'keys', 'frames', 'glass', 'glassMotion']);
+  assert.deepEqual(plain(ctx.LOOK), ['edge', 'keys', 'frames', 'glass', 'glassMotion', 'statusHints', 'dayline', 'seal']);
   assert.equal(ctx.matchPreset(Object.assign({}, ctx.presetById('tidy').options, {frames: 'glint'})), 'tidy');
   assert.equal(ctx.layoutDiffers(Object.assign({}, ctx.presetById('tidy').options, {frames: 'glint'}), ctx.presetById('tidy').options), false, 'the frame glint never rebuilds the bar');
   const tidy = ctx.presetById('tidy').options;
@@ -484,7 +490,7 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
   assert.deepEqual(handlers, {
     'tusche-status': ['group', 'member', 'close', 'state'],
     'tusche-quota': ['toggle', 'select', 'state'],
-    'tusche-bar': ['options', 'cc', 'save', 'load', 'ask', 'menu', 'search', 'apps', 'preset', 'set', 'glintWindow', 'recaptureBase', 'state']});
+    'tusche-bar': ['options', 'cc', 'save', 'load', 'ask', 'menu', 'search', 'apps', 'preset', 'set', 'focus', 'screenProfile', 'glintWindow', 'recaptureBase', 'state']});
   assert(en.includes('Quickshell.env("HOME") + "/.local/state/tusche-bar"'));
   assert(en.includes('"nerdibeard.tusche-bar"'));
   // logo: left = the drop-down, right = Omarchy's own menu, middle = the Control Center
@@ -1133,7 +1139,7 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
   assert(ws.includes('m.searchMode = true') && ws.includes('function openApps()'));
   assert(engine.includes('function search(): void { root.toggleMenu("search") }') && engine.includes('function apps(): void { root.toggleMenu("apps") }'));
   assert(engine.includes('keysProc.action = keysOption === "bar" ? "bar" : "omarchy"'), 'the bindings follow the option');
-  assert.deepEqual(plain(ctx.LOOK), ['edge', 'keys', 'frames', 'glass', 'glassMotion']);
+  assert.deepEqual(plain(ctx.LOOK), ['edge', 'keys', 'frames', 'glass', 'glassMotion', 'statusHints', 'dayline', 'seal']);
   assert.equal(ctx.normalizeOptions({}).keys, 'omarchy', 'plugin alone: Omarchy\'s keys stay');
   assert.equal(ctx.keepLook(ctx.presetById('tidy').options, {keys: 'bar'}).keys, 'bar', 'presets keep the keys');
   // look options only: the options are saved, the bar keeps its arrangement
@@ -1182,8 +1188,10 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
 // keep an empty ring in the bar; the formatting helpers.
 {
   const q = fs.readFileSync(path.join(root, 'modules/Quota.qml'), 'utf8');
+  const face = fs.readFileSync(path.join(root, 'modules/QuotaFace.qml'), 'utf8');
   assert(q.includes('if (slug(l.title || l.label) !== parts[1]) continue'), 'tracked ids like the AI usage widget: title first (Antigravity limits only have a title)');
-  assert(q.includes('model: root.ringItems') && q.includes('percent: modelData.missing ? -1 : modelData.percent'), 'rings include agents without numbers');
+  assert(q.includes('QuotaFace {') && q.includes('ringItems: root.ringItems'), 'production quota uses the shared live-data renderer');
+  assert(face.includes('model: root.ringItems') && face.includes('percent: modelData.missing ? -1 : modelData.percent'), 'rings include agents without numbers');
   assert(q.includes('readonly property var recordIds: ["claude", "codex", "antigravity", "grok", "fireworks"]'));
   assert(q.includes('WheelHandler { onWheel: function(e) { root.step(e.angleDelta.y > 0 ? -1 : 1) } }'), 'scroll switches agents');
   assert(/e\.key === Qt\.Key_Left[\s\S]*root\.step\(-1\)[\s\S]*e\.key === Qt\.Key_Right[\s\S]*root\.step\(1\)/.test(q), 'arrows switch agents');

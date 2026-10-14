@@ -46,6 +46,7 @@ Item {
     return {}
   }
   readonly property var options: Presets.normalizeOptions(entry.options || {})
+  readonly property var screenProfiles: Presets.normalizeScreens(entry.screenProfiles)
   readonly property string presetId: Presets.matchPreset(options)
   readonly property var currentLayout: config && config.bar ? config.bar.layout : null
   // Omarchy's own bar transparency (shell.json bar.transparent; a double click on
@@ -83,6 +84,34 @@ Item {
   readonly property bool materialOn: options.edge === "theme" && !!material
   readonly property var presentationMaterial: GlassMath.material(material, options.glass, options.glassMotion)
   readonly property bool themeEdgeVisible: materialOn && !!material.edge && barReady
+  Variants {
+    model: root.options.dayline === "on" ? Quickshell.screens : []
+    delegate: DayLine { bar: root.edgeBar }
+  }
+  FocusSeal { host: root }
+  property string focusResult: ""
+  property bool focusReleasePending: false
+  readonly property bool focusBusy: focusProcess.running
+  function focusAction(action) {
+    if (["start", "show", "release"].indexOf(action) < 0) return "unknown focus action"
+    if (action === "start" && options.seal !== "on") return "enable Focus seal first"
+    if (focusProcess.running) {
+      if (action === "release") focusReleasePending = true
+      return "busy"
+    }
+    focusProcess.command = ["python3", pluginDir + "/bin/focus-mode.py", action]
+    focusProcess.running = true
+    return "ok"
+  }
+  Process {
+    id: focusProcess
+    stdout: StdioCollector { onStreamFinished: root.focusResult = String(text).trim() }
+    stderr: StdioCollector { onStreamFinished: if (String(text).trim()) root.focusResult = "error: " + String(text).trim() }
+    onExited: if (root.focusReleasePending) { root.focusReleasePending = false; Qt.callLater(function() { root.focusAction("release") }) }
+  }
+  // Disabling releases only our unchanged hide flag, never a later user hide.
+  readonly property bool releaseFocus: configLoaded && options.seal !== "on"
+  onReleaseFocusChanged: if (releaseFocus) focusAction("release")
   Variants {
     model: root.themeEdgeVisible ? Quickshell.screens : []
     delegate: Component {
@@ -223,6 +252,13 @@ Item {
     var p = Presets.presetById(String(id))
     return p ? apply(Presets.keepLook(p.options, options)) : "unknown preset: " + id
   }
+  function applyScreens(profiles) {
+    if (writer.running) return "busy"
+    writer.payload = JSON.stringify({ pluginId: pluginId, profilesOnly: true,
+                                     screenProfiles: Presets.normalizeScreens(profiles) })
+    writer.running = true
+    return "ok"
+  }
   function setVariant(element, variant) {
     if (!Presets.ELEMENTS[element] || !Presets.ELEMENTS[element].variants.some(function(v) { return v.id === variant })) return "unknown element or variant"
     var o = JSON.parse(JSON.stringify(options))
@@ -334,7 +370,7 @@ Item {
   // ---------------------------------------------------------------- panel contract
   // The panel is the Control Center. Closing it is Cancel: whatever Use
   // applied goes back (see ControlCenter.qml). payloadJson may name an
-  // area: {"area": "quick|bar|island|cards|health"}.
+  // area: {"area": "quick|bar|screens|motion|island|cards|health"}.
   property bool isOpen: false
   readonly property bool opened: isOpen
   function open(payloadJson) {
@@ -613,6 +649,13 @@ Item {
     function apps(): void { root.toggleMenu("apps") }
     function preset(id: string): string { return root.applyPreset(id) }
     function set(element: string, variant: string): string { return root.setVariant(element, variant) }
+    function focus(action: string): string { return root.focusAction(action || "start") }
+    function screenProfile(name: string, profile: string): string {
+      if (!Presets.screenNameValid(name) || ["inherit", "compact", "detailed"].indexOf(profile) < 0) return "invalid screen or profile"
+      var next = Object.assign({}, root.screenProfiles)
+      if (profile === "inherit") delete next[name]; else next[name] = profile
+      return root.applyScreens(next)
+    }
     // the selected glint once on the focused window's frame now (metal themes), for other events
     function glintWindow(): string { return windowGlint.trigger() ? "ok" : "needs a theme with a frame glint (Chrom, Platin, or Frost / Smoke with the glass material on) and motion" }
     // After choosing Today: fresh snapshot of your own layout. Without any
@@ -623,6 +666,7 @@ Item {
     }
     function state(): string {
       return JSON.stringify({ preset: root.presetId, options: root.options, hasBase: root.baseLayout !== null,
+                              screenProfiles: root.screenProfiles, focus: { busy: root.focusBusy, result: root.focusResult },
                               open: root.isOpen, dropMenuOpen: root.dropMenuOpen, saved: root.savedPresets.map(function(p) { return p.name }), lastResult: root.lastResult, moduleDir: root.moduleDir,
                               keys: { option: root.keysOption, bindings: root.keysState },
                               edge: { option: root.options.edge, material: root.material ? (root.material.edge ? root.material.edge.kind : "no edge") : null, themeEdge: root.themeEdgeVisible, barReady: root.barReady },

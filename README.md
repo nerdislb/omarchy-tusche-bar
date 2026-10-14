@@ -306,11 +306,64 @@ chip. Edits are staged and confirmed explicitly:
   other close) restores the state from opening if Use applied something, then
   closes.
 
-Bar options go out as one write (each write rebuilds the bar), island settings
+Bar options go out as one write (layout changes rebuild the bar; look options do not), island settings
 through `omarchy-shell tusche-island set …`, the card picker through its
 `menu-override.py`; one step at a time, each confirmed before the next. Health
 only reports live checks (base layout, AI usage refresh, notification takeover
 marker, card picker override, last write, saved combinations).
+
+### Visual editing and optional presentation
+
+The **Tusche Bar** page now shows selectable logo, workspace, quota and status
+faces. These are the same pure renderers used by the live bar, with read-only
+snapshots of its running widgets. Hover or keyboard focus previews a variant;
+click, Enter or Space stages it. Preset cards describe their actual differences.
+Native **As today** widgets and missing readings are labelled, never invented.
+Use / Save / Cancel retain their existing meaning. Papier, Tusche, Lavur,
+Chrom, Platin, Frost and Smoke keep their materials and typography.
+
+**Motion** plays the current material's real popup and frame effects locally,
+at production speed, with Stop and reduced-motion support. It uses an authored
+backdrop, never a screen capture; playback ends at rest and stops on leaving.
+It does not trigger real window focus or simulate the Island's full transitions.
+
+**Screens** selects `compact` (pips, on-demand quotas, status deviations),
+`detailed` (minimaps, rings, status groups) or shared presentation per output.
+These choices also stage until Use / Save. Cancel restores only outputs touched
+by Use. Disconnected outputs retain their profile. Profiles affect already-active
+Tusche modules, not native **As today** widgets; no display geometry, resolution,
+hardware settings, native services or theme changes are involved.
+
+The **Minimap** variant shows real monitor-relative window rectangles, floating
+outlines and off-screen-page counts, including workspaces above 10 and named
+workspaces. Geometry refreshes on relevant compositor events and pointer entry,
+not an idle timer. Some silent resizes therefore appear on the next such event.
+On Quickshell 0.3.2 / Lua Hyprland, native monitor/workspace metadata can be
+empty even when native client metadata works. One shared, bounded read-only
+`hyprctl` batch supplies sanitized geometry in that case; no titles/PIDs are kept.
+
+Three optional look settings default **off** and survive preset changes:
+
+- **Brief status readings**: changes to volume/mute, brightness and Bluetooth
+  appear for 2.4 seconds in a reserved-width slot, without moving click targets.
+  Startup/source changes establish silent baselines; reduced motion does not
+  hide information. The existing native widgets remain the data sources.
+  Brightness checks run at most every 2 seconds, only on the selected bar when
+  enabled and without an open monitor panel or Island owner. Island-owned
+  channels are suppressed; native Omarchy OSDs can still coexist.
+- **Day progress**: a minute-resolution, one-device-pixel accent line inside a
+  horizontal bar's edge. It takes no input or extra reserved screen space and
+  uses the native bar's fullscreen stacking. Hidden/vertical bars show no line.
+- **Focus seal**: after applying this option, **Quick → Start focus mode** parks
+  the native bar offscreen while its widgets/services remain alive. A small seal
+  opens the Control Center; right/middle-click or **Show the bar** restores it.
+  Disabling the option releases only its own unchanged hide flag, preserving a
+  pre-existing or later manual hide. Recovery: `omarchy-toggle-bar off`.
+
+Focus ownership is stored privately in
+`~/.local/state/tusche-bar/focus-owner.json`. A failed native command is rolled
+back when possible, otherwise ownership remains for recovery. Explicit Show
+archives an unreadable ownership file instead of blocking future starts.
 
 ## Saved combinations
 
@@ -333,7 +386,8 @@ group may differ) and `state` reports it in `lastResult`.
 
 ## IPC
 
-- `omarchy-shell tusche-bar options` (Control Center, toggle) · `cc quick|bar|island|cards|health` · `preset today|tidy|focus` · `set <element> <variant>` · `save|load <name>` · `menu` (drop-down) · `search` (drop-down as a launcher) · `apps` (drop-down on the Apps list) · `recaptureBase` · `state`.
+- `omarchy-shell tusche-bar options` (Control Center, toggle) · `cc quick|bar|screens|motion|island|cards|health` · `preset today|tidy|focus` · `set <element> <variant>` · `save|load <name>` · `menu` (drop-down) · `search` (drop-down as a launcher) · `apps` (drop-down on the Apps list) · `recaptureBase` · `state`.
+- `omarchy-shell tusche-bar screenProfile <output> inherit|compact|detailed` applies a presentation profile directly; `focus start|show|release` controls the optional focus seal.
 - Module IPC (tests, keybinds): `tusche-quota toggle|select <agent>|state`, `tusche-status group net|phone|system|all`, `tusche-status member <widget-id>`, `tusche-centre state`.
 - `tusche-bar ask <payload>` is the menu shims' entry (an `omarchy-menu-select`/`-input` payload; answers `ok` when a drop-down took it).
 
@@ -342,6 +396,13 @@ group may differ) and `state` reports it in `lastResult`.
 `OMARCHY_PATH=/path/to/omarchy ./dev-install.sh`. Custom modules and `.pragma library` code can be cached by the running shell. `dev-install.sh` now publishes immutable code generations and updates only this plugin's owned source URLs before a plugin rescan; layout order and options stay intact. Verify the loaded `moduleDir` and `glass` state via IPC. Each preset change rebuilds the bar (widgets such as AI usage need 2–3 s). Do not restart or kill a secure lock client to apply UI changes. Older installers or native shell/facade changes may still require a full shell restart after unlocking.
 
 Tests: `node tests/regressions.cjs` (with the Tusche Island checkout next to this repository) and `python3 tests/boot_logo.py`.
+
+Presentation checks: `node tests/presentation.cjs`, `python3 tests/focus_mode.py`,
+`node tests/workspace_geometry.cjs`, `node tests/status_hints.cjs --qml`, and
+`node tests/visual_editor.cjs`. Native isolated renderer checks:
+`python3 tests/workspace_runtime.py --output /tmp/workspace-proof` and
+`python3 tests/visual_editor_runtime.py --output /tmp/editor-proof` (Qt, Quickshell,
+Xvfb). These use authored fixtures, not the live desktop or private data.
 
 ## Licences and trademarks
 

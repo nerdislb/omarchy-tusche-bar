@@ -1,4 +1,16 @@
 var ELEMENTS = {
+  statusHints: {
+    label: "Brief status readings",
+    variants: [{ id: "off", label: "Off" }, { id: "on", label: "Show changed values briefly" }]
+  },
+  dayline: {
+    label: "Day progress",
+    variants: [{ id: "off", label: "Off" }, { id: "on", label: "Quiet line at the bar edge" }]
+  },
+  seal: {
+    label: "Focus seal",
+    variants: [{ id: "off", label: "Off" }, { id: "on", label: "A small seal when the bar is hidden" }]
+  },
   workspaces: {
     label: "Workspaces",
     variants: [
@@ -78,7 +90,31 @@ var ELEMENTS = {
 
 // Look options that sit on top of any preset: presets keep the current
 // value, and preset matching ignores them.
-var LOOK = ["edge", "keys", "frames", "glass", "glassMotion"]
+var LOOK = ["edge", "keys", "frames", "glass", "glassMotion", "statusHints", "dayline", "seal"]
+
+// Presentation only: these never change the native layout, display geometry,
+// services or their settings. Native widgets ("today") keep their own renderer.
+var SCREEN_PROFILES = {
+  compact: { workspaces: "pips", ai: "ondemand", right: "deviations" },
+  detailed: { workspaces: "minimap", ai: "rings", right: "groups" }
+}
+function screenNameValid(name) {
+  return typeof name === "string" && name.length > 0 && name.length <= 128
+    && /^[A-Za-z0-9_.:-]+$/.test(name) && name !== "__proto__" && name !== "constructor" && name !== "prototype"
+}
+function normalizeScreens(value) {
+  var out = {}
+  if (!value || typeof value !== "object" || Array.isArray(value)) return out
+  Object.keys(value).sort().slice(0, 32).forEach(function(name) {
+    if (screenNameValid(name) && Object.prototype.hasOwnProperty.call(SCREEN_PROFILES, value[name])) out[name] = value[name]
+  })
+  return out
+}
+function screenValue(profiles, name, key, fallback) {
+  var selected = normalizeScreens(profiles)[name]
+  var profile = selected ? SCREEN_PROFILES[selected] : null
+  return profile && Object.prototype.hasOwnProperty.call(profile, key) ? profile[key] : fallback
+}
 
 // Presets.
 var PRESETS = [

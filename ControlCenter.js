@@ -8,6 +8,7 @@
 //
 // State shape (live, snapshot, pending):
 //   { bar: <normalized Tusche Bar options>,
+//     screens: { <output name>: "compact" | "detailed" },
 //     island: { notifications, noteStyle } | null (not configured),
 //     cards: { override: "enabled" | "disabled" } | null (not known) }
 // Values are strings, as the island IPC takes them. Staged edits are an
@@ -20,6 +21,8 @@ var CARDS_ID = "nerdibeard.card-picker"
 var AREAS = [
   { id: "quick", label: "Quick", note: "Most-used switches" },
   { id: "bar", label: "Tusche Bar", note: "Presets, combinations, every bar option" },
+  { id: "screens", label: "Screens", note: "Presentation profiles, not display settings" },
+  { id: "motion", label: "Motion", note: "Try the current material without changing it" },
   { id: "island", label: "Tusche Island", note: "Notifications in the bar" },
   { id: "cards", label: "Card picker", note: "Theme and wallpaper menus" },
   { id: "health", label: "Health", note: "Checks from live state" }
@@ -102,7 +105,10 @@ function listed(config, id) {
   return plugins.some(function(p) { return p === id || (p && p.id === id) })
 }
 function liveState(options, config, cardsStatus) {
+  var entries = config && Array.isArray(config.plugins) ? config.plugins : []
+  var owner = entries.filter(function(p) { return p && p.id === "nerdibeard.tusche-bar" })[0]
   return { bar: Presets.normalizeOptions(options || {}),
+           screens: Presets.normalizeScreens(owner && owner.screenProfiles),
            island: islandValues(islandEntry(config)),
            cards: cardsStatus === "enabled" || cardsStatus === "disabled" ? { override: cardsStatus } : null }
 }
@@ -110,6 +116,7 @@ function liveState(options, config, cardsStatus) {
 function split(id) { var i = String(id).indexOf("."); return { domain: String(id).slice(0, i), key: String(id).slice(i + 1) } }
 function value(state, id) {
   var p = split(id)
+  if (p.domain === "screens") return state && state.screens && state.screens[p.key] || "inherit"
   return state && state[p.domain] ? state[p.domain][p.key] : undefined
 }
 function withValue(state, id, v) {
@@ -131,7 +138,8 @@ function stage(edits, live, id, v) {
   var p = split(id)
   var out = Object.assign({}, edits)
   if (!live || !live[p.domain]) return out
-  if (live[p.domain][p.key] === v) delete out[id]
+  if (p.domain === "screens" && (!Presets.screenNameValid(p.key) || ["inherit", "compact", "detailed"].indexOf(v) < 0)) return out
+  if (value(live, id) === v) delete out[id]
   else out[id] = v
   return out
 }
@@ -147,7 +155,7 @@ function prune(edits, live) {
   var out = {}
   for (var id in edits) {
     var p = split(id)
-    if (live && live[p.domain] && live[p.domain][p.key] !== edits[id]) out[id] = edits[id]
+    if (live && live[p.domain] && value(live, id) !== edits[id]) out[id] = edits[id]
   }
   return out
 }
@@ -158,6 +166,11 @@ function changes(edits, live) {
     if (!(s.id in edits) || !live || !live[s.domain]) return
     var from = live[s.domain][s.key], to = edits[s.id]
     if (from !== to) out.push({ id: s.id, domain: s.domain, key: s.key, area: s.area, from: from, to: to })
+  })
+  Object.keys(edits).filter(function(id) { return id.indexOf("screens.") === 0 }).sort().forEach(function(id) {
+    var key = split(id).key, from = value(live, id), to = edits[id]
+    if (Presets.screenNameValid(key) && ["inherit", "compact", "detailed"].indexOf(to) >= 0 && from !== to)
+      out.push({ id: id, domain: "screens", key: key, area: "screens", from: from, to: to })
   })
   return out
 }
@@ -182,8 +195,20 @@ function plan(edits, live) {
     var step = { domain: "bar", keys: Object.keys(bar), changes: bar }
     if (!sameOptions(barOptions(step, live.bar), live.bar)) steps.push(step)
   }
+  var screens = {}
+  ch.forEach(function(c) { if (c.domain === "screens") screens[c.key] = c.to })
+  if (Object.keys(screens).length) steps.push({ domain: "screens", keys: Object.keys(screens), changes: screens })
   return steps
 }
+function screenOptions(step, current) {
+  var result = Presets.normalizeScreens(current)
+  Object.keys(step.changes).forEach(function(name) {
+    if (step.changes[name] === "inherit") delete result[name]
+    else result[name] = step.changes[name]
+  })
+  return Presets.normalizeScreens(result)
+}
+function sameScreens(a, b) { return JSON.stringify(Presets.normalizeScreens(a)) === JSON.stringify(Presets.normalizeScreens(b)) }
 // A bar step carries only its changed keys; the options are computed when
 // it runs, on top of the live options then (an outside change in between is
 // kept).
@@ -205,6 +230,13 @@ function revertPlan(snapshot, live, applied) {
   if (applied.bar) {
     var step = { domain: "bar", keys: Object.keys(snapshot.bar), changes: copy(snapshot.bar) }
     if (!sameOptions(barOptions(step, live.bar), live.bar)) steps.push(step)
+  }
+  if (applied.screens) {
+    var restore = {}, before = Presets.normalizeScreens(snapshot.screens), current = Presets.normalizeScreens(live.screens)
+    Object.keys(applied.screens).forEach(function(name) {
+      if (before[name] !== current[name]) restore[name] = before[name] || "inherit"
+    })
+    if (Object.keys(restore).length) steps.push({ domain: "screens", keys: Object.keys(restore), changes: restore })
   }
   return steps
 }

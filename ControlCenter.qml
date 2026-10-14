@@ -9,6 +9,7 @@ import qs.Commons as Commons
 import qs.Ui as Ui
 import "Presets.js" as Presets
 import "ControlCenter.js" as CC
+import "bridge" as Bridge
 
 // Control Center: one window for the Tusche Bar, the Tusche Island and the
 // card picker, plus Health. Structure after Shibumi's (Quick · Configure,
@@ -48,6 +49,19 @@ PanelWindow {
   readonly property var changeList: CC.changes(edits, live)
   readonly property bool islandAvailable: live.island !== null
   readonly property bool searchOpen: searchField.activeFocus && searchField.text.trim() !== ""
+  // Shared renderers receive only a read-only view of already-running widgets.
+  // An unavailable native part stays unavailable; no preview starts a service.
+  readonly property var previewSnapshot: {
+    var result = {}, kinds = { workspaces: "workspaces", quota: "quota", status: "status" }
+    Object.keys(kinds).forEach(function(key) {
+      var item = Bridge.ModuleBus.pick(kinds[key])
+      if (item && item.previewData) result[key] = item.previewData()
+    })
+    return result
+  }
+  readonly property var screenChoices: Quickshell.screens.map(function(s) {
+    return { name: s.name, width: s.width, height: s.height, x: s.x, y: s.y }
+  })
 
   // ---------------------------------------------------------------- probes (read-only)
   readonly property string homeDir: Quickshell.env("HOME")
@@ -83,7 +97,11 @@ PanelWindow {
       { id: "bar.presets", area: "bar", label: "Presets", current: presetName(pending.bar),
         values: Presets.PRESETS.map(function(p) { return p.label + " · " + p.note }) },
       { id: "bar.combos", area: "bar", label: "My combinations", current: "",
-        values: host ? host.savedPresets.map(function(p) { return p.name }) : [] }
+        values: host ? host.savedPresets.map(function(p) { return p.name }) : [] },
+      { id: "screens.profiles", area: "screens", label: "Screen presentation", current: "",
+        values: ["Compact", "Detailed", "Use the shared bar"].concat(screenChoices.map(function(s) { return s.name })) },
+      { id: "motion.preview", area: "motion", label: "Material and motion preview", current: "",
+        values: ["Popup", "Frame glint", "Reduced motion"] }
     ].concat(healthList.map(function(c) {
       return { id: "health." + c.id, area: "health", label: c.label, values: [c.detail],
                current: c.state === "issue" ? "issue" : c.state === "ok" ? "OK" : "…" }
@@ -106,6 +124,7 @@ PanelWindow {
   function areaMeta(id) {
     if (id === "quick") return changeList.length ? changeList.length + " staged" : ""
     if (id === "bar") return presetName(live.bar)
+    if (id === "screens") return Object.keys(live.screens).length + " overrides"
     if (id === "island") return !live.island ? "not found" : live.island.notifications === "true" ? "in the bar" : "Omarchy"
     if (id === "cards") return cardsStatus === "enabled" ? "on" : cardsStatus === "disabled" ? "off" : cardsStatus === "missing" ? "not installed" : ""
     if (id === "health") return health.label
@@ -222,6 +241,7 @@ PanelWindow {
     nextStep()
   }
   function stepLabel(s) {
+    if (s.domain === "screens") return "Screen presentation · " + s.keys.join(", ")
     if (s.domain === "island") { var spec = CC.setting("island." + s.key); return "Tusche Island · " + spec.label + ": " + CC.valueLabel(spec, s.value) }
     if (s.domain === "cards") return "Card picker · " + CC.valueLabel(CC.setting("cards.override"), s.value)
     return "Tusche Bar · " + s.keys.length + (s.keys.length === 1 ? " option" : " options") + " (the bar rebuilds)"
@@ -243,7 +263,13 @@ PanelWindow {
     stepTimer.restart()
   }
   function stepDone(settle) {
-    var d = Object.assign({}, doneDomains); d[step.domain] = true; doneDomains = d
+    var d = Object.assign({}, doneDomains)
+    if (step.domain === "screens") {
+      var touched = Object.assign({}, d.screens || {})
+      step.keys.forEach(function(name) { touched[name] = true })
+      d.screens = touched
+    } else d[step.domain] = true
+    doneDomains = d
     if (settle) setPhase("settle")            // let the shell and the plugins reload shell.json
     else { stepTimer.stop(); nextStep() }
   }
@@ -272,6 +298,18 @@ PanelWindow {
         if (settled || now - phaseAt > 6000) stepDone(true)   // a service disabled by hand is never handed back
         else probeIsland()
       }
+    } else if (s.domain === "screens") {
+      if (phase === "wait") {
+        if (host.writing) return
+        s.value = CC.screenOptions(s, host.screenProfiles)
+        var result = host.applyScreens(s.value)
+        if (result !== "ok") { failStep("Screens: " + result); return }
+        setPhase("write")
+      } else if (phase === "write") {
+        if (host.writing) return
+        if (String(host.lastResult).indexOf("error") === 0) { failStep("Screens: " + host.lastResult); return }
+        if (CC.sameScreens(host.screenProfiles, s.value)) stepDone(true)
+      }
     } else if (s.domain === "bar") {
       if (phase === "wait") {
         // Let an earlier write finish and reach shell.json first: the
@@ -297,7 +335,7 @@ PanelWindow {
     edits = CC.prune(edits, live)
     if (mode === "use" || mode === "save") {
       var a = Object.assign({}, applied)
-      for (var d in done) a[d] = true
+      for (var d in done) a[d] = d === "screens" ? Object.assign({}, a.screens || {}, done.screens) : true
       applied = a
       if (Object.keys(done).length) usedLive = true
     }
@@ -463,7 +501,7 @@ PanelWindow {
   // ---------------------------------------------------------------- window
   screen: {
     var s = Quickshell.screens
-    var f = Hyprland.focusedMonitor ? Hyprland.focusedMonitor.name : ""
+    var f = Bridge.ModuleBus.focusedScreenName()
     for (var i = 0; i < s.length; i++) if (s[i].name === f) return s[i]
     return s.length ? s[0] : null
   }
@@ -726,6 +764,30 @@ PanelWindow {
                 Repeater { model: win.islandAvailable ? CC.QUICK.filter(function(id) { return id.indexOf("island.") === 0 }) : []; delegate: settingRow }
                 SectionHead { text: "PRESETS" }
                 PresetFlow {}
+                SectionHead { text: "FOCUS MODE" }
+                Repeater { model: ["bar.seal"]; delegate: settingRow }
+                Flow {
+                  width: parent.width; spacing: Style.space(6)
+                  CcButton {
+                    label: "Start focus mode"
+                    enabled: !win.working && !!win.host && win.live.bar.seal === "on" && !win.host.focusBusy
+                    onPicked: win.host.focusAction("start")
+                  }
+                  CcButton {
+                    label: "Show the bar"
+                    enabled: !win.working && !!win.host && !win.host.focusBusy
+                    onPicked: win.host.focusAction("show")
+                  }
+                }
+                Caption {
+                  width: parent.width; wrapMode: Text.WordWrap
+                  text: "Apply the focus seal with Use or Save first. Start temporarily hides the native bar; its services keep running. Right-click the seal to show the bar again."
+                }
+                Caption {
+                  visible: !!win.host && String(win.host.focusResult).indexOf("error:") === 0
+                  width: parent.width; wrapMode: Text.WordWrap
+                  text: win.host ? win.host.focusResult : ""; color: Commons.Color.urgent
+                }
               }
 
               // ---- Tusche Bar
@@ -733,8 +795,20 @@ PanelWindow {
                 visible: win.area === "bar"
                 width: parent.width
                 spacing: Style.space(2)
-                SectionHead { text: "PRESETS" }
-                PresetFlow {}
+                Loader {
+                  active: win.open && win.area === "bar"
+                  width: parent.width
+                  sourceComponent: VisualBarEditor {
+                    width: parent.width
+                    options: win.pending.bar; liveOptions: win.live.bar
+                    snapshot: win.previewSnapshot
+                    material: win.host ? win.host.material : null
+                    showMotion: false
+                    enabled: !win.working
+                    onPicked: function(key, value) { win.pick("bar." + key, value) }
+                    onPresetPicked: function(id) { win.stagePreset(id) }
+                  }
+                }
                 Item {
                   id: combosBox
                   readonly property string settingId: "bar.combos"
@@ -805,6 +879,34 @@ PanelWindow {
                 }
                 SectionHead { text: "OPTIONS" }
                 Repeater { model: CC.barIds(); delegate: settingRow }
+              }
+
+              // ---- Per-screen presentation (never changes display topology)
+              Loader {
+                active: win.open && win.area === "screens"
+                width: parent.width
+                sourceComponent: ScreenProfiles {
+                  width: parent.width
+                  screens: win.screenChoices; profiles: win.pending.screens
+                  enabled: !win.working
+                  onPicked: function(name, profile) { win.pick("screens." + name, profile) }
+                }
+              }
+
+              // ---- Isolated production-material playback
+              Column {
+                visible: win.area === "motion"
+                width: parent.width; spacing: Style.space(8)
+                Loader {
+                  active: win.open && win.area === "motion"
+                  width: parent.width
+                  sourceComponent: MotionPreview {
+                    width: parent.width
+                    options: win.pending.bar
+                    material: win.host ? win.host.material : null
+                  }
+                }
+                Repeater { model: ["bar.frames", "bar.glass", "bar.glassMotion"]; delegate: settingRow }
               }
 
               // ---- Tusche Island
