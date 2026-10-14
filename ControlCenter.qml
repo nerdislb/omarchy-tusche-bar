@@ -797,6 +797,7 @@ PanelWindow {
                 spacing: Style.space(2)
                 Loader {
                   active: win.open && win.area === "bar"
+                  visible: active
                   width: parent.width
                   sourceComponent: VisualBarEditor {
                     width: parent.width
@@ -884,6 +885,7 @@ PanelWindow {
               // ---- Per-screen presentation (never changes display topology)
               Loader {
                 active: win.open && win.area === "screens"
+                visible: active
                 width: parent.width
                 sourceComponent: ScreenProfiles {
                   width: parent.width
@@ -899,6 +901,7 @@ PanelWindow {
                 width: parent.width; spacing: Style.space(8)
                 Loader {
                   active: win.open && win.area === "motion"
+                  visible: active
                   width: parent.width
                   sourceComponent: MotionPreview {
                     width: parent.width
