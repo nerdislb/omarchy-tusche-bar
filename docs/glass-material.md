@@ -27,6 +27,27 @@ fade, without a spring or travelling light. The resting bar and Island stay
 solid and compact. Existing quota rings and window-focus glints are retained;
 there is no new window animation or continuously moving highlight.
 
+## Pictures
+
+Frost and Smoke carry three pictures of their own, made for glass (design
+round 14.10.2026), not Platin's and Chrom's. The first one is the theme's
+default; the others are one `omarchy theme bg next` away.
+
+| Theme | Pictures (default first) |
+|---|---|
+| Frost | Raureif (hoar-frost ferns), Gletscherlicht (ice cave), Prisma (prism spectrum on plaster) |
+| Smoke | Rauchband (silky smoke), Regenglas (raindrops, night bokeh), Rauchquarz (smoky quartz) |
+
+They are AI-generated stills (`tools/glass-backgrounds/PROMPTS.md`), 1920×1080,
+calm in the upper third where the menu and the audio popup open. The glass
+keeps menu and popup text at 5.5 : 1 or better on all six (measured on the
+rendered pixels in the design round). The bar is opaque
+(`background-alpha = 1.0`), so its text does not depend on the picture; only
+the still haze under the bar and the bar's lower edge meet it. The previews
+(`preview.png`) are rendered with a schematic bar, not captured from the live
+desktop. The pictures are still images: video wallpapers keep the solid
+fallback described below.
+
 ## Native material
 
 `GlassBackdrop.qml` composes the current still wallpaper and intersecting,
@@ -103,4 +124,5 @@ Rebuild the shader:
 
 Synchronize the shared MaterialCard, Glass components/math and shader/QSB
 into the Island's `views/`. `tools/build-glass-themes.py` rebuilds the two
-themes from the existing metal-family assets and palettes.
+themes from the metal family's frames and palettes and the pictures in
+`tools/glass-backgrounds/`.

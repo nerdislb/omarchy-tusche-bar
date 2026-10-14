@@ -60,4 +60,18 @@ check('new themes retain the exact native window frame configs', () => {
   for (const [theme,base] of [['frost','platin'],['smoke','chrom']])
     assert.equal(fs.readFileSync(path.join(root,'themes',theme,'hyprland.lua'),'utf8'),fs.readFileSync(path.join(root,'themes',base,'hyprland.lua'),'utf8'));
 });
+check('Frost and Smoke carry their own pictures, not Platin\'s and Chrom\'s', () => {
+  const sha = f => require('node:crypto').createHash('sha1').update(fs.readFileSync(f)).digest('hex');
+  const themeDir = (t, ...p) => path.join(root, 'themes', t, ...p);
+  const expected = { frost: ['1-raureif.jpg', '2-gletscherlicht.jpg', '3-prisma.jpg'], smoke: ['1-rauchband.jpg', '2-regenglas.jpg', '3-rauchquarz.jpg'] };
+  for (const [theme, base] of [['frost', 'platin'], ['smoke', 'chrom']]) {
+    assert.deepEqual(fs.readdirSync(themeDir(theme, 'backgrounds')).sort(), expected[theme], theme + ': its three pictures, default first');
+    const own = new Set(fs.readdirSync(themeDir(theme, 'backgrounds')).map(f => sha(themeDir(theme, 'backgrounds', f))));
+    for (const f of fs.readdirSync(themeDir(base, 'backgrounds'))) assert(!own.has(sha(themeDir(base, 'backgrounds', f))), theme + ' shares no picture with ' + base);
+    assert.notEqual(sha(themeDir(theme, 'preview.png')), sha(themeDir(base, 'preview.png')), theme + ' has a preview of its own');
+    // the generator's input is what the theme ships
+    for (const f of expected[theme]) assert.equal(sha(path.join(root, 'tools', 'glass-backgrounds', theme, f)), sha(themeDir(theme, 'backgrounds', f)), f);
+    assert.equal(sha(path.join(root, 'tools', 'glass-backgrounds', theme, 'preview.png')), sha(themeDir(theme, 'preview.png')), theme + ' preview');
+  }
+});
 console.log(checks + ' glass checks passed');

@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
-"""Build Frost / Smoke from the existing Platin / Chrom assets and frames.
+"""Build Frost / Smoke from the existing Platin / Chrom frames and palettes.
 
 The glass lives only in shell cards, not in every application window.
 Window border geometry, font sizes, compositor blur and hardware settings
 are deliberately absent from this generator's overrides.
+
+Frost and Smoke carry pictures of their own (design round 14.10.2026), not
+Platin's and Chrom's: tools/glass-backgrounds/<theme>/ holds the stills in
+their order (1- is the theme's default) and preview.png (rendered, not a
+capture of the live desktop). Without that folder the base theme's pictures
+stay, as before.
 """
 import json
 import re
@@ -11,6 +17,7 @@ import shutil
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+PICTURES = ROOT / 'tools' / 'glass-backgrounds'
 PAIRS = {
     'frost': ('platin', {
         '#dde0e4': '#e9edf0', '#cdd0d4': '#d8dfe7', '#c0c3c7': '#c8d1dc',
@@ -26,10 +33,26 @@ PAIRS = {
 }
 
 
+def own_pictures(name, dst):
+    """Replace the pictures (and the preview) inherited from the base theme with the glass pair's own."""
+    own = PICTURES / name
+    stills = sorted(own.glob('*.jpg')) if own.is_dir() else []
+    if not stills:
+        return 0
+    shutil.rmtree(dst / 'backgrounds', ignore_errors=True)
+    (dst / 'backgrounds').mkdir()
+    for p in stills:
+        shutil.copy2(p, dst / 'backgrounds' / p.name)
+    if (own / 'preview.png').exists():
+        shutil.copy2(own / 'preview.png', dst / 'preview.png')
+    return len(stills)
+
+
 def build(name, base, colors):
     src = ROOT / 'themes' / base
     dst = ROOT / 'themes' / name
     shutil.copytree(src, dst, dirs_exist_ok=True)
+    pictures = own_pictures(name, dst)
     for p in dst.iterdir():
         # Frames are literally retained from the mature metal family.
         if p.name == 'hyprland.lua' or p.suffix not in ('.toml', '.lua'):
@@ -60,9 +83,10 @@ def build(name, base, colors):
     mat['metal']['hoverRadius'] = 0
     (dst / 'bar-material.json').write_text(json.dumps(mat, indent=2) + '\n')
     (dst / '.tusche-papier').write_text('built by tools/build-glass-themes.py (Frost / Smoke)\n')
+    return pictures
 
 
 if __name__ == '__main__':
     for name, (base, colors) in PAIRS.items():
-        build(name, base, colors)
-        print(f'{name}: Bevel Lens, existing {base} frame and wallpaper')
+        n = build(name, base, colors)
+        print(f'{name}: Bevel Lens, existing {base} frame, ' + (f'{n} pictures of its own' if n else f'the {base} pictures'))
