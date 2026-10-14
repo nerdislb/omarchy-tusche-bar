@@ -49,12 +49,12 @@ var ELEMENTS = {
       { id: "calm", label: "Temperature at the weather" }
     ]
   },
-  // not a layout option: a chrome glint on the focused window (WindowGlint.qml)
+  // not a layout option: a glint on the focused window (WindowGlint.qml)
   frames: {
     label: "Window frames",
     variants: [
       { id: "hyprland", label: "Hyprland's own" },
-      { id: "glint", label: "Chrome glint on focus, as the popups (metal themes)" },
+      { id: "glint", label: "Glint on focus, as the popups (chrome on metal themes, glass on Frost / Smoke)" },
       { id: "orbit", label: "Chrome glint once round the window (metal themes)" }
     ]
   },

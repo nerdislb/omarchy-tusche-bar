@@ -5,16 +5,21 @@ import Quickshell.Wayland
 import Quickshell.Hyprland
 import qs.Commons
 
-// A chrome glint on the focused window's frame (bar option `frames`, metal
-// themes; 08.10.2026). Hyprland can only turn a linear gradient on its border
-// (borderangle): in 1° steps, racing along the edges and lingering at the
-// corners. So the glint is drawn here instead, MetalShape kind "frame" over
-// Hyprland's own border, in one of two styles:
+// A glint on the focused window's frame (bar option `frames`; 08.10.2026).
+// Hyprland can only turn a linear gradient on its border (borderangle): in 1°
+// steps, racing along the edges and lingering at the corners. So the glint is
+// drawn here instead, over Hyprland's own border, in one of two styles:
 //   "sweep" (frames glint) – the cards' glint: a light band crosses the frame
 //            diagonally once and fades (material `sweepMs`, 900 ms, as a popup
 //            opening; the quietest, the owner's pick);
 //   "orbit" (frames orbit) – a comet once round the frame, placed by arc length
 //            so it keeps an even pace round the corners, slowing and fading.
+// Two renderers. The metal family (Chrom & Platin: material.metal) draws a
+// chrome glint, MetalShape kind "frame". The glass family (Frost & Smoke:
+// material.glass, 14.10.2026) has its own, quiet one, GlassFrameGlint: the
+// light a Bevel Lens card catches as it opens (650 ms, wide, cool and soft, no
+// steel shoulders or colour fringes), the sweep only; a theme with both takes
+// the glass one. The glass glint follows the glass material switch.
 //
 // Only while it runs is there a surface: a click-through Overlay layer the
 // size of the frame, on every monitor the frame reaches. It starts once the
@@ -31,11 +36,19 @@ Scope {
   property string style: "sweep"
   // the theme's material.metal (independent of the bar's edge option)
   property var metal: null
-  readonly property bool orbit: style === "orbit"
+  // the theme's material.glass, while the glass material is on: its `frame` object tunes the glass glint
+  property var glass: null
+  readonly property bool glassFrame: !!glass
+  readonly property var glassSpec: glass && glass.frame ? glass.frame : ({})
+  // the glass glint is the sweep only
+  readonly property bool orbit: style === "orbit" && !glassFrame
   // orbit: one turn, the comet's lead in px (its tail is 2.5× as long);
   // sweep: as a card's glint
   readonly property int durationMs: metal && Number(metal.frameGlintMs) > 0 ? Number(metal.frameGlintMs) : 2800
-  readonly property int sweepMs: metal && Number(metal.sweepMs) > 0 ? Number(metal.sweepMs) : 900
+  readonly property int sweepMs: glassFrame ? (Number(glassSpec.ms) > 0 ? Number(glassSpec.ms) : 650)
+                                            : (metal && Number(metal.sweepMs) > 0 ? Number(metal.sweepMs) : 900)
+  // the sweep's strength at its start (fading to nothing): the metal glint's, or the glass one's
+  readonly property real startAmount: glassFrame ? (glassSpec.amount !== undefined ? Number(glassSpec.amount) : 0.66) : 0.95
   readonly property real leadPx: 90
 
   // the frame being glinted, in global layout coordinates (logical px)
@@ -67,14 +80,14 @@ Scope {
     running = false
     amount = 0
   }
-  function eligible() { return !!metal && !Style.reduceMotion && (manual || enabled) }
+  function eligible() { return (!!metal || glassFrame) && !Style.reduceMotion && (manual || enabled) }
   function schedule(ms) {
     stop()
     settle.interval = ms
     settle.restart()
   }
   function trigger() {
-    if (!metal || Style.reduceMotion) return false
+    if ((!metal && !glassFrame) || Style.reduceMotion) return false
     manual = true
     schedule(40)
     return true
@@ -105,6 +118,7 @@ Scope {
   onEnabledChanged: if (!enabled) stop()
   onStyleChanged: stop()
   onMetalChanged: stop()
+  onGlassChanged: stop()
 
   Timer {
     id: settle
@@ -213,7 +227,7 @@ Scope {
   ParallelAnimation {
     id: cardSweep
     NumberAnimation { target: root; property: "sweep"; from: -0.15; to: 1.15; duration: root.sweepMs; easing.type: Easing.InOutQuad }
-    NumberAnimation { target: root; property: "amount"; from: 0.95; to: 0; duration: root.sweepMs; easing.type: Easing.InQuad }
+    NumberAnimation { target: root; property: "amount"; from: root.startAmount; to: 0; duration: root.sweepMs; easing.type: Easing.InQuad }
     onFinished: { root.running = false; root.amount = 0; watch.stop() }
   }
 
@@ -251,7 +265,21 @@ Scope {
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
         mask: Region {}
 
+        GlassFrameGlint {
+          visible: root.glassFrame
+          x: win.lx - win.ox
+          y: win.ly - win.oy
+          width: root.fw + 2 * win.pad
+          height: root.fh + 2 * win.pad
+          spec: root.glass
+          pad: win.pad
+          radius: root.rounding > 0 ? root.rounding + root.tube : 0
+          tube: root.tube
+          sweep: root.sweep
+          amount: root.amount
+        }
         MetalShape {
+          visible: !root.glassFrame
           x: win.lx - win.ox
           y: win.ly - win.oy
           width: root.fw + 2 * win.pad

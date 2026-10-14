@@ -18,7 +18,10 @@ switchable; Reduced Motion removes the spring and light sweep. See
 [Glass material](docs/glass-material.md) for capture boundaries, verification
 and limitations. Existing themes remain unchanged. Each of the two ships three
 pictures of its own, made for glass: Frost has Raureif, Gletscherlicht and
-Prisma; Smoke has Rauchband, Regenglas and Rauchquarz.
+Prisma; Smoke has Rauchband, Regenglas and Rauchquarz. They carry no chrome
+(that is Chrom's and Platin's): the bar's rings, logo and clock segment are
+plain, and the window frame's focus glint is a soft, cool light band like the
+popups' own, not a chrome spark.
 
 ![The bar in Tusche Lavur](docs/screenshots/bar-tusche-lavur.png)
 ![The bar in Papier](docs/screenshots/bar-papier.png)

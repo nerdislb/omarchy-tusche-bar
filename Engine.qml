@@ -94,13 +94,15 @@ Item {
       }
     }
   }
-  // option `frames` (metal themes): a chrome glint on the focused window's frame – as a card's
-  // (glint) or once round it (orbit); the theme's metal, whatever the edge option says
+  // option `frames`: a glint on the focused window's frame – as a card's (glint) or once round it
+  // (orbit, metal themes); the theme's metal (chrome) or glass (its own quiet glint, while the glass
+  // material is on), whatever the edge option says
   WindowGlint {
     id: windowGlint
     metal: root.material && root.material.metal ? root.material.metal : null
+    glass: root.material && root.material.glass && root.options.glass !== "off" ? root.material.glass : null
     style: root.options.frames === "orbit" ? "orbit" : "sweep"
-    enabled: (root.options.frames === "glint" || root.options.frames === "orbit") && !!metal
+    enabled: (root.options.frames === "glint" || root.options.frames === "orbit") && (!!metal || !!glass)
   }
 
   // ---------------------------------------------------------------- base layout
@@ -612,7 +614,7 @@ Item {
     function preset(id: string): string { return root.applyPreset(id) }
     function set(element: string, variant: string): string { return root.setVariant(element, variant) }
     // the selected glint once on the focused window's frame now (metal themes), for other events
-    function glintWindow(): string { return windowGlint.trigger() ? "ok" : "needs a metal theme (Chrom, Platin) and motion" }
+    function glintWindow(): string { return windowGlint.trigger() ? "ok" : "needs a theme with a frame glint (Chrom, Platin, or Frost / Smoke with the glass material on) and motion" }
     // After choosing Today: fresh snapshot of your own layout. Without any
     // baseline (base.json lost) it rebuilds one from our modules instead.
     function recaptureBase(): string {
@@ -624,7 +626,7 @@ Item {
                               open: root.isOpen, dropMenuOpen: root.dropMenuOpen, saved: root.savedPresets.map(function(p) { return p.name }), lastResult: root.lastResult, moduleDir: root.moduleDir,
                               keys: { option: root.keysOption, bindings: root.keysState },
                               edge: { option: root.options.edge, material: root.material ? (root.material.edge ? root.material.edge.kind : "no edge") : null, themeEdge: root.themeEdgeVisible, barReady: root.barReady },
-                              frames: { option: root.options.frames, glint: windowGlint.enabled, style: windowGlint.style, running: windowGlint.running, durationMs: windowGlint.orbit ? windowGlint.durationMs : windowGlint.sweepMs, sweep: windowGlint.sweep, amount: windowGlint.amount, frame: [windowGlint.gx, windowGlint.gy, windowGlint.fw, windowGlint.fh], tube: windowGlint.tube },
+                              frames: { option: root.options.frames, glint: windowGlint.enabled, renderer: windowGlint.glassFrame ? "glass" : (windowGlint.metal ? "metal" : null), style: windowGlint.style, running: windowGlint.running, durationMs: windowGlint.orbit ? windowGlint.durationMs : windowGlint.sweepMs, sweep: windowGlint.sweep, amount: windowGlint.amount, frame: [windowGlint.gx, windowGlint.gy, windowGlint.fw, windowGlint.fh], tube: windowGlint.tube },
                               glass: { available: !!(root.material && root.material.glass), enabled: root.options.glass !== "off", spring: root.options.glassMotion !== "off", family: root.material ? root.material.family : null },
                               usage: { folded: root.usageFolded, intervalSec: root.usageIntervalSec, running: usageUpdate.running, command: usageUpdate.command },
                               ask: root.askState(),

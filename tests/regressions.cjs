@@ -1233,7 +1233,7 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
   assert.match(wg, /if \(!w \|\| !w\.address \|\| !w\.size \|\| w\.fullscreen > 0 \|\| w\.hidden\) return/);
   assert.match(wg, /property: "sweep"; from: 0; to: 1\.06; duration: root\.durationMs; easing\.type: Easing\.OutQuad/, 'one turn and a little past, slowing towards the end (OutCubic crept)');
   assert.match(wg, /property: "amount"; from: 0; to: 1; duration: 200/, 'the glint fades in');
-  assert.match(read('Engine.qml'), /metal: root\.material && root\.material\.metal \? root\.material\.metal : null\n\s*style: root\.options\.frames === "orbit" \? "orbit" : "sweep"\n\s*enabled: \(root\.options\.frames === "glint" \|\| root\.options\.frames === "orbit"\) && !!metal/, 'the frame glint follows the theme, not the edge option');
+  assert.match(read('Engine.qml'), /metal: root\.material && root\.material\.metal \? root\.material\.metal : null\n\s*glass: root\.material && root\.material\.glass && root\.options\.glass !== "off" \? root\.material\.glass : null\n\s*style: root\.options\.frames === "orbit" \? "orbit" : "sweep"\n\s*enabled: \(root\.options\.frames === "glint" \|\| root\.options\.frames === "orbit"\) && \(!!metal \|\| !!glass\)/, 'the frame glint follows the theme (chrome on metal, its own on glass), not the edge option');
   // glint = a card's glint (owner, 08.10.: the quietest); orbit = once round
   assert.match(wg, /property: "sweep"; from: -0\.15; to: 1\.15; duration: root\.sweepMs; easing\.type: Easing\.InOutQuad/, 'the frame sweep is exactly a card\'s glint');
   assert.match(ms, /property: "sweep"; from: -0\.15; to: 1\.15; duration: glint\.duration; easing\.type: Easing\.InOutQuad/, '… as MetalShape.play()');

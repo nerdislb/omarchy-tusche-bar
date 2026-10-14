@@ -74,4 +74,34 @@ check('Frost and Smoke carry their own pictures, not Platin\'s and Chrom\'s', ()
     assert.equal(sha(path.join(root, 'tools', 'glass-backgrounds', theme, 'preview.png')), sha(themeDir(theme, 'preview.png')), theme + ' preview');
   }
 });
+check('the glass family carries no chrome; its frame glint is its own; the metal family keeps its chrome', () => {
+  const mat = t => JSON.parse(fs.readFileSync(path.join(root, 'themes', t, 'bar-material.json'), 'utf8'));
+  for (const theme of ['frost', 'smoke']) {
+    const m = mat(theme);
+    assert.equal(m.family, 'glass');
+    assert.equal(m.metal, undefined, theme + ': no metal block (logo frame, rings, meters, hover tube, segment rim, pulse and the chrome window glint hang on it)');
+    const f = m.glass.frame;
+    assert(f && f.ms > 0 && f.band > 0 && f.amount > 0 && f.amount <= 1 && f.bloom >= 0 && f.shadeAmt >= 0, theme + ': glass.frame is complete');
+    assert(/^#[0-9a-f]{6}$/i.test(f.tint) && /^#[0-9a-f]{6}$/i.test(f.shade), theme + ': frame colours');
+    // the glass material switch (GlassMath.material) keeps the frame object, whatever it turns on or off
+    assert.deepEqual(plain(ctx.material(m, 'on', 'off').glass.frame), f);
+  }
+  for (const theme of ['chrom', 'platin']) {
+    const m = mat(theme);
+    assert(m.metal && m.metal.logo && m.metal.rings !== false && m.metal.meters !== false && m.metal.hover === 'tube', theme + ' keeps its chrome');
+  }
+  const wg = fs.readFileSync(path.join(root, 'WindowGlint.qml'), 'utf8');
+  assert.match(wg, /GlassFrameGlint \{\n\s*visible: root\.glassFrame/, 'WindowGlint draws the glass glint for a glass theme');
+  assert.match(wg, /MetalShape \{\n\s*visible: !root\.glassFrame/, '… and the chrome one only without');
+  assert.match(wg, /readonly property bool orbit: style === "orbit" && !glassFrame/, 'the glass glint is the sweep only');
+  assert.match(wg, /function eligible\(\) \{ return \(!!metal \|\| glassFrame\) && !Style\.reduceMotion && \(manual \|\| enabled\) \}/, 'Reduced Motion stops it, as the chrome glint');
+  for (const f of ['shaders/frameglass.frag', 'shaders/frameglass.frag.qsb', 'GlassFrameGlint.qml']) assert(fs.existsSync(path.join(root, f)), f);
+  const frag = fs.readFileSync(path.join(root, 'shaders/frameglass.frag'), 'utf8');
+  assert.match(frag, /if \(wide < 0\.004\) \{ fragColor = vec4\(0\.0\); return; \}/, 'away from the band nothing is drawn');
+  // every uniform of the shader is a property of GlassFrameGlint (ShaderEffect binds them by name)
+  const block = frag.slice(frag.indexOf('uniform buf {'), frag.indexOf('};'));
+  const gq = fs.readFileSync(path.join(root, 'GlassFrameGlint.qml'), 'utf8');
+  for (const u of [...block.matchAll(/^\s*(?:float|vec2|vec4)\s+(\w+);/gm)].map(x => x[1]).filter(n => !n.startsWith('qt_')))
+    assert.match(gq, new RegExp('(?:readonly )?property [\\w.]+ ' + u + '\\b'), 'GlassFrameGlint provides ' + u);
+});
 console.log(checks + ' glass checks passed');

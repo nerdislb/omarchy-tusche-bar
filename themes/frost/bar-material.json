@@ -34,27 +34,6 @@
       "blur": 24
     }
   },
-  "metal": {
-    "rim": 1.4,
-    "ring": 3.4,
-    "ringSize": 22,
-    "ringStyle": 2,
-    "tint": "#f7f8fa",
-    "light": true,
-    "disp": 0.35,
-    "spark": 0.15,
-    "sharp": 0.6,
-    "gain": 1,
-    "base": 1,
-    "flow": 0,
-    "sweepMs": 900,
-    "track": "#b9bcc0",
-    "rings": true,
-    "meters": true,
-    "hover": "tube",
-    "hoverRadius": 0,
-    "logo": true
-  },
   "source": {
     "fill": "#171c24",
     "text": "#e9edf0"
@@ -72,6 +51,15 @@
     "bevel": 9,
     "bend": 4,
     "omega": 24.5,
-    "damping": 0.78
+    "damping": 0.78,
+    "frame": {
+      "ms": 650,
+      "band": 0.1,
+      "amount": 0.66,
+      "shadeAmt": 0.15,
+      "bloom": 0.8,
+      "tint": "#ffffff",
+      "shade": "#3a5675"
+    }
   }
 }

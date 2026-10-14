@@ -24,8 +24,37 @@ omarchy-shell tusche-bar set glassMotion on
 
 Reduced Motion remains authoritative: fixed geometry and the native opacity
 fade, without a spring or travelling light. The resting bar and Island stay
-solid and compact. Existing quota rings and window-focus glints are retained;
-there is no new window animation or continuously moving highlight.
+solid and compact. There is no continuously moving highlight.
+
+## No chrome
+
+Frost and Smoke are not metal themes (design round 14.10.2026): their
+`bar-material.json` has no `metal` block, and everything chrome in the bar hangs
+on that block. So there is no chrome frame round the logo, the quota rings and
+meters are the plain Tusche ones, the Island's segment (the clock) has no
+chrome rim, the menu hover is the plain row, and nothing glints on a workspace
+switch. Chrom and Platin keep all of it.
+
+The window frame keeps Platin's and Chrom's stripes (`hyprland.lua`, see above).
+Its focus glint (option *Window frames → Glint on focus*) is the glass one,
+`GlassFrameGlint.qml` with `shaders/frameglass.frag`, drawn by `WindowGlint.qml`
+instead of the chrome `MetalShape` kind "frame": the light a Bevel Lens card
+catches as it opens, one wide, cool, soft band that crosses the frame
+diagonally once in 650 ms (as the popups' light, from the top-left corner to
+the bottom-right one), with a faint bevel shadow beside it and a soft light
+spilling a few pixels over the edge. No dark steel shoulders, no colour
+fringes, no sparks. It follows the glass material switch and Reduced Motion
+(off), draws only while it runs, and the "orbit" style is metal-only. Tune it
+in the theme's `glass.frame` (`tools/build-glass-themes.py` writes it):
+
+| Key | Meaning | Frost / Smoke |
+|---|---|---|
+| `ms` | duration | 650 / 650 |
+| `band` | band half width, a fraction of the frame's diagonal | 0.10 / 0.10 |
+| `amount` | strength at the start, fading to nothing | 0.66 / 0.56 |
+| `shadeAmt`, `shade` | bevel shadow beside the band | 0.15, `#3a5675` / 0.12, `#03060b` |
+| `bloom` | soft light just outside (and a few px inside) the frame | 0.8 / 0.65 |
+| `tint` | the light | `#ffffff` / `#cfe3ff` |
 
 ## Pictures
 
@@ -79,7 +108,14 @@ popup owner; `NativeMaterial` uses the existing presentation adapter.
 node tests/glass.cjs
 TUSCHE_ISLAND_DIR=/path/to/omarchy-tusche-island node tests/regressions.cjs
 python3 tests/glass_runtime.py --output /tmp/glass-native-evidence
+python3 tests/glass_frame_runtime.py --output /tmp/glass-frame-evidence
 ```
+
+`glass_frame_runtime.py` renders the production `GlassFrameGlint` and its shader
+over a fake window (Xvfb, no screen capture; needs Pillow): at rest and after
+the glint nothing is drawn (pixel-identical to the scene without it), mid-glint
+the light lies along the frame and reaches no deeper than a few pixels into
+the window, and it is cool or neutral, never warm.
 
 The runtime test runs production Qt components, the real Omarchy Border
 factory and OpenGL RHI under Xvfb, with an authored backdrop. It does not
@@ -106,6 +142,12 @@ idempotence, update and rejection of edited installed generations.
 Capture API: [Quickshell ScreencopyView](https://quickshell.org/docs/v0.2.0/types/Quickshell.Wayland/ScreencopyView/).
 
 ## Limits
+
+The glass frame glint's integration (`WindowGlint.qml` choosing the renderer,
+the Hyprland events that start and stop it) cannot run without Hyprland: the
+native test covers the renderer, the live behaviour is checked with
+`omarchy-shell tusche-bar glintWindow` and `omarchy-shell tusche-bar state`
+(`frames.renderer` is `glass`).
 
 Toplevel export requires Hyprland's installed protocol. If unavailable,
 the safe fallback is the still wallpaper or tint. Floating-window stacking
