@@ -246,6 +246,28 @@ Item {
    Hyprland.monitors=monitors
    Hyprland.workspaces=workspaces
   }
+  function test_04b_leading_edge_refresh_collapses_bursts() {
+   var item=createTemporaryObject(live,canvas,{x:10,y:10})
+   verify(item && item.geometryOwner)
+   wait(420)
+   var before=Hyprland.clientRefreshes
+   // the first event of a burst refreshes at once, not after the coalescing wait
+   Hyprland.rawEvent({name:"workspacev2"})
+   compare(Hyprland.clientRefreshes,before+1)
+   // the rest of the burst collapses into exactly one trailing refresh
+   for(var i=0;i<12;i++) Hyprland.rawEvent({name:"openwindow"})
+   compare(Hyprland.clientRefreshes,before+1)
+   tryCompare(Hyprland,"clientRefreshes",before+2)
+   wait(420)
+   compare(Hyprland.clientRefreshes,before+2)
+   // events that cannot change geometry never refresh
+   Hyprland.rawEvent({name:"windowtitle"})
+   wait(200)
+   compare(Hyprland.clientRefreshes,before+2)
+   // a quiet gap re-arms the leading edge
+   Hyprland.rawEvent({name:"closewindow"})
+   compare(Hyprland.clientRefreshes,before+3)
+  }
   function test_05_optional_theme_gallery() {
    if(!OUTPUT) return
    var sample=createTemporaryObject(gallery,canvas)

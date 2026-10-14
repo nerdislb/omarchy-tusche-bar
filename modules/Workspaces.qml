@@ -137,33 +137,44 @@ Item {
   }
   property bool monitorsPending: false
   property bool snapshotAgain: false
+  property bool geometryTrailing: false
+  // Leading edge: the first event of a burst refreshes at once, because on the
+  // snapshot path the active workspace is read from the snapshot and a wait
+  // would show as a late marker. Further events inside the cooldown collapse
+  // into one trailing refresh, so a burst stays bounded.
   function scheduleGeometry(monitors) {
     if (!geometryOwner) return
     monitorsPending = monitorsPending || monitors === true
-    // A non-restarting coalescer is bounded even during an event burst.
-    if (!geometryRefresh.running) geometryRefresh.start()
+    if (geometryCooldown.running) { geometryTrailing = true; return }
+    refreshGeometry()
+    geometryCooldown.start()
+  }
+  function refreshGeometry() {
+    if (!geometryOwner) return
+    if (!nativeGeometryReady) {
+      if (snapshotProcess.running) snapshotAgain = true
+      else snapshotProcess.running = true
+      return
+    }
+    if (monitorsPending) {
+      Hyprland.refreshMonitors()
+      Hyprland.refreshWorkspaces()
+    }
+    monitorsPending = false
+    Hyprland.refreshToplevels()
   }
   onGeometryOwnerChanged: {
     if (geometryOwner) scheduleGeometry(true)
-    else { geometryRefresh.stop(); monitorsPending = false; snapshotAgain = false; snapshotProcess.running = false }
+    else { geometryCooldown.stop(); geometryTrailing = false; monitorsPending = false; snapshotAgain = false; snapshotProcess.running = false }
   }
   Timer {
-    id: geometryRefresh
+    id: geometryCooldown
     interval: 140
     repeat: false
-    onTriggered: {
-      if (!root.geometryOwner) return
-      if (!root.nativeGeometryReady) {
-        if (snapshotProcess.running) root.snapshotAgain = true
-        else snapshotProcess.running = true
-        return
-      }
-      if (root.monitorsPending) {
-        Hyprland.refreshMonitors()
-        Hyprland.refreshWorkspaces()
-      }
-      root.monitorsPending = false
-      Hyprland.refreshToplevels()
+    onTriggered: if (root.geometryTrailing) {
+      root.geometryTrailing = false
+      root.refreshGeometry()
+      geometryCooldown.start()
     }
   }
   Process {
