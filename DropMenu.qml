@@ -166,8 +166,8 @@ KeyboardPanel {
     finish(function() { Util.execDetached("omarchy-menu summon apps") })
   }
 
-  // A list level's rows narrowed to what was typed (label or subtext, as the
-  // native menu filters a question's options).
+  // A list level's rows narrowed by label/subtext and provider search terms
+  // (language codes and English names, as in the native language picker).
   function listRows(all) {
     var q = menu.query.trim().toLowerCase()
     if (!all.length) return [{ kind: "wait", label: "Nothing here", disabled: true }]
@@ -175,6 +175,7 @@ KeyboardPanel {
     var out = all.filter(function(r) {
       return String(r.label || "").toLowerCase().indexOf(q) !== -1
         || String(r.sub || r.note || "").toLowerCase().indexOf(q) !== -1
+        || (r.searchTerms || []).join(" ").toLowerCase().indexOf(q) !== -1
     })
     return out.length ? out : [{ kind: "wait", label: "No matches", disabled: true }]
   }
@@ -274,8 +275,8 @@ KeyboardPanel {
   }
 
   // ---------------------------------------------------------------- lists the shell fills in
-  // Apps, fonts, power profiles: a level here; a provider this drop-down does
-  // not know (or Apps without the library) still opens the native menu there.
+  // Apps, fonts, power profiles, languages: a level here; an unknown provider
+  // (or Apps without the library) still opens the native menu there.
   function openProvider(r) {
     if (!source.hasProvider(r.provider)) {
       finish(function() { Util.execDetached("omarchy-menu summon " + Util.shellQuote(r.id)) })

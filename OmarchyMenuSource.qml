@@ -10,8 +10,8 @@ import "vendor/MenuModel.js" as MenuModel
 // same reading as the native menu (vendor/MenuModel.js is its library).
 // Rows open on the last answers; evaluate() refreshes them.
 // Also the lists the shell fills in (the native menu's providers: Apps from
-// the shell's application library, fonts and power profiles from bash),
-// and which actions ask a question through omarchy-menu-select / -input.
+// the shell's application library; fonts, power profiles and languages from
+// bash), and which actions ask a question through omarchy-menu-select / -input.
 Item {
   id: src
 
@@ -239,8 +239,9 @@ Item {
   // ---------------------------------------------------------------- providers
   // The native menu's bash providers, copied from the `providers` map in
   // shell/plugins/menu/Menu.qml (tests/regressions.cjs compares them): one
-  // row per line, `label\tvalue\tcurrent`. A volatile one runs again each
-  // time its level is entered; the others once per menu definition.
+  // row per line, `label\tvalue\tcurrent` plus an optional search term.
+  // A volatile one runs again each time its level is entered; the others
+  // once per menu definition.
   readonly property var providers: ({
     "fonts": {
       script: "current=$(omarchy-font-current 2>/dev/null); omarchy-font-list 2>/dev/null | while read -r f; do [[ -z $f ]] && continue; printf '%s\\t%s\\t%s\\n' \"$f\" \"$f\" \"$current\"; done",
@@ -252,6 +253,12 @@ Item {
       script: "current=$(powerprofilesctl get 2>/dev/null); omarchy-powerprofiles-list 2>/dev/null | while read -r p; do [[ -z $p ]] && continue; printf '%s\\t%s\\t%s\\n' \"$p\" \"$p\" \"$current\"; done",
       icon: "\udb81\udc0b",
       actionFor: function(value) { return "omarchy-powerprofiles-set autodetect " + Util.shellQuote(value) }
+    },
+    "languages": {
+      script: "current=$(omarchy-language 2>/dev/null); omarchy-language list 2>/dev/null | while IFS=$'\\t' read -r name code english; do [[ -z $code ]] && continue; printf '%s\\t%s\\t%s\\t%s\\n' \"$name\" \"$code\" \"$current\" \"$english\"; done",
+      icon: "\uf1ab",
+      volatile: true,
+      actionFor: function(value) { return "omarchy-language " + Util.shellQuote(value) }
     }
   })
   // menu id → rows; replaced whole, never written in place
@@ -302,7 +309,10 @@ Item {
       while (taken[id]) id += "-"
       taken[id] = true
       var action = spec.actionFor(value)
+      // Native search includes the value via the row id and an optional
+      // fourth field (e.g. "Danish" for the language labeled "Dansk").
       out.push({ kind: "action", id: id, label: label, icon: spec.icon || "", checked: value === current,
+                 searchTerms: [value].concat(parts[3] ? [parts[3]] : []),
                  action: action, asks: asks(action), path: "" })
     }
     return out

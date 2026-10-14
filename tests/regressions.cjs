@@ -613,6 +613,55 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
   assert.equal(fonts[0].action, "omarchy-font-set 'Fira Code'");
   assert.equal(fonts[0].icon, '\ue659');
   assert.deepEqual(plain(sc2.providerList('x', 'unknown', 'a\tb')), []);
+  // The new native provider keeps native names, code-based actions and the
+  // current checkmark; English names and codes also find a row in its level.
+  const languages = sc2.providerList('setup.language', 'languages',
+    'English\ten\tda\tEnglish\nDansk\tda\tda\tDanish\nPortuguês (Brasil)\tpt-BR\tda\tPortuguese (Brazil)\n');
+  assert.deepEqual(plain(languages.map(r => [r.label, r.checked, r.id, r.action, r.icon])), [
+    ['English', false, 'setup.language.en', "omarchy-language 'en'", '\uf1ab'],
+    ['Dansk', true, 'setup.language.da', "omarchy-language 'da'", '\uf1ab'],
+    ['Português (Brasil)', false, 'setup.language.pt-br', "omarchy-language 'pt-BR'", '\uf1ab']]);
+  for (const [query, label] of [[' DAnIsH ', 'Dansk'], ['dansk', 'Dansk'], ['pt-BR', 'Português (Brasil)']]) {
+    dc.menu.query = query;
+    assert.deepEqual(plain(dc.listRows(languages).map(r => r.label)), [label]);
+  }
+  dc.menu.query = '';
+
+  if (omarchy) {
+    // Follow the shipped Setup > Language and Style > Font definitions
+    // through the real row, provider-load and activation functions. Capture
+    // detached commands: tests must not change the user's language or font.
+    const merged = MenuModel.mergeMenuSources(MenuModel.parseMenuJsonc(
+      fs.readFileSync(path.join(omarchy, 'default/omarchy/omarchy-menu.jsonc'), 'utf8')), []);
+    Object.assign(sc2, {items: merged.items, checkedResults: {}, disabledResults: {},
+      providerRows: {}, providerQueue: [], providerRevision: 0, providerProc: {running: false}});
+    vm.runInContext(['row', 'loadProvider'].map(n => functionSource(oms, n)).join('\n'), sc2);
+    vm.runInContext(oms.match(/^  function hasProvider\(.*$/m)[0], sc2);
+    const routed = [];
+    Object.assign(dc, {source: sc2, shimDir: '', push: level => routed.push(level),
+      Qt: {callLater: fn => fn()}, Util: {shellQuote, execDetached: cmd => routed.push(cmd)}});
+    vm.runInContext(['activate', 'openProvider', 'finish', 'runAction', 'prefixed']
+      .map(n => functionSource(dm, n)).join('\n'), dc);
+    dc.menu.close = () => routed.push('close');
+    dc.menu.runAction = dc.runAction;
+    for (const [parent, id, provider] of [['setup', 'setup.language', 'languages'], ['style', 'style.font', 'fonts']]) {
+      assert.equal(merged.items[id].parent, parent);
+      dc.activate(sc2.row(merged.items[parent]));
+      assert.equal(routed.at(-1).id, parent);
+      dc.activate(sc2.row(merged.items[id]));
+      assert.deepEqual(plain(routed.at(-1)), {kind: 'provider', id, provider, title: merged.items[id].label});
+      assert.deepEqual(plain(sc2.providerProc.command), ['bash', '-lc', sc2.providers[provider].script]);
+      assert.equal(sc2.providerProc.running, true);
+      sc2.providerProc.running = false;
+      sc2.providerRows[id] = [];
+      sc2.loadProvider(id, provider);
+      assert.equal(sc2.providerProc.running, true, `${provider} refreshes on re-entry`);
+      sc2.providerProc.running = false;
+    }
+    routed.length = 0;
+    dc.activate(languages[1]);
+    assert.deepEqual(routed, ['close', "omarchy-language 'da'"], 'close the drop-down, then run the native command');
+  }
   const entries = [{id: 'zen', name: 'Zen Browser', genericName: 'Web Browser', icon: 'zen'},
     {id: 'alacritty', name: 'Alacritty', genericName: 'Terminal', icon: '/x/a.svg'}, {id: 'zen', name: 'Zen Browser', icon: 'zen'}, {id: '', name: 'Nameless'}];
   sc2.appLibrary = {

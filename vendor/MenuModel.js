@@ -33,6 +33,10 @@ function normalizeItem(id, raw) {
     action: value.action || "",
     provider: value.provider || "",
     aliases: aliases,
+    // Search-only terms: matched by nameSearchText, never by resolveRoute.
+    // Translations put the English label here so English search keeps
+    // working without making English words routable commands.
+    searchTerms: normalizeAliases(value.searchTerms),
     when: value.when || "",
     checked: value.checked || "",
     disabled: value.disabled || ""
@@ -63,7 +67,11 @@ function parseMenuJsonc(raw) {
   return out
 }
 
-function mergeMenuSources(defaultItems, userItems) {
+// The root row has no JSONC entry, so the merge injects it when neither
+// source supplies one; only then does rootLabel (the catalog's translation
+// of "Go") apply. A root row from either source keeps its own label, so a
+// user-supplied heading is never overwritten by the catalog.
+function mergeMenuSources(defaultItems, userItems, rootLabel) {
   var nextItems = ({})
   var nextOrder = []
   var sources = [defaultItems || [], userItems || []]
@@ -84,7 +92,7 @@ function mergeMenuSources(defaultItems, userItems) {
   }
 
   if (!nextItems.root) {
-    nextItems.root = { id: "root", parent: "", kind: "menu", icon: "", iconFont: "", label: "Go", title: "", target: "", description: "", aliases: [], when: "", checked: "", disabled: "", action: "", provider: "" }
+    nextItems.root = { id: "root", parent: "", kind: "menu", icon: "", iconFont: "", label: (typeof rootLabel === "string" && rootLabel) ? rootLabel : "Go", title: "", target: "", description: "", aliases: [], searchTerms: [], when: "", checked: "", disabled: "", action: "", provider: "" }
     nextOrder.unshift("root")
   }
   for (var k3 = 0; k3 < nextOrder.length; k3++) nextItems[nextOrder[k3]].order = k3
@@ -299,7 +307,7 @@ function leafIdFor(id) {
 function nameSearchText(entry) {
   if (!entry) return ""
   var aliases = []
-  var values = Array.isArray(entry.aliases) ? entry.aliases : []
+  var values = (Array.isArray(entry.aliases) ? entry.aliases : []).concat(Array.isArray(entry.searchTerms) ? entry.searchTerms : [])
   for (var i = 0; i < values.length; i++) aliases.push(searchableToken(values[i]))
   return [entry.label, searchableToken(leafIdFor(entry.id)), aliases.join(" ")].join(" ").toLowerCase()
 }
@@ -404,6 +412,8 @@ var GUARD_READERS = [
   "omarchy-default-terminal",
   "omarchy-default-dictation",
   "omarchy-dns",
+  "omarchy-dock autohide",
+  "omarchy-dock position",
   "omarchy-hyprland-corners",
   "omarchy-hyprland-window-transparency",
   "omarchy-hyprland-workspace-layout-default"
@@ -616,6 +626,43 @@ function toggleDmenuSelection(selected, value) {
     : selected.filter(function(item) { return item !== value })
 }
 
+// Returns a copy of items with label/title/description replaced from a
+// translation catalog ({id: {label, title, description}}), as shipped in
+// default/i18n/<code>/menu.json. The English label stays searchable by
+// moving it into searchTerms when the translation differs — searchTerms
+// feed search but never resolveRoute, so English words do not become
+// routable commands in other languages. Items without a
+// catalog entry pass through untouched, so an incomplete (or missing)
+// catalog degrades to English row by row. Applied to the default items
+// before the user extension merges, so user rows and retitles always win.
+function applyTranslations(items, catalog) {
+  var source = Array.isArray(items) ? items : []
+  var strings = (catalog && typeof catalog === "object") ? catalog : ({})
+  var out = []
+  for (var i = 0; i < source.length; i++) {
+    var entry = source[i]
+    var translated = entry && strings[entry.id]
+    if (!translated || typeof translated !== "object") {
+      out.push(entry)
+      continue
+    }
+    var next = {}
+    for (var k in entry) next[k] = entry[k]
+    if (translated.label) {
+      if (translated.label !== entry.label && entry.label) {
+        var terms = Array.isArray(entry.searchTerms) ? entry.searchTerms.slice() : []
+        if (terms.indexOf(entry.label) < 0) terms.push(entry.label)
+        next.searchTerms = terms
+      }
+      next.label = translated.label
+    }
+    if (translated.title) next.title = translated.title
+    if (translated.description) next.description = translated.description
+    out.push(next)
+  }
+  return out
+}
+
 if (typeof module !== "undefined") {
   module.exports = {
     summonAction: summonAction,
@@ -649,6 +696,7 @@ if (typeof module !== "undefined") {
     dmenuValue: dmenuValue,
     dmenuSelections: dmenuSelections,
     toggleDmenuSelection: toggleDmenuSelection,
-    displayRow: displayRow
+    displayRow: displayRow,
+    applyTranslations: applyTranslations
   }
 }
