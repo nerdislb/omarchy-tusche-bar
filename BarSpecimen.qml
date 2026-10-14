@@ -240,7 +240,7 @@ Item {
       height: root.barSize
       spacing: Style.space(2)
       readonly property var faces: root.opts.right === "groups"
-        ? [{group:"net"}, {group:"phone"}, {group:"system"}]
+        ? (root.status.groups || ["net", "phone", "system"]).map(function(group) { return {group:group} })
         : (root.status.deviations || []).map(function(d) { return {glyph:d.glyph || "", chip:!!d.chip, tone:d.color || root.foreground} })
           .concat([{glyph:"\u{f01d8}", tone:Util.alpha(root.foreground,0.7)}])
       Repeater {
