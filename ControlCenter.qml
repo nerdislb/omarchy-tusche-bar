@@ -534,6 +534,9 @@ PanelWindow {
     anchors.fill: parent
     property real reveal: 0
     opacity: reveal
+    // New keyboard-focusable preview cards are siblings of the original
+    // focus sink. Unhandled Escape / Ctrl+K must work from every descendant.
+    Keys.onPressed: function(e) { win.keyPressed(e) }
 
     Ui.BorderSurface {
       id: card
