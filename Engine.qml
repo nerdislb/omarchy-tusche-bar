@@ -88,6 +88,14 @@ Item {
     model: root.options.dayline === "on" ? Quickshell.screens : []
     delegate: DayLine { bar: root.edgeBar }
   }
+  // Option statusHints: moves of the audio output and Bluetooth connections
+  // go to Omarchy's OSD (the island's HUD when it owns the OSD).
+  Announcer {
+    id: announcer
+    enabled: root.configLoaded && root.options.statusHints === "on"
+    config: root.config
+    emit: function(argv) { Quickshell.execDetached(argv) }
+  }
   FocusSeal { host: root }
   property string focusResult: ""
   property bool focusReleasePending: false
@@ -667,6 +675,7 @@ Item {
     function state(): string {
       return JSON.stringify({ preset: root.presetId, options: root.options, hasBase: root.baseLayout !== null,
                               screenProfiles: root.screenProfiles, focus: { busy: root.focusBusy, result: root.focusResult },
+                              announce: announcer.stateObject(),
                               open: root.isOpen, dropMenuOpen: root.dropMenuOpen, saved: root.savedPresets.map(function(p) { return p.name }), lastResult: root.lastResult, moduleDir: root.moduleDir,
                               keys: { option: root.keysOption, bindings: root.keysState },
                               edge: { option: root.options.edge, material: root.material ? (root.material.edge ? root.material.edge.kind : "no edge") : null, themeEdge: root.themeEdgeVisible, barReady: root.barReady },

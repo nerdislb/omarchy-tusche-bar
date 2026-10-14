@@ -21,7 +21,7 @@ QtObject {
     var name = item && item.QsWindow && item.QsWindow.window && item.QsWindow.window.screen
       ? String(item.QsWindow.window.screen.name) : ""
     // Live-only look toggles must not rebuild the native bar or its popups.
-    if (key === "statusHints" || key === "dayline" || key === "seal")
+    if (key === "dayline" || key === "seal")
       return engine && engine.options ? engine.options[key] : fallback
     return Presets.screenValue(engine ? engine.screenProfiles : null, name, key, fallback)
   }

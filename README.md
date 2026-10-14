@@ -344,13 +344,19 @@ empty even when native client metadata works. One shared, bounded read-only
 
 Three optional look settings default **off** and survive preset changes:
 
-- **Brief status readings**: changes to volume/mute, brightness and Bluetooth
-  appear for 2.4 seconds in a reserved-width slot, without moving click targets.
-  Startup/source changes establish silent baselines; reduced motion does not
-  hide information. The existing native widgets remain the data sources.
-  Brightness checks run at most every 2 seconds, only on the selected bar when
-  enabled and without an open monitor panel or Island owner. Island-owned
-  channels are suppressed; native Omarchy OSDs can still coexist.
+- **Device announcements**: when the default audio output moves (a headset
+  taking over, a dock going away) or a Bluetooth device connects or disconnects,
+  one line goes to Omarchy's on-screen display (`omarchy-osd -m …`). When the
+  island owns the OSD, the line lands in its HUD; the bar itself gets no extra
+  slot and no click target moves. Volume and brightness keep Omarchy's own OSD,
+  so they are not repeated, and nothing is polled: PipeWire and BlueZ are
+  observed through Quickshell's public services, never through a native widget.
+  The island already announces Bluetooth devices unless its own `bluetooth`
+  setting is off, so Bluetooth stays quiet here in that case. Start-up and late
+  sources set silent baselines, at most one line goes out per 1.5 s (a flapping
+  device ends in its final state), and device names are cleaned to one plain
+  line and passed as an argument, never through a shell. Option key
+  `statusHints`, off by default.
 - **Day progress**: a minute-resolution, one-device-pixel accent line inside a
   horizontal bar's edge. It takes no input or extra reserved screen space and
   uses the native bar's fullscreen stacking. Hidden/vertical bars show no line.
@@ -398,9 +404,10 @@ group may differ) and `state` reports it in `lastResult`.
 Tests: `node tests/regressions.cjs` (with the Tusche Island checkout next to this repository) and `python3 tests/boot_logo.py`.
 
 Presentation checks: `node tests/presentation.cjs`, `python3 tests/focus_mode.py`,
-`node tests/workspace_geometry.cjs`, `node tests/status_hints.cjs --qml`, and
+`node tests/workspace_geometry.cjs`, `node tests/announce.cjs`, and
 `node tests/visual_editor.cjs`. Native isolated renderer checks:
-`python3 tests/workspace_runtime.py --output /tmp/workspace-proof` and
+`python3 tests/workspace_runtime.py --output /tmp/workspace-proof`,
+`python3 tests/announce_runtime.py` and
 `python3 tests/visual_editor_runtime.py --output /tmp/editor-proof` (Qt, Quickshell,
 Xvfb). These use authored fixtures, not the live desktop or private data.
 

@@ -1,7 +1,7 @@
 var ELEMENTS = {
   statusHints: {
-    label: "Brief status readings",
-    variants: [{ id: "off", label: "Off" }, { id: "on", label: "Show changed values briefly" }]
+    label: "Device announcements",
+    variants: [{ id: "off", label: "Off" }, { id: "on", label: "Announce output and Bluetooth changes on the OSD" }]
   },
   dayline: {
     label: "Day progress",

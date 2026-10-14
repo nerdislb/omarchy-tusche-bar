@@ -1,7 +1,6 @@
 import QtQuick
 import "../bridge" as Bridge
 import ".." as Root
-import "../StatusHints.js" as Hints
 import Quickshell
 import Quickshell.Io
 import Quickshell.Bluetooth
@@ -23,8 +22,6 @@ Item {
   Component.onCompleted: {
     stableMountIds = mountIds
     Bridge.ModuleBus.register("status", root)
-    hintsMounted = true
-    configureHints()
   }
   Component.onDestruction: Bridge.ModuleBus.unregister("status", root)
 
@@ -245,108 +242,6 @@ Item {
   Timer { interval: 5000; running: true; repeat: true; triggeredOnStart: true; onTriggered: if (!nm.running) nm.running = true }
   Timer { interval: 20000; running: true; repeat: true; triggeredOnStart: true; onTriggered: { if (!ts.running) ts.running = true; if (!flux.running) flux.running = true } }
 
-  // ---------------------------------------------------------------- brief status hints
-  // The native widgets stay the source of truth (including audio's physical
-  // output behind a DSP sink). Observe their public presentation properties;
-  // never create another audio/brightness service or change any device state.
-  readonly property bool hintsEnabled: String(Bridge.ModuleBus.optionFor(root, "statusHints", setting("statusHints", "off"))) === "on"
-  property bool hintsMounted: false
-  property var hintState: Hints.initial(false)
-  property var hintAudio: null
-  property var hintMonitor: null
-  readonly property bool hintFocused: Bridge.ModuleBus.pick("status") === root
-  readonly property var hintOwners: Hints.islandOwners(Bridge.ModuleBus.engine ? Bridge.ModuleBus.engine.config : null)
-  readonly property var hintAudioSample: {
-    var a = hintsEnabled ? hintAudio : null
-    var sink = a && a.volumeSink ? a.volumeSink : null
-    return { ready: !!(a && a.hasOutput && sink && sink.audio),
-      id: sink ? String(sink.name || "output") : "", name: sink ? String(sink.description || sink.name || "Output") : "",
-      percent: a ? a.outputVolume * 100 : -1, muted: a ? a.outputMuted : false }
-  }
-  readonly property var hintBrightnessSample: {
-    var m = hintsEnabled ? hintMonitor : null
-    return { ready: !!(m && m.brightnessAvailable), id: m ? String(m.focusedMonitor || "display") : "",
-      percent: m ? m.brightnessPercent : -1 }
-  }
-  readonly property var hintBluetoothSample: {
-    var a = hintsEnabled ? Bluetooth.defaultAdapter : null
-    var devices = hintsEnabled && Bluetooth.devices ? Bluetooth.devices.values : []
-    return { ready: !!a, id: a ? String(a.adapterId || a.name || "adapter") : "", on: !!(a && a.enabled),
-      devices: devices.filter(function(d) { return !!d }).map(function(d) {
-        return { id: String(d.address || d.name || ""), name: String(d.name || d.deviceName || "Bluetooth device"), connected: !!d.connected }
-      }) }
-  }
-  onHintsEnabledChanged: if (hintsMounted) configureHints()
-  onHintAudioSampleChanged: scheduleHintSample()
-  onHintBrightnessSampleChanged: scheduleHintSample()
-  onHintBluetoothSampleChanged: scheduleHintSample()
-  onHintOwnersChanged: scheduleHintSample()
-  onHintFocusedChanged: scheduleHintSample()
-  onMountedChanged: if (hintsMounted && hintsEnabled) refreshHintSources()
-
-  function configureHints() {
-    hintState = Hints.configure(hintState, hintsEnabled)
-    hintExpiry.stop()
-    hintSampleTimer.stop()
-    if (hintsEnabled) { refreshHintSources(); scheduleHintSample() }
-    else { hintAudio = null; hintMonitor = null }
-  }
-  function refreshHintSources() {
-    if (!hintsEnabled) return
-    // Same narrowly-scoped visual slot discovery already used for popup
-    // materials. Do not walk host services or widen a PluginBarApi facade.
-    var top = root
-    for (var i = 0; i < 24 && top.parent; i++) top = top.parent
-    var slots = nativeMaterial.slotsIn(top, 0, []), audio = null
-    var monitor = root.mounted["nerdibeard.monitor"] || null
-    for (var j = 0; j < slots.length; j++) {
-      if (slots[j].moduleName === "omarchy.audio") audio = slots[j].activeItem
-      if (!monitor && (slots[j].moduleName === "omarchy.monitor" || slots[j].moduleName === "nerdibeard.monitor")) monitor = slots[j].activeItem
-    }
-    hintAudio = audio
-    hintMonitor = monitor
-    scheduleHintSample()
-  }
-  Connections {
-    target: dressTimer
-    function onTriggered() { if (root.hintsEnabled) root.refreshHintSources() }
-  }
-  function scheduleHintSample() {
-    // Coalesce related native properties (volume+mute, availability+value,
-    // device name+connection) before taking a primitive snapshot.
-    if (hintsMounted && hintsEnabled) hintSampleTimer.restart()
-  }
-  function sampleHints() {
-    if (!hintsEnabled) return
-    var now = Date.now(), state = Hints.configure(hintState, true)
-    state = Hints.observe(state, "audio", hintAudioSample, now, hintOwners.audio || !hintFocused)
-    state = Hints.observe(state, "brightness", hintBrightnessSample, now, hintOwners.brightness || !hintFocused)
-    state = Hints.observe(state, "bluetooth", hintBluetoothSample, now, hintOwners.bluetooth || !hintFocused)
-    hintState = state
-    armHintExpiry()
-  }
-  function armHintExpiry() {
-    hintExpiry.stop()
-    if (!hintsEnabled || !hintState.hint) return
-    hintExpiry.interval = Math.max(1, hintState.hint.until - Date.now())
-    hintExpiry.start()
-  }
-  Timer { id: hintSampleTimer; interval: 35; onTriggered: root.sampleHints() }
-  Timer {
-    id: hintExpiry
-    onTriggered: { root.hintState = Hints.expire(root.hintState, Date.now()); root.armHintExpiry() }
-  }
-  // The monitor backend otherwise reads only on popup-open. Reuse its guarded
-  // read-only refresh for external brightness keys; never poll when disabled,
-  // off the focused monitor, or when the Island already owns that channel.
-  Timer {
-    interval: 2000
-    repeat: true
-    running: root.hintsEnabled && root.hintFocused && !root.hintOwners.brightness
-      && !!root.hintMonitor && root.hintMonitor.opened !== true && root.hintMonitor.layoutPending !== true
-    onTriggered: if (root.hintMonitor && typeof root.hintMonitor.refresh === "function") root.hintMonitor.refresh()
-  }
-
   // Inert snapshots for the visual editor. It must not instantiate this module
   // or its native backends merely to draw an option tile.
   function previewData() {
@@ -354,8 +249,7 @@ Item {
       bluetoothConnected: btConnected.length > 0, phone: phone ? Object.assign({}, phone) : null,
       cpu: cpu, mem: mem, cpuKnown: cpuKnown, memKnown: memKnown, sysHot: sysHot,
       groups: shownGroups.map(function(g) { return g.id }),
-      deviations: deviations.map(function(d) { return { glyph: d.glyph || "", chip: !!d.chip, color: String(d.color), member: d.member } }),
-      hint: hintState.hint ? { kind: hintState.hint.kind, text: hintState.hint.text } : null }
+      deviations: deviations.map(function(d) { return { glyph: d.glyph || "", chip: !!d.chip, color: String(d.color), member: d.member } }) }
   }
 
   function memberState(id) {
@@ -439,16 +333,6 @@ Item {
       onClicked: root.openGroup("all", moreCell)
       StatusFace { anchors.fill: parent; glyph: "\u{f01d8}"; ink: root.fg; glyphInk: Util.alpha(root.fg, 0.7); barSize: root.barSize }
     }
-    StatusHint {
-      id: hintFace
-      visible: root.hintsEnabled
-      width: root.hintsEnabled ? implicitWidth : 0
-      height: root.barSize
-      barSize: root.barSize
-      ink: root.fg
-      text: root.hintState.hint ? root.hintState.hint.text : ""
-      kind: root.hintState.hint ? root.hintState.hint.kind : ""
-    }
   }
 
   component Cell: WidgetButton {
@@ -502,7 +386,7 @@ Item {
   function stateJson() {
     return JSON.stringify({variant: variant, mounted: Object.keys(mounted), wifi: wifiName,
       vpn: vpnUp, tailscale: tailscaleUp, phone: phone, cpu: cpu, mem: mem,
-      open: popupOpen, group: popupGroup, statusHints: hintsEnabled, hint: hintState.hint, hintSources: {audio: !!hintAudio, brightness: !!hintMonitor}, hintOwners: hintOwners, monitor: root.QsWindow.window ? root.QsWindow.window.screen.name : ""})
+      open: popupOpen, group: popupGroup, monitor: root.QsWindow.window ? root.QsWindow.window.screen.name : ""})
   }
 
   KeyboardPanel {
