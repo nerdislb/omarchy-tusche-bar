@@ -123,6 +123,12 @@ def main():
         subprocess.run(['omarchy-toggle-bar', action], check=True, timeout=15,
                        stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
 
+    if args.action == 'status':
+        # Strictly read-only (the Health page runs it): no state directory and no
+        # lock file. The record is replaced atomically, so a plain read is
+        # consistent, and a missing record just means nothing is owned.
+        print(json.dumps(act('status', flag, record, toggle)))
+        return
     record.parent.mkdir(parents=True, exist_ok=True)
     with (record.parent / 'focus.lock').open('a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)

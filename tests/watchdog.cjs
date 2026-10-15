@@ -96,6 +96,8 @@ test('Health text tells armed, suspicious and handed-back apart', () => {
   assert.match(model.describe({...model.initial(), lastOk: T - 10000}, true, T).detail, /just now/);
   const suspicious = model.describe({...model.initial(), misses: 2}, true, T);
   assert.deepEqual([suspicious.state, /2 of 3/.test(suspicious.detail)], ['issue', true]);
+  const looked = model.describe({...model.initial(), lastCheck: T - 1000, armed: false}, true, T);
+  assert.deepEqual([looked.state, /not through the island/.test(looked.detail)], ['ok', true]);
   const back = model.describe({...model.initial(), handedBacks: 1}, false, T);
   assert.deepEqual([back.state, /1 time\b/.test(back.detail)], ['issue', true]);
   assert.match(model.describe({...model.initial(), handedBacks: 2}, false, T).detail, /2 times/);
@@ -112,9 +114,13 @@ test('the QML passes the marker as an argument, limits the ping and uses the isl
   }
   assert(scripts[0].includes('timeout 4 omarchy-shell notifications ping'));
   assert(scripts[0].includes('echo nomarker'));
-  assert(scripts[1].includes('[ -f "$1" ] && omarchy-plugin-enable omarchy.notifications && rm -f "$1"'), 'only with the marker, marker removed only after success');
+  assert(scripts[1].includes('[ -f "$1" ] && omarchy-plugin-enable omarchy.notifications || exit 1'), 'only with the marker, and only a successful enable goes on');
+  assert(scripts[1].includes('[ $? -eq 1 ] && rm -f "$1"'), 'the marker goes only when jq says the plugin is no longer disabled (exit 1), not on an unreadable file (exit 2)');
+  assert(/sleep 2; jq -e/.test(scripts[1]), 'a short wait before looking, so a reviving island can take the service over again first');
   assert((qml.match(/"sh", root\.markerPath\]/g) || []).length === 2, 'the marker path is the argument after the shell name');
   assert(!/repeat:\s*true/.test(qml), 'it re-arms a single-shot timer; there is no fixed polling loop');
+  assert(/if \(answer === "nomarker"\) return/.test(qml), 'without the island\'s marker nothing is scheduled');
+  assert(qml.includes('onRearmChanged: if (enabled && !probe.running && !handback.running && !model.armed)'), 'a shell.json rewrite re-arms an idle watchdog');
 });
 test('the real probe and hand-back scripts, run against fake omarchy programs, behave as promised', () => {
   const os = require('node:os');
@@ -159,17 +165,36 @@ test('the real probe and hand-back scripts, run against fake omarchy programs, b
     r = sh(handback, marker);
     assert.notEqual(r.status, 0);
     assert(!calls().includes('enable'), 'no marker: the service is not touched');
-    // hand-back with the marker: enabled, then the marker goes
+    // hand-back with the marker: enabled, then (after the wait) the marker goes
+    const shellJson = path.join(dir, '.config/omarchy/shell.json');
+    fs.mkdirSync(path.dirname(shellJson), {recursive: true});
+    const listed = names => fs.writeFileSync(shellJson, JSON.stringify({disabledPlugins: names, plugins: []}));
+    listed(['omarchy.something-else']);
     fs.writeFileSync(marker, '');
     r = sh(handback, marker, {FAKE_ENABLE: '0'});
     assert.equal(r.status, 0);
     assert(calls().includes('enable omarchy.notifications'));
-    assert(!fs.existsSync(marker), 'marker removed after a successful hand-back');
-    // a failing enable keeps the marker, so the takeover is still recorded as the island's
+    assert(!fs.existsSync(marker), 'marker removed after a hand-back that held');
+    // a reviving island disables the service again within the wait: its marker stays, so a later failure is still caught
+    listed(['omarchy.notifications']);
     fs.writeFileSync(marker, '');
+    r = sh(handback, marker, {FAKE_ENABLE: '0'});
+    assert.equal(r.status, 0);
+    assert(fs.existsSync(marker), 'marker kept when the service is disabled again');
+    // an unreadable shell.json is not proof: the marker stays
+    fs.writeFileSync(shellJson, 'not json');
+    r = sh(handback, marker, {FAKE_ENABLE: '0'});
+    assert(fs.existsSync(marker), 'marker kept when shell.json cannot be read');
+    fs.unlinkSync(shellJson);
+    r = sh(handback, marker, {FAKE_ENABLE: '0'});
+    assert(fs.existsSync(marker), 'marker kept when shell.json is missing');
+    // a failing enable keeps the marker, reports failure and never waits
+    listed([]);
+    const before = Date.now();
     r = sh(handback, marker, {FAKE_ENABLE: '1'});
     assert.notEqual(r.status, 0);
     assert(fs.existsSync(marker), 'marker kept when the hand-back failed');
+    assert(Date.now() - before < 1500, 'a failed enable does not wait');
   } finally {
     fs.rmSync(dir, {recursive: true, force: true});
   }
@@ -178,6 +203,7 @@ test('the engine arms it only while Omarchy\'s notification service is disabled'
   const engine = read('Engine.qml');
   assert(engine.includes('NotificationsWatchdog {'));
   assert(engine.includes('enabled: root.configLoaded && root.takeoverDisabled'));
+  assert(engine.includes('rearm: root.configSerial') && engine.includes('root.configSerial++'), 'the engine bumps a serial on every read of shell.json');
   assert(engine.includes('markerPath: root.stateRoot + "/tusche-island/notifications-takeover"'));
   assert(/takeoverDisabled: !!\(config && Array\.isArray\(config\.disabledPlugins\) && config\.disabledPlugins\.indexOf\("omarchy\.notifications"\) >= 0\)/.test(engine));
 });

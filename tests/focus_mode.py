@@ -113,5 +113,56 @@ class FocusTests(unittest.TestCase):
         self.assertFalse(self.run_action('release')['hidden'])
 
 
+class StatusIsReadOnlyTests(unittest.TestCase):
+    """`focus-mode.py status` runs from the Health page: it must not create anything."""
+
+    def run_status(self, home, flag=False, record=None):
+        state = Path(home) / '.local/state'
+        if flag:
+            (state / 'omarchy/toggles').mkdir(parents=True, exist_ok=True)
+            (state / 'omarchy/toggles/bar-off').touch()
+        if record is not None:
+            (state / 'tusche-bar').mkdir(parents=True, exist_ok=True)
+            (state / 'tusche-bar/focus-owner.json').write_text(record)
+        return subprocess.run(['python3', '-I', str(Path(__file__).resolve().parents[1] / 'bin/focus-mode.py'), 'status'],
+                              env={'HOME': str(home), 'PATH': os.environ['PATH']}, capture_output=True, text=True, timeout=20)
+
+    def tree(self, home):
+        return sorted(str(p.relative_to(home)) for p in Path(home).rglob('*'))
+
+    def test_missing_state_is_reported_and_nothing_is_created(self):
+        with tempfile.TemporaryDirectory() as home:
+            r = self.run_status(home)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertEqual(json.loads(r.stdout), {'hidden': False, 'owned': False, 'changed': False})
+            self.assertEqual(self.tree(home), [], 'no state directory, no lock file')
+
+    def test_unwritable_state_does_not_break_status(self):
+        with tempfile.TemporaryDirectory() as home:
+            self.run_status(home, record=json.dumps({'version': 1, 'flag': [1, 2]}))
+            os.chmod(Path(home) / '.local/state/tusche-bar', 0o500)
+            try:
+                r = self.run_status(home, flag=True)
+                self.assertEqual(r.returncode, 0, r.stderr)
+                self.assertTrue(json.loads(r.stdout)['hidden'])
+            finally:
+                os.chmod(Path(home) / '.local/state/tusche-bar', 0o700)
+
+    def test_existing_state_is_left_exactly_as_it_was(self):
+        with tempfile.TemporaryDirectory() as home:
+            self.run_status(home, flag=True, record=json.dumps({'version': 1, 'flag': [1, 2]}))
+            before = self.tree(home)
+            r = self.run_status(home)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertEqual(self.tree(home), before)
+            self.assertFalse((Path(home) / '.local/state/tusche-bar/focus.lock').exists())
+
+    def test_a_corrupt_record_still_fails_the_status(self):
+        with tempfile.TemporaryDirectory() as home:
+            r = self.run_status(home, flag=True, record='not json')
+            self.assertNotEqual(r.returncode, 0)
+            self.assertEqual((Path(home) / '.local/state/tusche-bar/focus-owner.json').read_text(), 'not json')
+
+
 if __name__ == '__main__':
     unittest.main()

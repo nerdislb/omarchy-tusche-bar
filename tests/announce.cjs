@@ -170,6 +170,18 @@ test('unknown channels and bad clocks leave the state alone', () => {
   assert.equal(model.observe(state, 'output', output('b'), '1000', false), state);
 });
 
+test('a waiting line is only still true while its source is there', () => {
+  let state = ready('output', output('a', 'A'));
+  state = sample(state, 'output', output('b', 'B'), 1000);
+  assert.equal(model.stillTrue(state, state.hint), true);
+  const gone = sample(state, 'output', {ready: false}, 1100);
+  assert.equal(model.stillTrue(gone, state.hint), false, 'the output disappeared');
+  assert.equal(model.stillTrue(model.configure(state, false), state.hint), false, 'announcements are off');
+  for (const bad of [null, undefined, {}, {kind: 'nothing'}]) assert.equal(model.stillTrue(state, bad), false, JSON.stringify(bad));
+  assert.equal(model.stillTrue(null, state.hint), false);
+  const other = sample(state, 'bluetooth', bluetooth(['Buds']), 1200);
+  assert.equal(model.stillTrue(other, state.hint), true, 'another channel coming does not matter');
+});
 test('the gate lets one line through per gap; a waiting line is replaced by a newer one', () => {
   const hint = n => ({seq: n, kind: 'output', icon: 'volume-high', text: 'D' + n});
   let g = null, r = model.gate(g, hint(1), 10000);
@@ -224,6 +236,7 @@ test('Announcer observes only public services, never polls, and goes through the
   assert(!/repeat:\s*true/.test(announcer), 'no repeating timer');
   assert(!/Process\b|FileView|Hyprland|slotsIn|activeItem|lastIpcObject/.test(announcer), 'no processes, widget internals or compositor reads');
   assert(announcer.includes('Announce.argv('), 'the command line comes from the model');
+  assert((announcer.match(/Announce\.stillTrue\(/g) || []).length === 2, 'a waiting line is re-checked when the source changes and when its turn comes');
   const engine = read('Engine.qml');
   assert(engine.includes('options.statusHints === "on"'));
   assert(engine.includes('emit: function(argv) { Quickshell.execDetached(argv) }'), 'a plain argv, no shell');

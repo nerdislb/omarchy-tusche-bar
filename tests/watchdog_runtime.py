@@ -61,14 +61,26 @@ Item {
    verify(w.stateObject().lastOk !== null)
   }
 
-  function test_03_a_missing_marker_is_not_the_islands_takeover() {
+  function test_03_a_missing_marker_is_one_look_then_idle_until_shell_json_changes() {
    IoProbe.fallback = "nomarker"
    var w = createTemporaryObject(make, root)
    w.enabled = true
-   tryVerify(function() { return root.probes().length >= 4 }, 1200)
+   tryVerify(function() { return root.probes().length >= 1 }, 600)
+   wait(500)                                            // several slow periods would have passed
+   compare(root.probes().length, 1)                     // nothing is scheduled without the island's marker
    compare(root.handbacks().length, 0)
    compare(w.stateObject().armed, false)
    compare(w.stateObject().misses, 0)
+   w.rearm = w.rearm + 1                                // the engine read shell.json again (the island's takeover writes it)
+   tryVerify(function() { return root.probes().length === 2 }, 600)
+   IoProbe.fallback = "ok"                              // the marker is there now and the island answers
+   w.rearm = w.rearm + 1
+   tryVerify(function() { return root.probes().length >= 4 }, 900)   // armed: the slow look goes on
+   compare(w.stateObject().armed, true)
+   var armedProbes = root.probes().length
+   w.rearm = w.rearm + 1                                // a rewrite never disturbs an armed watchdog
+   wait(40)
+   verify(root.probes().length <= armedProbes + 1)
   }
 
   function test_04_three_silent_answers_hand_the_service_back_once() {

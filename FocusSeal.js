@@ -35,6 +35,16 @@ function describe(s, level) {
   return parts.join(", ")
 }
 
+// How many workspaces want you. The bar's own workspace module knows (its urgent ids),
+// but a bar with native workspaces ("As today") has none of ours: then Hyprland's public
+// workspace list is the source, the same data the native widget reads.
+function urgentCount(moduleIds, nativeWorkspaces) {
+  if (Array.isArray(moduleIds)) return moduleIds.length
+  var n = 0, list = Array.isArray(nativeWorkspaces) ? nativeWorkspaces : []
+  for (var i = 0; i < list.length; i++) if (list[i] && list[i].urgent === true) n++
+  return n
+}
+
 // What a click does: the bar comes back on left and right click; the middle
 // button opens the Control Center.
 function clickAction(button) {

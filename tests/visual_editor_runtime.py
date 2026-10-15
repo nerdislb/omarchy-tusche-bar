@@ -116,12 +116,13 @@ FloatingWindow {
   schedule(350,function(){
    var strip=findItem(editor,function(i){return i.strip===true&&typeof i.move==="function"})
    check(!!strip,"the complete proof is one strip")
-   var row=findItem(strip,function(i){return i.spacing===0&&i.children&&i.children.some(function(c){return c.modelData!==undefined})})
+   editor.width=960
+   var row=findItem(strip,function(i){return i.spacing===-1&&i.children&&i.children.some(function(c){return c.modelData!==undefined})})
    var cells=row.children.filter(function(c){return c.modelData!==undefined})
    check(cells.length===4,"all four parts are in the strip")
    check(cells.every(function(c){return c.y===cells[0].y}),"every part sits on the same line")
-   var ordered=true;for(var i=1;i<cells.length;i++) ordered=ordered&&cells[i].x>=cells[i-1].x+cells[i-1].width-0.5
-   check(ordered,"parts follow each other without overlap")
+   var ordered=true;for(var i=1;i<cells.length;i++) ordered=ordered&&cells[i].x>=cells[i-1].x+cells[i-1].width-1.5&&cells[i].x<=cells[i-1].x+cells[i-1].width
+   check(ordered,"parts follow each other, sharing only their hairline")
    var last=cells[3];check(last.x+last.width<=strip.width+0.5,"the whole strip fits the editor width")
    check(cells.map(function(c){return c.numbered}).join("|")==="1  Logo|2  Workspaces|3  AI quotas|4  Right side","parts are numbered in the bar's order")
    check(Math.abs(strip.implicitHeight-(strip.labelHeight+strip.barSize+12+8))<0.5,"the strip is one row high")
@@ -148,13 +149,44 @@ FloatingWindow {
          schedule(80,function(){
           check(editor.selectedPart==="right","Right at the last part stays")
           check(picks===picked&&JSON.stringify(opts)===before,"walking along the strip stages nothing")
-          testMotion()
+          testNarrowStrip()
          })
         })
        })
       })
      })
     })
+   })
+  })
+ }
+
+ function testNarrowStrip() {
+  // a narrow editor: the strip continues on the next line instead of cutting a part off
+  editor.width=380
+  schedule(300,function(){
+   var strip=findItem(editor,function(i){return i.strip===true&&typeof i.move==="function"})
+   var row=findItem(strip,function(i){return i.spacing===-1&&i.children&&i.children.some(function(c){return c.modelData!==undefined})})
+   var cells=row.children.filter(function(c){return c.modelData!==undefined})
+   var rows={};cells.forEach(function(c){rows[Math.round(c.y)]=true})
+   check(Object.keys(rows).length>=2,"a narrow strip wraps onto further lines")
+   check(cells.every(function(c){return c.x>=-0.5&&c.x+c.width<=editor.width+1.5}),"no part reaches past the editor edge")
+   check(cells.every(function(c){return c.y+c.height<=strip.implicitHeight+0.5}),"the strip's height holds every line")
+   check(strip.implicitHeight>strip.labelHeight+strip.barSize+12+8+1,"the strip grew to hold the wrapped lines")
+   // arrow keys still reach the last part, wherever it sits
+   editor.selectedPart="logo";cells[0].forceActiveFocus(Qt.TabFocusReason)
+   schedule(60,function(){
+    var steps=0
+    function next() {
+     if(steps<3){steps++;keyDriver.keyClick(Qt.Key_Right,Qt.NoModifier,0);schedule(70,next);return}
+     check(editor.selectedPart==="right"&&cells[3].activeFocus,"Right reaches the last part on the wrapped strip")
+     editor.width=960
+     schedule(200,function(){
+      var again=findItem(editor,function(i){return i.strip===true&&typeof i.move==="function"})
+      check(Math.abs(again.implicitHeight-(again.labelHeight+again.barSize+12+8))<0.5,"the strip returns to one line when there is room")
+      testMotion()
+     })
+    }
+    next()
    })
   })
  }

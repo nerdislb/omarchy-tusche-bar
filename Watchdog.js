@@ -70,9 +70,12 @@ function describe(state, enabled, now) {
     return { state: "issue", detail: "The island stayed silent, so Omarchy's notification service was handed back (" + s.handedBacks +
       (s.handedBacks === 1 ? " time" : " times") + " since the shell started). Fix the island, then switch its notifications off and on." }
   if (!enabled) return { state: "ok", detail: "Not needed: Omarchy's notification service is running" }
+  // looked, and the island's marker is not there: somebody else disabled the service, nothing to watch
+  if (!s.armed && typeof s.lastCheck === "number" && isFinite(s.lastCheck))
+    return { state: "ok", detail: "Omarchy's notification service is off, but not through the island (no takeover marker): nothing to watch; it looks again when shell.json changes" }
   if (s.misses > 0)
     return { state: "issue", detail: "The island did not answer " + s.misses + " of " + MISSES + " times; Omarchy's notifications go back after the third" }
-  if (s.lastOk === -Infinity || s.lastOk === undefined)
+  if (typeof s.lastOk !== "number" || !isFinite(s.lastOk))
     return { state: "ok", detail: "Armed: first look shortly after the shell starts, then every " + Math.round(SLOW_MS / 60000) + " minutes" }
   var minutes = Math.max(0, Math.round((now - s.lastOk) / 60000))
   return { state: "ok", detail: "Armed: the island answered " + (minutes < 1 ? "just now" : minutes + " min ago") +

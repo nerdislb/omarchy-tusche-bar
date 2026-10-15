@@ -54,6 +54,14 @@ test('the words for assistive technology list battery before workspaces', () => 
   assert.equal(model.describe(s({battery: bat(0.12), urgent: 1}), 0.12), 'battery low at 12 percent, a workspace needs you');
   assert.equal(model.describe(s({battery: bat(0.9), urgent: 2}), 0.9), '2 workspaces need you');
 });
+test('urgent workspaces come from our module when there is one, else from the native list', () => {
+  assert.equal(model.urgentCount([3, 7], [{urgent: true}, {urgent: true}, {urgent: true}]), 2, 'our module wins');
+  assert.equal(model.urgentCount([], [{urgent: true}]), 0, 'an empty answer from our module is an answer');
+  assert.equal(model.urgentCount(null, [{urgent: true}, {urgent: false}, {urgent: true}, {}, null]), 2);
+  assert.equal(model.urgentCount(undefined, [{urgent: 'yes'}]), 0, 'only a real true counts');
+  for (const odd of [undefined, null, 'x', {}]) assert.equal(model.urgentCount(null, odd), 0);
+  assert.equal(model.urgentCount('x', []), 0);
+});
 test('a click brings the bar back; only the middle button opens the Control Center', () => {
   assert.equal(model.clickAction('primary'), 'show');
   assert.equal(model.clickAction('secondary'), 'show');
@@ -64,7 +72,8 @@ test('a click brings the bar back; only the middle button opens the Control Cent
 test('the window reads public services only and wires clicks through the model', () => {
   const seal = read('FocusSeal.qml');
   assert(/import Quickshell\.Services\.UPower/.test(seal));
-  assert(/readonly property var urgentIds: \{\s*var w = visible \? Bridge\.ModuleBus\.pick\("workspaces"\) : null/.test(seal), 'workspaces are read only while the seal shows');
+  assert(/readonly property int urgentCount: \{\s*if \(!visible\) return 0/.test(seal), 'workspaces are read only while the seal shows');
+  assert(seal.includes('Model.urgentCount(w && w.urgentIds ? w.urgentIds : null, native)') && /import Quickshell\.Hyprland/.test(seal), 'native workspaces are the fallback');
   assert(!/Process|FileView|execDetached|hyprctl/.test(seal), 'no processes of its own');
   assert(seal.includes('mouse.button === Qt.MiddleButton ? "middle" : "primary"'));
   assert(seal.includes('if (Model.clickAction(button) === "open") host.open(\'{"area":"quick"}\')'));

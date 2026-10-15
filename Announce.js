@@ -128,6 +128,12 @@ function release(g, now) {
   return { state: g, emit: null, delay: Math.max(1, g.last + MIN_GAP_MS - now) }
 }
 
+// A line that waited out the rate limit is only still true while its source is
+// there: a source that disappeared in the meantime takes its waiting line along.
+function stillTrue(state, hint) {
+  return !!(hint && state && state.enabled === true && state.channels && state.channels[hint.kind])
+}
+
 // The command line for Omarchy's OSD. An argv, never a shell string: the text
 // can carry a device's own name.
 function argv(hint) {

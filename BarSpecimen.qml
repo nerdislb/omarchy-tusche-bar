@@ -33,12 +33,13 @@ Item {
   readonly property var metal: quiet && quiet.metal ? quiet.metal : null
   readonly property var parts: part ? [part] : Visual.PARTS
   // The complete proof is one strip: the parts in the bar's own order, each at its
-  // natural width, numbered above, inside one bar-coloured frame. A single part
-  // (a variant card) fills its card.
+  // natural width, numbered above, with joined frames. When the editor is too narrow
+  // for all of them the strip continues on the next line (a Flow), so no part is ever
+  // cut off or out of reach. A single part (a variant card) fills its card.
   readonly property bool strip: part === ""
   readonly property real labelHeight: Style.space(22)
   readonly property real cellHeight: barSize + Style.space(43)
-  implicitHeight: strip ? labelHeight + barSize + Style.space(12) + Style.space(8) : cellHeight
+  implicitHeight: strip ? partRow.height + Style.space(8) : cellHeight
   signal partPicked(string key)
   // arrow keys walk along the strip; choosing a part only changes what is shown, never a setting
   function move(from, delta) {
@@ -62,19 +63,10 @@ Item {
     opacity: 0.65
     color: root.foreground
   }
-  // one frame behind the whole strip: it reads as the bar
-  Rectangle {
-    visible: root.strip
-    y: root.labelHeight
-    width: Math.min(root.width, partRow.width)
-    height: root.barSize + Style.space(12)
-    color: root.background
-    border.width: 1
-    border.color: Util.alpha(Commons.Color.popups.text, 0.22)
-  }
-  Row {
+  Flow {
     id: partRow
-    spacing: 0
+    width: root.width
+    spacing: root.strip ? -1 : 0           // neighbouring frames share their hairline
     Repeater {
       id: cells
       model: root.parts
@@ -88,6 +80,7 @@ Item {
         // strip: as wide as the face (or its label) needs; card: the card
         width: root.strip ? Math.max(Math.ceil(heading.implicitWidth) + Style.space(18), face.width + Style.space(28)) : root.width
         height: root.labelHeight + root.barSize + Style.space(12)
+        z: cell.selected || cell.activeFocus ? 1 : 0
         activeFocusOnTab: root.interactive
         Accessible.role: Accessible.Button
         Accessible.name: (root.strip ? "Part " + (index + 1) + ", " : "") + title
@@ -109,10 +102,9 @@ Item {
           y: root.labelHeight
           width: parent.width
           height: root.barSize + Style.space(12)
-          // the strip draws one frame for all parts; a selected or focused part gets its own
-          color: root.strip ? "transparent" : root.background
-          border.width: cell.selected || cell.activeFocus ? 2 : (root.strip ? 0 : 1)
-          border.color: cell.selected || cell.activeFocus ? root.accent : Util.alpha(Commons.Color.popups.text, 0.16)
+          color: root.background
+          border.width: cell.selected || cell.activeFocus ? 2 : 1
+          border.color: cell.selected || cell.activeFocus ? root.accent : Util.alpha(Commons.Color.popups.text, root.strip ? 0.22 : 0.16)
           clip: true
           Loader {
             id: face
@@ -123,13 +115,6 @@ Item {
               : cell.modelData === "workspaces" ? workspaceFace
               : cell.modelData === "ai" ? quotaFace : statusFace
           }
-        }
-        // a hairline between neighbouring parts of the strip
-        Rectangle {
-          visible: root.strip && cell.index > 0 && !cell.selected
-          x: 0; y: root.labelHeight + Style.space(5)
-          width: 1; height: root.barSize + Style.space(2)
-          color: Util.alpha(Commons.Color.popups.text, 0.16)
         }
         MouseArea {
           anchors.fill: parent

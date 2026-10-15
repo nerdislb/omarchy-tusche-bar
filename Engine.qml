@@ -37,9 +37,10 @@ Item {
     path: Quickshell.env("HOME") + "/.config/omarchy/shell.json"
     watchChanges: true
     onFileChanged: reload()
-    onLoaded: { try { root.config = JSON.parse(text()); root.configLoaded = true } catch (e) {} }
+    onLoaded: { try { root.config = JSON.parse(text()); root.configLoaded = true; root.configSerial++ } catch (e) {} }
   }
   property bool configLoaded: false
+  property int configSerial: 0           // bumped on every successful read of shell.json
   readonly property var entry: {
     var list = config && Array.isArray(config.plugins) ? config.plugins : []
     for (var i = 0; i < list.length; i++) if (list[i] && list[i].id === pluginId) return list[i]
@@ -105,6 +106,7 @@ Item {
   NotificationsWatchdog {
     id: watchdog
     enabled: root.configLoaded && root.takeoverDisabled
+    rearm: root.configSerial
     markerPath: root.stateRoot + "/tusche-island/notifications-takeover"
   }
   // for the Control Center's Health page

@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import Quickshell.Hyprland
 import Quickshell.Services.UPower
 import qs.Commons
 import qs.Commons as Commons
@@ -32,19 +33,21 @@ PanelWindow {
   WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
   ScreenMoveRemap { id: remap; window: sealWindow }
 
-  // Facts: UPower's display device (the same public service the island reads)
-  // and the workspaces the bar's own module reports as urgent. Read only while
-  // the seal is showing.
+  // Facts: UPower's display device (the same public service the island reads) and
+  // the workspaces that want you, from the bar's own workspace module or, with
+  // native workspaces, from Hyprland's public list. Read only while the seal shows.
   readonly property var battery: UPower.displayDevice
   readonly property bool hasBattery: !!(battery && battery.isPresent)
   readonly property real level: hasBattery ? Math.max(0, Math.min(1, Number(battery.percentage) || 0)) : 0
   readonly property bool charging: hasBattery && battery.state !== UPowerDeviceState.Discharging
     && battery.state !== UPowerDeviceState.Empty && battery.state !== UPowerDeviceState.Unknown
-  readonly property var urgentIds: {
-    var w = visible ? Bridge.ModuleBus.pick("workspaces") : null
-    return w && w.urgentIds ? w.urgentIds : []
+  readonly property int urgentCount: {
+    if (!visible) return 0
+    var w = Bridge.ModuleBus.pick("workspaces")
+    var native = Hyprland.workspaces ? Hyprland.workspaces.values.map(function(x) { return { urgent: x.urgent === true } }) : []
+    return Model.urgentCount(w && w.urgentIds ? w.urgentIds : null, native)
   }
-  readonly property var facts: ({ battery: { present: hasBattery, level: level, charging: charging }, urgent: urgentIds.length })
+  readonly property var facts: ({ battery: { present: hasBattery, level: level, charging: charging }, urgent: urgentCount })
   readonly property var sealState: Model.state(facts)
   readonly property string said: Model.describe(sealState, level)
 

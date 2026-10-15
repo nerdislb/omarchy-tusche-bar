@@ -169,6 +169,27 @@ Item {
    compare(a.stateObject().announced, 1)
    compare(canvas.lines.length, 0)
   }
+
+
+  function test_08_a_waiting_line_does_not_outlive_its_source() {
+   Pipewire.defaultAudioSink = canvas.newSink("a", "Dock")
+   var a = createTemporaryObject(make, canvas)
+   wait(120)
+   canvas.offset += 1000
+   Pipewire.defaultAudioSink = canvas.newSink("b", "Dock 2")
+   wait(120)
+   compare(canvas.lines.length, 1)
+   Pipewire.defaultAudioSink = canvas.newSink("c", "Headphones")      // inside the gap: waits
+   wait(120)
+   compare(a.stateObject().waiting, true)
+   Pipewire.defaultAudioSink = null                                    // the output disappears
+   wait(120)
+   compare(a.stateObject().waiting, false)
+   canvas.offset += 3000
+   Pipewire.defaultAudioSink = canvas.newSink("d", "Speakers")         // a new baseline, silent
+   wait(1900)
+   compare(canvas.lines.length, 1)                                     // Headphones was never announced
+  }
  }
 }
 '''

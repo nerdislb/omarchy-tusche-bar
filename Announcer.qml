@@ -69,6 +69,11 @@ Item {
     next = Announce.observe(next, "output", outputSample, now, false)
     next = Announce.observe(next, "bluetooth", bluetoothSample, now, islandShowsBluetooth)
     model = next
+    // a waiting line whose source is gone is dropped, not announced later
+    if (gateState.pending && !Announce.stillTrue(next, gateState.pending)) {
+      gateState = { last: gateState.last, pending: null }
+      gateTimer.stop()
+    }
     if (next.hint && next.hint.seq > announced) {
       announced = next.hint.seq
       var gated = Announce.gate(gateState, next.hint, now)
@@ -85,6 +90,7 @@ Item {
     onTriggered: {
       var released = Announce.release(root.gateState, root.clock())
       root.gateState = released.state
+      if (released.emit && !Announce.stillTrue(root.model, released.emit)) return
       if (released.emit) root.send(released.emit)
       else if (released.delay > 0) { gateTimer.interval = released.delay; gateTimer.restart() }
     }

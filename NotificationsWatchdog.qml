@@ -16,6 +16,7 @@ Item {
   width: 0; height: 0
 
   property bool enabled: false            // the engine: config loaded and omarchy.notifications is disabled
+  property int rearm: 0                   // the engine bumps it whenever shell.json was read again
   property string markerPath: ""
   property int firstMs: Watchdog.FIRST_MS
   property int fastMs: Watchdog.FAST_MS
@@ -27,6 +28,10 @@ Item {
 
   Component.onCompleted: sync()
   onEnabledChanged: sync()
+  // The island takes the service over by touching its marker and then disabling
+  // the plugin, which rewrites shell.json: a rewrite is the cue to look again
+  // while nobody owns the takeover (nothing is scheduled in that state).
+  onRearmChanged: if (enabled && !probe.running && !handback.running && !model.armed) { look.interval = firstMs; look.restart() }
 
   function sync() {
     look.stop()
@@ -46,8 +51,12 @@ Item {
   }
   function onAnswer(text) {
     if (!enabled) return
-    var result = Watchdog.step(model, Watchdog.classify(text), clock())
+    var answer = Watchdog.classify(text)
+    var result = Watchdog.step(model, answer, clock())
     model = result.state
+    // No marker: the island does not own this takeover, so there is nothing to
+    // watch and nothing is scheduled (the next shell.json rewrite re-arms it).
+    if (answer === "nomarker") return
     if (result.action === "handback") {
       note = "Handing Omarchy's notification service back (the island stayed silent) …"
       handback.running = true
@@ -68,8 +77,11 @@ Item {
 
   Process {
     id: handback
+    // The marker goes only if the service is still enabled two seconds later, as in
+    // the island's own hand-back: a reviving island that takes the service over
+    // again keeps its marker, so a later failure is still caught.
     command: ["sh", "-c",
-      "[ -f \"$1\" ] && omarchy-plugin-enable omarchy.notifications && rm -f \"$1\"",
+      "[ -f \"$1\" ] && omarchy-plugin-enable omarchy.notifications || exit 1; sleep 2; jq -e --arg p omarchy.notifications '(.disabledPlugins // []) | index($p)' \"$HOME/.config/omarchy/shell.json\" >/dev/null 2>&1; [ $? -eq 1 ] && rm -f \"$1\"; exit 0",
       "sh", root.markerPath]
     onExited: function(code) {
       if (code === 0) root.model = Watchdog.handedBack(root.model)
