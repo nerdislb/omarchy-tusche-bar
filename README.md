@@ -405,6 +405,12 @@ group may differ) and `state` reports it in `lastResult`.
 
 ## Develop
 
+Papier and Tusche popup cards retain their approved four-sided 2 px outline
+through `BarMaterialCard.qml`, including the Control Center's motion preview.
+This bar-only adapter leaves native layout/border bindings and the shared
+Island material unchanged. Lavur, metal and glass keep their own rims.
+Verify its lifecycle with `python3 tests/card_frame.py`.
+
 `OMARCHY_PATH=/path/to/omarchy ./dev-install.sh`. Custom modules and `.pragma library` code can be cached by the running shell. `dev-install.sh` now publishes immutable code generations and updates only this plugin's owned source URLs before a plugin rescan; layout order and options stay intact. Verify the loaded `moduleDir` and `glass` state via IPC. Each preset change rebuilds the bar (widgets such as AI usage need 2–3 s). Do not restart or kill a secure lock client to apply UI changes. Older installers or native shell/facade changes may still require a full shell restart after unlocking.
 
 Tests: `node tests/regressions.cjs` (with the Tusche Island checkout next to this repository), `node tests/layout_sections.cjs` and `python3 tests/boot_logo.py`.

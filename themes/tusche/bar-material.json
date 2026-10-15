@@ -32,6 +32,7 @@
     }
   },
   "card": {
+    "frame": { "color": "#ffffff", "width": 2 },
     "glow": {
       "color": "#ffffff",
       "alpha": 0.15,

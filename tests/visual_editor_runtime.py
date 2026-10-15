@@ -46,7 +46,7 @@ QtObject {
  property QtObject bar: QtObject { property color background: "#e9edf0"; property color text: "#171c24" }
 }
 ''')
-        for name in ['VisualBarEditor.qml','BarSpecimen.qml','MotionPreview.qml','VisualEditor.js','Presets.js','MaterialCard.qml','InkSheet.qml','MetalShape.qml','GlassFrameGlint.qml','GlassMath.js','GlassBackdrop.qml','GlassSurface.qml']:
+        for name in ['VisualBarEditor.qml','BarSpecimen.qml','MotionPreview.qml','VisualEditor.js','Presets.js','BarMaterialCard.qml','MaterialCard.qml','InkSheet.qml','MetalShape.qml','GlassFrameGlint.qml','GlassMath.js','GlassBackdrop.qml','GlassSurface.qml']:
             shutil.copy2(ROOT / name, tmp / name)
         (tmp / 'modules').mkdir()
         for name in ['QuotaFace.qml','StatusFace.qml','WorkspacesFace.qml','WorkspaceMiniature.qml','ArchLogo.qml','SealLogo.qml']:
@@ -183,7 +183,7 @@ FloatingWindow {
      schedule(200,function(){
       var again=findItem(editor,function(i){return i.strip===true&&typeof i.move==="function"})
       check(Math.abs(again.implicitHeight-(again.labelHeight+again.barSize+12+8))<0.5,"the strip returns to one line when there is room")
-      testMotion()
+      testDryFrames(0)
      })
     }
     next()
@@ -191,6 +191,19 @@ FloatingWindow {
   })
  }
 
+ function testDryFrames(index) {
+  var names=["papier","tusche"]
+  if(index===names.length) {testMotion();return}
+  var name=names[index]
+  setTheme(name);motion.playPopup()
+  schedule(600,function(){
+   var renderer=motion.cardMaterial,frame=renderer.cardFrame
+   check(!!frame&&frame.visible&&frame.parent===renderer.card,"motion preview uses the actual dry frame: "+name)
+   check(frame.border.width===2&&String(frame.border.color)===String(themes[name].material.card.frame.color),"motion preview preserves the approved outline: "+name)
+   check(renderer.roll===1,"dry popup finishes its slower opening: "+name)
+   shot(name+"-motion-frame",function(){motion.stop();testDryFrames(index+1)})
+  })
+ }
  function testMotion() {
   setTheme("smoke")
   check(!motion.popupRunning&&!motion.frameRunning,"motion idle initially")

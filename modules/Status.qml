@@ -401,7 +401,7 @@ Item {
     contentHeight: popup.fittedContentHeight(content.implicitHeight)
 
     // Theme material: the popup rolls out of the bar as a card.
-    Root.MaterialCard { panel: popup; material: Bridge.ModuleBus.material }
+    Root.BarMaterialCard { panel: popup; material: Bridge.ModuleBus.material }
 
     Item {
       id: popupKeys

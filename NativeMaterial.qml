@@ -17,7 +17,7 @@ QtObject {
   // panels that already carry a MaterialCard
   property var dressed: []
   property var decorations: []
-  readonly property Component cardComponent: Component { MaterialCard {} }
+  readonly property Component cardComponent: Component { BarMaterialCard {} }
 
   // A KeyboardPanel (Omarchy's Ui/KeyboardPanel.qml), recognised by its API.
   function isPanel(o) {
