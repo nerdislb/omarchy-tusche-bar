@@ -180,7 +180,7 @@ Item {
 
   function captureBase() {
     var current = currentLayout
-    if (!current || (!current.left && !current.center && !current.right)) return "no bar layout yet"
+    if (!current || !Presets.layoutSections(current).some(function(k) { return Array.isArray(current[k]) })) return "no bar layout yet"
     // base.json lost while our modules are live: rebuild the native layout
     // from them (folded widgets keep their settings) instead of dead-ending.
     var reconstructed = Presets.hasOwn(current)
@@ -328,7 +328,7 @@ Item {
   // own settings (interval, disabled providers); otherwise limits froze at
   // their last value (e.g. a 5-hour limit at 100 % long after its reset).
   readonly property var agentsSettings: {
-    var lists = baseLayout ? [baseLayout.left, baseLayout.center, baseLayout.right] : []
+    var lists = baseLayout ? Presets.layoutSections(baseLayout).map(function(k) { return baseLayout[k] }) : []
     for (var s = 0; s < lists.length; s++)
       for (var i = 0; i < (lists[s] || []).length; i++)
         if (Presets.entryId(lists[s][i]) === "omarchy.agents") return typeof lists[s][i] === "object" ? lists[s][i] : ({})
@@ -336,7 +336,7 @@ Item {
   }
   readonly property bool usageFolded: {
     var folded = Presets.foldedIds(options)
-    var lists = baseLayout ? [baseLayout.left, baseLayout.center, baseLayout.right] : []
+    var lists = baseLayout ? Presets.layoutSections(baseLayout).map(function(k) { return baseLayout[k] }) : []
     for (var s = 0; s < lists.length; s++)
       for (var i = 0; i < (lists[s] || []).length; i++) {
         var id = Presets.entryId(lists[s][i])

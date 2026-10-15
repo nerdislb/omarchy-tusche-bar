@@ -148,7 +148,7 @@ function islandShowsBluetooth(config) {
   if (disabled.indexOf(ISLAND_ID) >= 0) return false
   var list = Array.isArray(config.plugins) ? config.plugins.slice() : []
   var layout = config.bar && config.bar.layout ? config.bar.layout : {}
-  ;["left", "center", "right"].forEach(function(side) {
+  ;Object.keys(layout).forEach(function(side) {
     if (Array.isArray(layout[side])) list = list.concat(layout[side])
   })
   return list.some(function(entry) {

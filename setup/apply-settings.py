@@ -61,8 +61,10 @@ def place_island(look, dry):
     for sec in ('left', 'center', 'right'):
         layout.setdefault(sec, [])
     entry = {'id': ISLAND, **settings}
-    for sec in ('left', 'center', 'right'):
-        for i, e in enumerate(layout[sec]):
+    for sec, entries in layout.items():
+        if not isinstance(entries, list):
+            continue
+        for i, e in enumerate(entries):
             if entry_id(e) == ISLAND:
                 old = e if isinstance(e, dict) else {'id': ISLAND}
                 layout[sec][i] = {**old, **entry}

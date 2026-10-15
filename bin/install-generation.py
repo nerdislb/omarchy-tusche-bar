@@ -54,7 +54,7 @@ def install(source, target, config):
         # Publish the complete generation in one rename on the same filesystem;
         # the manifest never points to a half-copied payload.
         folder.parent.mkdir(parents=True, exist_ok=True)
-        with tempfile.TemporaryDirectory(prefix='.staging-', dir=folder.parent) as scratch:
+        with tempfile.TemporaryDirectory(prefix='.staging-', dir=target.parent.parent) as scratch:
             stage = Path(scratch) / generation
             stage.mkdir()
             for p in files:
@@ -75,8 +75,10 @@ def install(source, target, config):
         current = json.loads(config.read_text())
         next_config = json.loads(json.dumps(current))
         layout = next_config.get('bar', {}).get('layout', {})
-        for section in ['left', 'center', 'right']:
-            for entry in layout.get(section, []):
+        for entries in layout.values():
+            if not isinstance(entries, list):
+                continue
+            for entry in entries:
                 if not isinstance(entry, dict) or not str(entry.get('id', '')).startswith('tusche.'):
                     continue
                 old = entry.get('source')

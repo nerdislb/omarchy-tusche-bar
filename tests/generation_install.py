@@ -20,10 +20,18 @@ with tempfile.TemporaryDirectory(prefix='generation-test-') as tmp:
     config=root/'shell.json'
     before={'bar':{'layout':{'left':[{'id':'tusche.workspaces','source':str(target/'modules/Workspaces.qml'),'logo':'seal','unknown':{'keep':True}}], 'center':[{'id':'other','source':'/other/Widget.qml'}], 'right':[]},'position':'top'},'plugins':[{'id':'some-plugin','tokenRef':'do-not-touch','options':{'x':42}}],'unknown':[1,2,3]}
     config.write_text(json.dumps(before));config.chmod(0o600)
+    # Modules can be dragged into any section, including the tray drawer.
+    for section in ['centerBegin', 'centerEnd', 'tray', 'future']:
+        before['bar']['layout'][section] = [{'id':'tusche.' + section, 'source':str(target/'modules/Workspaces.qml'), 'keep':section}]
+    before['bar']['layout']['metadata'] = {'keep':True}
+    config.write_text(json.dumps(before))
     first=mod.install(source,target,config)
     after=json.loads(config.read_text())
     assert after['bar']['layout']['left'][0]['source']==str(target/'generations'/first/'modules/Workspaces.qml')
     normalized=json.loads(json.dumps(after));normalized['bar']['layout']['left'][0]['source']=before['bar']['layout']['left'][0]['source']
+    for section in ['centerBegin', 'centerEnd', 'tray', 'future']:
+        assert after['bar']['layout'][section][0]['source']==str(target/'generations'/first/'modules/Workspaces.qml')
+        normalized['bar']['layout'][section][0]['source']=before['bar']['layout'][section][0]['source']
     assert normalized==before, 'all unrelated options and entries preserved'
     assert config.stat().st_mode & 0o777 == 0o600
     raw=config.read_bytes()
@@ -36,6 +44,9 @@ with tempfile.TemporaryDirectory(prefix='generation-test-') as tmp:
     after=json.loads(config.read_text())
     assert after['bar']['layout']['left'][0]['source']==str(target/'generations'/second/'modules/Workspaces.qml')
     normalized=json.loads(json.dumps(after));normalized['bar']['layout']['left'][0]['source']=before['bar']['layout']['left'][0]['source']
+    for section in ['centerBegin', 'centerEnd', 'tray', 'future']:
+        assert after['bar']['layout'][section][0]['source']==str(target/'generations'/second/'modules/Workspaces.qml')
+        normalized['bar']['layout'][section][0]['source']=before['bar']['layout'][section][0]['source']
     assert normalized==before
     (target/'generations'/second/'Engine.qml').write_text('local edit')
     try: mod.install(source,target,config)

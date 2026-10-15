@@ -407,7 +407,9 @@ group may differ) and `state` reports it in `lastResult`.
 
 `OMARCHY_PATH=/path/to/omarchy ./dev-install.sh`. Custom modules and `.pragma library` code can be cached by the running shell. `dev-install.sh` now publishes immutable code generations and updates only this plugin's owned source URLs before a plugin rescan; layout order and options stay intact. Verify the loaded `moduleDir` and `glass` state via IPC. Each preset change rebuilds the bar (widgets such as AI usage need 2–3 s). Do not restart or kill a secure lock client to apply UI changes. Older installers or native shell/facade changes may still require a full shell restart after unlocking.
 
-Tests: `node tests/regressions.cjs` (with the Tusche Island checkout next to this repository) and `python3 tests/boot_logo.py`.
+Tests: `node tests/regressions.cjs` (with the Tusche Island checkout next to this repository), `node tests/layout_sections.cjs` and `python3 tests/boot_logo.py`.
+
+Omarchy's centre-box layout (`centerBegin`, `center`, `centerEnd`) and the tray drawer are preserved by presets and generation updates. Put the island alone in `center` to keep it centred independently of neighbouring widgets. On current Omarchy, `centerAnchor` is obsolete. Native widgets added after the saved baseline are retained when changing presets.
 
 Presentation checks: `node tests/presentation.cjs`, `python3 tests/focus_mode.py`,
 `node tests/workspace_geometry.cjs`, `node tests/announce.cjs`, `node tests/watchdog.cjs`,

@@ -156,7 +156,7 @@ function foldedIds(options) {
 }
 
 function removeIds(layout, ids) {
-  var sections = ["left", "center", "right"]
+  var sections = layoutSections(layout)
   for (var s = 0; s < sections.length; s++)
     layout[sections[s]] = layout[sections[s]].filter(function(e) { return ids.indexOf(entryId(e)) === -1 })
 }
@@ -177,10 +177,25 @@ function copy(v) { return JSON.parse(JSON.stringify(v)) }
 
 function entryId(e) { return typeof e === "string" ? e : (e && e.id ? String(e.id) : "") }
 
+// Omarchy's centre box has two flanking sections; the tray is a section too.
+// Keep the legacy shape when those sections are absent, and preserve future
+// array sections plus non-section metadata rather than silently dropping them.
+function layoutSections(layout) {
+  var names = ["left", "centerBegin", "center", "centerEnd", "right", "tray"]
+  var out = names.filter(function(k) { return ["left", "center", "right"].indexOf(k) >= 0 || (layout && Array.isArray(layout[k])) })
+  Object.keys(layout || {}).forEach(function(k) { if (Array.isArray(layout[k]) && out.indexOf(k) < 0) out.push(k) })
+  return out
+}
+function emptyLayout(layout) {
+  var out = copy(layout || {})
+  layoutSections(layout).forEach(function(k) { out[k] = [] })
+  return out
+}
+
 // The user's layout without anything this plugin added.
 function stripOwn(layout) {
-  var out = { left: [], center: [], right: [] }
-  var sections = ["left", "center", "right"]
+  var out = emptyLayout(layout)
+  var sections = layoutSections(layout)
   for (var s = 0; s < sections.length; s++) {
     var list = layout && Array.isArray(layout[sections[s]]) ? layout[sections[s]] : []
     for (var i = 0; i < list.length; i++)
@@ -190,7 +205,7 @@ function stripOwn(layout) {
 }
 
 function hasOwn(layout) {
-  var sections = ["left", "center", "right"]
+  var sections = layoutSections(layout)
   for (var s = 0; s < sections.length; s++) {
     var list = layout && Array.isArray(layout[sections[s]]) ? layout[sections[s]] : []
     for (var i = 0; i < list.length; i++) if (isOwn(entryId(list[i]))) return true
@@ -201,7 +216,7 @@ function hasOwn(layout) {
 // Replace the ids in `remove` (in whichever section they sit) by `entry`,
 // placed where the first of them was. Returns true if something matched.
 function replaceGroup(layout, remove, entry) {
-  var sections = ["left", "center", "right"]
+  var sections = layoutSections(layout)
   for (var s = 0; s < sections.length; s++) {
     var list = layout[sections[s]]
     var at = -1
@@ -237,7 +252,7 @@ function build(base, options, moduleDir) {
     // module mounts them invisibly so their native popups keep working.
     var embeds = {}
     var fold = foldedIds(o)
-    var sections = ["left", "center", "right"]
+    var sections = layoutSections(layout)
     for (var si = 0; si < sections.length; si++) {
       var list = layout[sections[si]]
       for (var li = 0; li < list.length; li++) {
@@ -262,7 +277,7 @@ function build(base, options, moduleDir) {
 }
 
 function insertAfter(layout, id, entry) {
-  var sections = ["left", "center", "right"]
+  var sections = layoutSections(layout)
   for (var s = 0; s < sections.length; s++) {
     var list = layout[sections[s]]
     for (var i = 0; i < list.length; i++) if (entryId(list[i]) === id) { list.splice(i + 1, 0, entry); return true }
@@ -271,7 +286,7 @@ function insertAfter(layout, id, entry) {
 }
 
 function insertBefore(layout, id, entry) {
-  var sections = ["left", "center", "right"]
+  var sections = layoutSections(layout)
   for (var s = 0; s < sections.length; s++) {
     var list = layout[sections[s]]
     for (var i = 0; i < list.length; i++) if (entryId(list[i]) === id) { list.splice(i, 0, entry); return true }
@@ -319,17 +334,36 @@ function keepLook(next, current) {
 
 // Widget settings edited through folded native popups survive preset changes.
 function mergeEmbeddedSettings(base, current) {
-  var out = copy(base), embeds = {}, native = {}
-  ;["left", "center", "right"].forEach(function(section) {
+  var out = copy(base), embeds = {}, native = {}, known = {}
+  layoutSections(current).forEach(function(section) {
     ;(current && current[section] || []).forEach(function(entry) {
-      if (isOwn(entryId(entry)) && ownName(entryId(entry)) === "status") embeds = entry.embeds || {}
-      else if (entry && typeof entry === "object" && !isOwn(entryId(entry))) native[entryId(entry)] = entry
+      if (isOwn(entryId(entry)) && ownName(entryId(entry)) === "status") Object.assign(embeds, entry.embeds || {})
+      else if (entry && !isOwn(entryId(entry))) native[entryId(entry)] = entry
     })
   })
-  ;["left", "center", "right"].forEach(function(section) {
+  layoutSections(base).forEach(function(section) {
     out[section] = (out[section] || []).map(function(entry) {
       var id = entryId(entry)
+      known[id] = true
       return embeds[id] ? Object.assign({}, copy(embeds[id]), {id: id}) : native[id] ? copy(native[id]) : entry
+    })
+  })
+  // Native plugins added since the original baseline (including drawer widgets)
+  // must not disappear on the next preset change. Keep their current section
+  // and their next surviving neighbour, without recapturing our own modules.
+  layoutSections(current).forEach(function(section) {
+    var list = current && Array.isArray(current[section]) ? current[section] : []
+    if (!Array.isArray(out[section])) out[section] = []
+    list.forEach(function(entry, index) {
+      var id = entryId(entry)
+      if (!id || isOwn(id) || known[id]) return
+      var at = out[section].length
+      for (var i = index + 1; i < list.length; i++) {
+        var next = entryId(list[i])
+        var found = out[section].map(entryId).indexOf(next)
+        if (found >= 0) { at = found; break }
+      }
+      out[section].splice(at, 0, copy(entry)); known[id] = true
     })
   })
   return out
@@ -340,7 +374,7 @@ function mergeEmbeddedSettings(base, current) {
 // back with their settings (kept in the status entry); order within a group
 // follows the catalogue, not necessarily the user's original order.
 function reconstructBase(layout) {
-  var out = { left: [], center: [], right: [] }
+  var out = emptyLayout(layout)
   var seen = {}
   function push(section, entry) {
     var id = entryId(entry)
@@ -348,7 +382,7 @@ function reconstructBase(layout) {
     seen[id] = true
     out[section].push(copy(entry))
   }
-  ;["left", "center", "right"].forEach(function(section) {
+  ;layoutSections(layout).forEach(function(section) {
     ;(layout && Array.isArray(layout[section]) ? layout[section] : []).forEach(function(entry) {
       var id = entryId(entry), own = isOwn(id) ? ownName(id) : ""
       if (own === "workspaces") { push(section, "omarchy.menu"); push(section, "omarchy.workspaces") }
@@ -361,13 +395,13 @@ function reconstructBase(layout) {
     })
   })
   // omarchy.agents is folded by the AI and right-side modules only
-  var folding = ["left", "center", "right"].some(function(section) {
+  var folding = layoutSections(layout).some(function(section) {
     return (layout && Array.isArray(layout[section]) ? layout[section] : []).some(function(e) {
       var id = entryId(e); return isOwn(id) && (ownName(id) === "status" || ownName(id) === "quota") })
   })
   if (folding && !seen["omarchy.agents"]) out.left.push("omarchy.agents")
   // plain string entries stay plain
-  ;["left", "center", "right"].forEach(function(section) {
+  ;layoutSections(layout).forEach(function(section) {
     out[section] = out[section].map(function(e) { return typeof e === "object" && Object.keys(e).length === 1 ? e.id : e })
   })
   return out

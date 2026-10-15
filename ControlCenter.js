@@ -87,7 +87,7 @@ function valueLabel(spec, v) {
 // island writes them); a plugins[] entry is the fallback.
 function islandEntry(config) {
   var layout = config && config.bar && config.bar.layout ? config.bar.layout : {}
-  var sections = ["left", "center", "right"]
+  var sections = Presets.layoutSections(layout)
   for (var s = 0; s < sections.length; s++) {
     var list = Array.isArray(layout[sections[s]]) ? layout[sections[s]] : []
     for (var i = 0; i < list.length; i++) if (list[i] && typeof list[i] === "object" && list[i].id === ISLAND_ID) return list[i]
@@ -387,7 +387,10 @@ function healthChecks(f) {
   else add("menumodel", "Menu model", "unknown", "Comparing with Omarchy's copy …")
 
   var a = f.anchor
-  if (!a || !a.anchor) add("anchor", "Centre anchor", "ok", "No centre anchor set: Omarchy centres the middle group as a whole")
+  if (a && a.modern) add("anchor", "Centre layout", a.anchor ? "issue" : "ok", a.anchor
+      ? "This layout uses Omarchy's centre box; remove the obsolete bar.centerAnchor setting"
+      : "Omarchy centres the centre box (" + (a.centre.join(", ") || "empty") + "); centerBegin and centerEnd stay on its two sides")
+  else if (!a || !a.anchor) add("anchor", "Centre layout", "ok", "Omarchy centres the middle group as a whole")
   else if ((a.centre || []).indexOf(a.anchor) >= 0) add("anchor", "Centre anchor", "ok", a.anchor + " anchors the centre")
   else add("anchor", "Centre anchor", "issue", "bar.centerAnchor names " + a.anchor + ", which is not in the centre section: Omarchy centres the whole group and the middle drifts with its widths" +
            (a.suggest ? " · set it to " + a.suggest : ""))
@@ -413,7 +416,8 @@ function anchorFacts(config) {
   if (anchor && ids.indexOf(anchor) < 0) {
     if (/island$/.test(anchor)) for (var i = 0; i < ISLAND_IDS.length; i++) if (ids.indexOf(ISLAND_IDS[i]) >= 0) suggest = ISLAND_IDS[i]
   }
-  return { anchor: anchor, centre: ids, suggest: suggest }
+  return { anchor: anchor, centre: ids, suggest: suggest,
+           modern: !!(bar.layout && (Array.isArray(bar.layout.centerBegin) || Array.isArray(bar.layout.centerEnd))) }
 }
 // installed-generation.json → the generation name, or "".
 function generationOf(text) {
