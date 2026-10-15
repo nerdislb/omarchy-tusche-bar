@@ -6,6 +6,23 @@ const root = path.resolve(__dirname, '..');
 // The Tusche Island next to the bar (its folder before the rename as the fallback).
 const islandDir = process.env.TUSCHE_ISLAND_DIR || ['../omarchy-tusche-island', '../omarchy-amiga-island'].map(d => path.resolve(root, d)).find(d => fs.existsSync(d));
 assert(islandDir, 'the Tusche Island repository next to the bar (../omarchy-tusche-island)');
+// Bar-only variant B: all menu levels and dressed native popups use the
+// framed card; Island's shared material remains untouched.
+{
+  for (const [file, re] of [
+    ['DropMenu.qml', /BarMaterialCard \{ id: materialCard; panel: menu;/],
+    ['NativeMaterial.qml', /Component \{ BarMaterialCard \{\} \}/],
+    ['modules/Status.qml', /Root\.BarMaterialCard \{ panel: popup;/],
+    ['modules/Quota.qml', /Root\.BarMaterialCard \{ panel: popup;/],
+    ['MotionPreview.qml', /BarMaterialCard \{ id: popupMaterialRenderer;/],
+  ]) assert.match(fs.readFileSync(path.join(root, file), 'utf8'), re, file + ': persistent frame is wired');
+  for (const t of ['tusche-lavur', 'papier-lavur', 'chrom', 'platin', 'frost', 'smoke']) {
+    const mat = JSON.parse(fs.readFileSync(path.join(root, 'themes', t, 'bar-material.json'), 'utf8'));
+    assert.equal(mat.card.frame, undefined, t + ': retains its own rim');
+  }
+  console.log('PASS: bar-only variant B wiring and special-theme isolation');
+}
+
 const ctx = {};
 vm.createContext(ctx);
 vm.runInContext(fs.readFileSync(path.join(root, 'Presets.js'), 'utf8').replace('.pragma library', ''), ctx);
@@ -212,9 +229,9 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
   const islandCard = path.join(islandDir, 'views/MaterialCard.qml');
   if (fs.existsSync(islandCard)) assert.equal(strip(fs.readFileSync(islandCard, 'utf8')), strip(mc), 'both MaterialCard copies alike');
   // callers hand over the panel and the material only
-  for (const [file, re] of [['DropMenu.qml', /MaterialCard \{ id: materialCard; panel: menu; material: Bridge\.ModuleBus\.material \}/],
-                            ['modules/Status.qml', /Root\.MaterialCard \{ panel: popup; material: Bridge\.ModuleBus\.material \}/],
-                            ['modules/Quota.qml', /Root\.MaterialCard \{ panel: popup; material: Bridge\.ModuleBus\.material \}/]])
+  for (const [file, re] of [['DropMenu.qml', /BarMaterialCard \{ id: materialCard; panel: menu; material: Bridge\.ModuleBus\.material \}/],
+                            ['modules/Status.qml', /Root\.BarMaterialCard \{ panel: popup; material: Bridge\.ModuleBus\.material \}/],
+                            ['modules/Quota.qml', /Root\.BarMaterialCard \{ panel: popup; material: Bridge\.ModuleBus\.material \}/]])
     assert.match(fs.readFileSync(path.join(root, file), 'utf8'), re, file);
   const engine = fs.readFileSync(path.join(root, 'Engine.qml'), 'utf8');
   assert.match(engine, /current\/theme\.name/, 'reloads the material on theme switch');
@@ -915,7 +932,7 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
 {
   const nm = fs.readFileSync(path.join(root, 'NativeMaterial.qml'), 'utf8');
   const st = fs.readFileSync(path.join(root, 'modules/Status.qml'), 'utf8');
-  assert(nm.includes('readonly property Component cardComponent: Component { MaterialCard {} }'));
+  assert(nm.includes('readonly property Component cardComponent: Component { BarMaterialCard {} }'));
   assert(nm.includes('cardComponent.createObject(holder, {'));
   assert(nm.includes('edge: false'), 'no extra line or shadow on Omarchy popups without material');
   assert(/o\.borderSpec !== undefined && o\.anchorItem !== undefined/.test(nm));

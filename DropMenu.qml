@@ -108,7 +108,7 @@ KeyboardPanel {
   Behavior on contentHeight { NumberAnimation { duration: Style.duration(160); easing.type: Easing.OutCubic } }
 
   OmarchyMenuSource { id: source; live: menu.visible; appLibrary: menu.appLibrary }
-  MaterialCard { id: materialCard; panel: menu; material: Bridge.ModuleBus.material }
+  BarMaterialCard { id: materialCard; panel: menu; material: Bridge.ModuleBus.material }
   // how far the card is out (rolled, grown or faded): the logo stays its tab until it is back in the bar
   readonly property real cardPresence: materialCard.presence
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the real NativeMaterial.qml with stub MaterialCard and ModuleBus, off the desktop.
+"""Run the real NativeMaterial.qml with stub BarMaterialCard and ModuleBus, off the desktop.
 
 A destroyed QML object leaves a truthy JS wrapper whose properties throw. After a
 plugin reload the status report (`tusche-bar state`) kept throwing because
@@ -66,7 +66,7 @@ def run():
     with tempfile.TemporaryDirectory(prefix='tusche-native-material-') as folder:
         tmp = Path(folder)
         shutil.copy2(ROOT / 'NativeMaterial.qml', tmp / 'NativeMaterial.qml')
-        (tmp / 'MaterialCard.qml').write_text('import QtQuick\nQtObject { property var panel; property bool edge; property var material; function stateObject() { return {ok: true} } }\n')
+        (tmp / 'BarMaterialCard.qml').write_text('import QtQuick\nQtObject { property var panel; property bool edge; property var material; function stateObject() { return {ok: true} } }\n')
         (tmp / 'bridge').mkdir()
         (tmp / 'bridge/qmldir').write_text('singleton ModuleBus 1.0 ModuleBus.qml\n')
         (tmp / 'bridge/ModuleBus.qml').write_text('pragma Singleton\nimport QtQuick\nQtObject { property var material: null }\n')

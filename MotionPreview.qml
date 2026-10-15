@@ -178,7 +178,7 @@ Item {
               Behavior on opacity { NumberAnimation { duration: root.reduced ? 0 : 140; easing.type: Easing.OutCubic } }
               Item {
                 anchors.fill: parent
-                MaterialCard { id: popupMaterialRenderer; panel: popupPanel; material: root.popupMaterial }
+                BarMaterialCard { id: popupMaterialRenderer; panel: popupPanel; material: root.popupMaterial }
                 Column {
                   x: Style.space(14); y: Style.space(14)
                   width: parent.width - Style.space(28)
