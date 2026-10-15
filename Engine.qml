@@ -110,6 +110,13 @@ Item {
   // for the Control Center's Health page
   readonly property var watchdogModel: watchdog.model
   readonly property bool watchdogEnabled: watchdog.enabled
+  // Option urgentFrame: a window that asks for you takes the urgent colour as
+  // its inactive border until it is focused or closed (Hyprland draws it).
+  UrgentFrame {
+    id: urgentFrame
+    enabled: root.configLoaded && root.options.urgentFrame === "on"
+    run: function(argv) { Quickshell.execDetached(argv) }
+  }
   FocusSeal { host: root }
   property string focusResult: ""
   property bool focusReleasePending: false
@@ -691,7 +698,7 @@ Item {
     function state(): string {
       return JSON.stringify({ preset: root.presetId, options: root.options, hasBase: root.baseLayout !== null,
                               screenProfiles: root.screenProfiles, focus: { busy: root.focusBusy, result: root.focusResult },
-                              announce: announcer.stateObject(), watchdog: watchdog.stateObject(),
+                              announce: announcer.stateObject(), watchdog: watchdog.stateObject(), urgentFrame: urgentFrame.stateObject(),
                               open: root.isOpen, dropMenuOpen: root.dropMenuOpen, saved: root.savedPresets.map(function(p) { return p.name }), lastResult: root.lastResult, moduleDir: root.moduleDir,
                               keys: { option: root.keysOption, bindings: root.keysState },
                               edge: { option: root.options.edge, material: root.material ? (root.material.edge ? root.material.edge.kind : "no edge") : null, themeEdge: root.themeEdgeVisible, barReady: root.barReady },

@@ -14,7 +14,7 @@ let checks = 0;
 function test(label, run) { run(); checks++; console.log('PASS ' + label); }
 
 test('optional additions default off and never rebuild the native layout', () => {
-  for (const key of ['statusHints','seal','dayline']) {
+  for (const key of ['statusHints','seal','dayline','urgentFrame']) {
     assert.equal(p.normalizeOptions({})[key], 'off');
     assert.equal(p.layoutDiffers({[key]:'on'},{}), false);
     assert.equal(p.keepLook(p.PRESETS[1].options,{[key]:'on'})[key], 'on');

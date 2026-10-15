@@ -342,7 +342,18 @@ On Quickshell 0.3.2 / Lua Hyprland, native monitor/workspace metadata can be
 empty even when native client metadata works. One shared, bounded read-only
 `hyprctl` batch supplies sanitized geometry in that case; no titles/PIDs are kept.
 
-Three optional look settings default **off** and survive preset changes:
+Four optional look settings default **off** and survive preset changes:
+
+- **Urgent window frame** (`urgentFrame`): a window that asks for you (Hyprland's
+  `urgent` event) gets the theme's urgent colour as its inactive border, until you
+  focus it or it closes; turning the option off, or a theme switch, lets go of or
+  re-colours the windows that are still urgent. Hyprland draws the border: the
+  engine only sets and unsets one window property (`hyprctl setprop address:0x…
+  inactive_border_color …`, an argv per window, address and colour validated).
+  No overlay, no animation, no timer and nothing runs while nothing is urgent.
+  The workspace pips and the focus seal still show the same thing for other
+  workspaces. A Hyprland config reload resets the property, as it does for any
+  `setprop`.
 
 - **Device announcements**: when the default audio output moves (a headset
   taking over, a dock going away) or a Bluetooth device connects or disconnects,
@@ -413,7 +424,7 @@ Presentation checks: `node tests/presentation.cjs`, `python3 tests/focus_mode.py
 `node tests/workspace_geometry.cjs`, `node tests/announce.cjs`, and
 `node tests/visual_editor.cjs`. Native isolated renderer checks:
 `python3 tests/workspace_runtime.py --output /tmp/workspace-proof`,
-`python3 tests/announce_runtime.py` and
+`python3 tests/announce_runtime.py`, `tests/watchdog_runtime.py`, `tests/focus_seal_runtime.py`, `tests/urgent_frame_runtime.py` and
 `python3 tests/visual_editor_runtime.py --output /tmp/editor-proof` (Qt, Quickshell,
 Xvfb). These use authored fixtures, not the live desktop or private data.
 

@@ -11,6 +11,10 @@ var ELEMENTS = {
     label: "Focus seal",
     variants: [{ id: "off", label: "Off" }, { id: "on", label: "A small seal when the bar is hidden" }]
   },
+  urgentFrame: {
+    label: "Urgent window frame",
+    variants: [{ id: "off", label: "Off" }, { id: "on", label: "A window that asks for you gets the urgent colour until you focus it" }]
+  },
   workspaces: {
     label: "Workspaces",
     variants: [
@@ -90,7 +94,7 @@ var ELEMENTS = {
 
 // Look options that sit on top of any preset: presets keep the current
 // value, and preset matching ignores them.
-var LOOK = ["edge", "keys", "frames", "glass", "glassMotion", "statusHints", "dayline", "seal"]
+var LOOK = ["edge", "keys", "frames", "glass", "glassMotion", "statusHints", "dayline", "seal", "urgentFrame"]
 
 // Presentation only: these never change the native layout, display geometry,
 // services or their settings. Native widgets ("today") keep their own renderer.

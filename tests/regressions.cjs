@@ -125,7 +125,7 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
 
 // The edge (and the Super+Space keys, the window frames) are look options: presets keep them, preset matching ignores them.
 {
-  assert.deepEqual(plain(ctx.LOOK), ['edge', 'keys', 'frames', 'glass', 'glassMotion', 'statusHints', 'dayline', 'seal']);
+  assert.deepEqual(plain(ctx.LOOK), ['edge', 'keys', 'frames', 'glass', 'glassMotion', 'statusHints', 'dayline', 'seal', 'urgentFrame']);
   assert.equal(ctx.matchPreset(Object.assign({}, ctx.presetById('tidy').options, {frames: 'glint'})), 'tidy');
   assert.equal(ctx.layoutDiffers(Object.assign({}, ctx.presetById('tidy').options, {frames: 'glint'}), ctx.presetById('tidy').options), false, 'the frame glint never rebuilds the bar');
   const tidy = ctx.presetById('tidy').options;
@@ -1148,7 +1148,7 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
   assert(ws.includes('m.searchMode = true') && ws.includes('function openApps()'));
   assert(engine.includes('function search(): void { root.toggleMenu("search") }') && engine.includes('function apps(): void { root.toggleMenu("apps") }'));
   assert(engine.includes('keysProc.action = keysOption === "bar" ? "bar" : "omarchy"'), 'the bindings follow the option');
-  assert.deepEqual(plain(ctx.LOOK), ['edge', 'keys', 'frames', 'glass', 'glassMotion', 'statusHints', 'dayline', 'seal']);
+  assert.deepEqual(plain(ctx.LOOK), ['edge', 'keys', 'frames', 'glass', 'glassMotion', 'statusHints', 'dayline', 'seal', 'urgentFrame']);
   assert.equal(ctx.normalizeOptions({}).keys, 'omarchy', 'plugin alone: Omarchy\'s keys stay');
   assert.equal(ctx.keepLook(ctx.presetById('tidy').options, {keys: 'bar'}).keys, 'bar', 'presets keep the keys');
   // look options only: the options are saved, the bar keeps its arrangement
