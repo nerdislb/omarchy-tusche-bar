@@ -61,9 +61,11 @@ QtObject {
   // clock …): their slots share the bar's scene with our modules, so walk up
   // from one of ours and dress the KeyboardPanels of Omarchy's panel widgets.
   // They stay Omarchy's (trusted bar, all their services); only the popup's
-  // look changes. Returns how many popups were new.
+  // look changes. Tesla uses the same native KeyboardPanel contract and is
+  // explicitly included; unrelated third-party popups remain untouched.
+  // Returns how many popups were new.
   readonly property var nativeIds: ["omarchy.audio", "omarchy.power", "omarchy.weather", "omarchy.elsewhen", "omarchy.clock",
-    "omarchy.network", "omarchy.bluetooth", "omarchy.tailscale", "omarchy.monitor", "omarchy.dropbox"]
+    "omarchy.network", "omarchy.bluetooth", "omarchy.tailscale", "omarchy.monitor", "omarchy.dropbox", "nerdibeard.tesla"]
   function isSlot(o) {
     return !!o && o.entry !== undefined && o.moduleName !== undefined && o.activeItem !== undefined && o.region !== undefined
   }
