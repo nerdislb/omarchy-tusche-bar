@@ -27,6 +27,9 @@ Item {
   id: fp
 
   property var panel: null
+  // Give the opening gesture more time without slowing dismissal or frame glints.
+  // Shared by the rolling, spring-glass and wet-bloom entry paths.
+  readonly property real openingTimeScale: 1.35
   // The colour the bar ends in (opaque).
   property color color: Qt.rgba(Commons.Color.bar.background.r, Commons.Color.bar.background.g, Commons.Color.bar.background.b, 1)
   // Edge: a faint line in the text colour and a soft shadow, so a popup in
@@ -60,11 +63,11 @@ Item {
     // (the first ~30 % of the growth is the drop) and passes the far corner
     // after the bloom has reached its size
     SequentialAnimation {
-      PauseAnimation { duration: 200 }
-      NumberAnimation { target: fp; property: "clearing"; from: 0; to: 1; duration: 720; easing.type: Easing.InOutQuad }
+      PauseAnimation { duration: 200 * fp.openingTimeScale }
+      NumberAnimation { target: fp; property: "clearing"; from: 0; to: 1; duration: 720 * fp.openingTimeScale; easing.type: Easing.InOutQuad }
     }
-    NumberAnimation { target: fp; property: "wet"; from: 1; to: 0; duration: 1700; easing.type: Easing.InQuad }
-    NumberAnimation { target: fp; property: "phase"; from: 0; to: 6.283; duration: 1700 }
+    NumberAnimation { target: fp; property: "wet"; from: 1; to: 0; duration: 1700 * fp.openingTimeScale; easing.type: Easing.InQuad }
+    NumberAnimation { target: fp; property: "phase"; from: 0; to: 6.283; duration: 1700 * fp.openingTimeScale }
   }
   function settle() { wetting.stop(); clearing = 1; wet = 0 }
   readonly property real shadowOpacity: lightTheme ? 0.22 : 0.55
@@ -93,6 +96,10 @@ Item {
   property real roll: 0      // 0 = rolled up into the bar, 1 = open
   property real rollVelocity: 0
   property real rollTarget: 0
+  // Change natural frequency, not delta time: retargeting retains physical
+  // position/velocity and closing keeps the original theme frequency.
+  readonly property real springOmega: (glassSpec && glassSpec.omega ? Number(glassSpec.omega) : 22)
+                                     / (rollTarget > 0.5 ? openingTimeScale : 1)
   property bool springRunning: false
   // Geometry consumers use [0,1], the spring itself retains its overshoot
   // and velocity so a close/reopen never restarts from an endpoint.
@@ -174,13 +181,13 @@ Item {
     id: rollEffect
     MultiEffect { maskEnabled: true; maskSource: fp.rollMask; maskThresholdMin: 0.5; maskSpreadAtMin: 0; autoPaddingEnabled: false }
   }
-  NumberAnimation { id: rollOut; target: fp; property: "roll"; to: 1; duration: 260; easing.type: Easing.OutCubic }
+  NumberAnimation { id: rollOut; target: fp; property: "roll"; to: 1; duration: 260 * fp.openingTimeScale; easing.type: Easing.OutCubic }
   NumberAnimation { id: rollIn; target: fp; property: "roll"; to: 0; duration: 200; easing.type: Easing.InCubic }
   FrameAnimation {
     running: fp.springRunning && fp.springOn && !fp.reduced
     onTriggered: {
       var s = GlassMath.step(fp.roll, fp.rollVelocity, fp.rollTarget, frameTime,
-                             fp.glassSpec.omega || 22, fp.glassSpec.damping || 0.82)
+                             fp.springOmega, fp.glassSpec.damping || 0.82)
       fp.roll = s.x; fp.rollVelocity = s.v
       if (GlassMath.settled(fp.roll, fp.rollVelocity, fp.rollTarget)) {
         fp.roll = fp.rollTarget; fp.rollVelocity = 0; fp.springRunning = false
@@ -206,8 +213,8 @@ Item {
 
   SequentialAnimation {
     id: opening
-    NumberAnimation { target: fp; property: "grow"; to: 1; duration: 480; easing.type: Easing.Linear }
-    NumberAnimation { target: fp; property: "ink"; to: 1; duration: 140; easing.type: Easing.Linear }
+    NumberAnimation { target: fp; property: "grow"; to: 1; duration: 480 * fp.openingTimeScale; easing.type: Easing.Linear }
+    NumberAnimation { target: fp; property: "ink"; to: 1; duration: 140 * fp.openingTimeScale; easing.type: Easing.Linear }
   }
   SequentialAnimation {
     id: closing
@@ -465,6 +472,7 @@ Item {
   function stateObject() {
     return { glass: glassOn, spring: springOn, rolling: springRunning,
              reveal: reveal, velocity: rollVelocity,
+             openingTimeScale: openingTimeScale, springOmega: springOmega,
              radius: card ? card.radius : null, size: [frameW, frameH],
              open: !!panel && panel.open, backing: glassSpec ? glassSpec.backing : null,
              captureBlocked: glassBody ? glassBody.captureBlocked : true,
