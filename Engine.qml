@@ -96,6 +96,20 @@ Item {
     config: root.config
     emit: function(argv) { Quickshell.execDetached(argv) }
   }
+  // The island's takeover of Omarchy's notification service has no other
+  // safety net: if the island is then gone or silent, nobody shows notifications.
+  // The watchdog looks only while the island's marker says the takeover is its
+  // own, and hands the service back after three silent answers (Watchdog.js).
+  readonly property string stateRoot: Quickshell.env("HOME") + "/.local/state/omarchy"
+  readonly property bool takeoverDisabled: !!(config && Array.isArray(config.disabledPlugins) && config.disabledPlugins.indexOf("omarchy.notifications") >= 0)
+  NotificationsWatchdog {
+    id: watchdog
+    enabled: root.configLoaded && root.takeoverDisabled
+    markerPath: root.stateRoot + "/tusche-island/notifications-takeover"
+  }
+  // for the Control Center's Health page
+  readonly property var watchdogModel: watchdog.model
+  readonly property bool watchdogEnabled: watchdog.enabled
   FocusSeal { host: root }
   property string focusResult: ""
   property bool focusReleasePending: false
@@ -675,7 +689,7 @@ Item {
     function state(): string {
       return JSON.stringify({ preset: root.presetId, options: root.options, hasBase: root.baseLayout !== null,
                               screenProfiles: root.screenProfiles, focus: { busy: root.focusBusy, result: root.focusResult },
-                              announce: announcer.stateObject(),
+                              announce: announcer.stateObject(), watchdog: watchdog.stateObject(),
                               open: root.isOpen, dropMenuOpen: root.dropMenuOpen, saved: root.savedPresets.map(function(p) { return p.name }), lastResult: root.lastResult, moduleDir: root.moduleDir,
                               keys: { option: root.keysOption, bindings: root.keysState },
                               edge: { option: root.options.edge, material: root.material ? (root.material.edge ? root.material.edge.kind : "no edge") : null, themeEdge: root.themeEdgeVisible, barReady: root.barReady },

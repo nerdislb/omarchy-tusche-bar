@@ -1,5 +1,6 @@
 .pragma library
 .import "Presets.js" as Presets
+.import "Watchdog.js" as Watchdog
 
 // Control Center model: the settings registry, staging for Save · Use ·
 // Cancel, the apply/revert plans, search and health checks. Pure functions;
@@ -352,6 +353,45 @@ function healthChecks(f) {
   else if (c === "error") add("cards", "Card picker menus", "issue", "menu-override.py status failed")
   else add("cards", "Card picker menus", "unknown", "Checking …")
 
+  // The island took Omarchy's notification service over; a watchdog hands it back
+  // if the island then goes silent (Watchdog.js).
+  if (f.watchdog) {
+    var wd = Watchdog.describe(f.watchdog.state, f.watchdog.enabled === true, f.watchdog.now || 0)
+    add("watchdog", "Notification safety net", wd.state, wd.detail)
+  }
+
+  var g = f.generation
+  if (!g || !g.installed) add("generation", "Loaded code", "unknown", "Reading the installed generation …")
+  else if (!g.loaded || g.loaded === g.installed) add("generation", "Loaded code", "ok", "The shell runs the installed generation (" + g.installed.slice(0, 8) + ")")
+  else add("generation", "Loaded code", "issue", "The shell still runs generation " + g.loaded.slice(0, 8) + " but " + g.installed.slice(0, 8) +
+           " is installed: plugin rescans keep cached QML; restart the shell after unlocking")
+
+  var h = f.hypr
+  if (h === "unused") add("hypr", "Workspace data", "ok", "Not in use: the bar keeps the native workspaces")
+  else if (h === "native") add("hypr", "Workspace data", "ok", "Quickshell reports monitors and workspace ids itself")
+  else if (h === "snapshot") add("hypr", "Workspace data", "ok", "Quickshell's monitor and workspace metadata is incomplete on this build (expected on Lua Hyprland): one bounded hyprctl batch supplies it")
+  else if (h === "missing") add("hypr", "Workspace data", "issue", "Quickshell has no monitor or workspace ids and the hyprctl fallback has delivered nothing yet; workspace faces may show the wrong marker")
+  else add("hypr", "Workspace data", "unknown", "Checking …")
+
+  var fm = f.focus
+  if (fm === null || fm === undefined) add("focus", "Focus mode and bar visibility", "unknown", "Reading the hide flag …")
+  else if (fm.error) add("focus", "Focus mode and bar visibility", "issue", "The focus ownership record is unreadable; Show the bar archives it, omarchy-toggle-bar off shows the bar")
+  else if (fm.hidden && fm.owned) add("focus", "Focus mode and bar visibility", "ok", "Focus mode is on: the native bar is parked, its services keep running · click the seal or Show the bar")
+  else if (fm.hidden) add("focus", "Focus mode and bar visibility", "ok", "The bar is hidden, not by focus mode · omarchy-toggle-bar off shows it")
+  else add("focus", "Focus mode and bar visibility", "ok", "The bar is visible")
+
+  var mm = f.menuModel
+  if (mm === "same") add("menumodel", "Menu model", "ok", "vendor/MenuModel.js is Omarchy's current copy")
+  else if (mm === "different") add("menumodel", "Menu model", "issue", "vendor/MenuModel.js differs from Omarchy's: new menu entries may be missing; copy it again (vendor/README.md)")
+  else if (mm === "missing") add("menumodel", "Menu model", "ok", "Omarchy's menu model was not found to compare with")
+  else add("menumodel", "Menu model", "unknown", "Comparing with Omarchy's copy …")
+
+  var a = f.anchor
+  if (!a || !a.anchor) add("anchor", "Centre anchor", "ok", "No centre anchor set: Omarchy centres the middle group as a whole")
+  else if ((a.centre || []).indexOf(a.anchor) >= 0) add("anchor", "Centre anchor", "ok", a.anchor + " anchors the centre")
+  else add("anchor", "Centre anchor", "issue", "bar.centerAnchor names " + a.anchor + ", which is not in the centre section: Omarchy centres the whole group and the middle drifts with its widths" +
+           (a.suggest ? " · set it to " + a.suggest : ""))
+
   var r = String(f.lastResult || "")
   if (r.indexOf("error") === 0) add("apply", "Last bar write", "issue", r)
   else add("apply", "Last bar write", "ok", r === "" ? "Nothing written since the shell started" : r === "ok" ? "Succeeded" : r)
@@ -360,6 +400,42 @@ function healthChecks(f) {
   else add("saved", "Saved combinations", "ok", (f.savedCount || 0) + " saved (presets.json)")
   return out
 }
+// Facts the health page needs from shell.json: the centre anchor and where it
+// points. A renamed widget leaves a stale id behind (the Amiga Island became the
+// Tusche Island), and Omarchy then silently centres the whole group instead.
+var ISLAND_IDS = ["nerdibeard.tusche-island"]
+function anchorFacts(config) {
+  var bar = config && config.bar ? config.bar : {}
+  var centre = bar.layout && Array.isArray(bar.layout.center) ? bar.layout.center : []
+  var ids = centre.map(function(e) { return typeof e === "string" ? e : (e && e.id ? String(e.id) : "") }).filter(function(x) { return x })
+  var anchor = typeof bar.centerAnchor === "string" ? bar.centerAnchor : ""
+  var suggest = ""
+  if (anchor && ids.indexOf(anchor) < 0) {
+    if (/island$/.test(anchor)) for (var i = 0; i < ISLAND_IDS.length; i++) if (ids.indexOf(ISLAND_IDS[i]) >= 0) suggest = ISLAND_IDS[i]
+  }
+  return { anchor: anchor, centre: ids, suggest: suggest }
+}
+// installed-generation.json → the generation name, or "".
+function generationOf(text) {
+  try { var d = JSON.parse(String(text)); return d && typeof d.generation === "string" && /^[0-9a-f]{8,64}$/.test(d.generation) ? d.generation : "" } catch (e) { return "" }
+}
+// The loaded code's generation from the plugin's code directory (…/generations/<hash>).
+function loadedGeneration(pluginDir) {
+  var m = /\/generations\/([0-9a-f]{8,64})\/?$/.exec(String(pluginDir || ""))
+  return m ? m[1] : ""
+}
+// The plugin's installed root: the code directory without …/generations/<hash>.
+function pluginRoot(pluginDir) { return String(pluginDir || "").replace(/\/generations\/[0-9a-f]{8,64}\/?$/, "") }
+// focus-mode.py status → { hidden, owned } or { error: true }.
+function focusFacts(exitCode, text) {
+  if (exitCode !== 0) return { error: true }
+  try {
+    var d = JSON.parse(String(text))
+    return d && typeof d.hidden === "boolean" ? { hidden: d.hidden, owned: d.owned === true, error: false } : { error: true }
+  } catch (e) { return { error: true } }
+}
+function menuModelFacts(exitCode) { return exitCode === 0 ? "same" : exitCode === 1 ? "different" : "missing" }
+
 function healthSummary(checks) {
   var issues = 0, unknown = 0
   ;(checks || []).forEach(function(c) { if (c.state === "issue") issues++; else if (c.state === "unknown") unknown++ })

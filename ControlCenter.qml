@@ -74,8 +74,28 @@ PanelWindow {
   property double probeStartedAt: 0
   property var markerExists: null
   property var usageAge: null              // seconds since the newest usage record · -1: none
+  property var focusFact: null             // focus-mode.py status: { hidden, owned } · { error: true } · null (not read yet)
+  property var menuModelFact: null         // same · different · missing · null
+  property string installedGeneration: ""  // installed-generation.json
+  readonly property string codeDir: host && host.pluginDir ? String(host.pluginDir) : ""
+  readonly property string omarchyRoot: Quickshell.env("OMARCHY_PATH") || (homeDir + "/.local/share/omarchy")
+  // How Quickshell's Hyprland data looks to the workspace module: complete (native),
+  // incomplete but covered by the hyprctl batch (snapshot), incomplete and not
+  // covered yet (missing), or no Tusche workspace module in the bar (unused).
+  readonly property string hyprFact: {
+    var w = Bridge.ModuleBus.pick("workspaces")
+    if (!w) return "unused"
+    if (w.nativeGeometryReady) return "native"
+    return w.snapshot ? "snapshot" : "missing"
+  }
 
   readonly property var healthList: CC.healthChecks({
+    watchdog: host && host.watchdogModel !== undefined ? { state: host.watchdogModel, enabled: host.watchdogEnabled === true, now: Date.now() } : null,
+    generation: { loaded: CC.loadedGeneration(codeDir), installed: installedGeneration },
+    hypr: hyprFact,
+    focus: focusFact,
+    menuModel: menuModelFact,
+    anchor: CC.anchorFacts(host ? host.config : null),
     hasBase: !!(host && host.baseLayout),
     usageFolded: !!(host && host.usageFolded),
     usageRunning: !!(host && host.usageRunning),
@@ -395,6 +415,11 @@ PanelWindow {
     if (!host) return
     if (!markerProbe.running) markerProbe.running = true
     if (!usageProbe.running) usageProbe.running = true
+    if (codeDir !== "") {
+      if (!focusProbe.running) focusProbe.running = true
+      if (!menuProbe.running) menuProbe.running = true
+      if (!generationProbe.running) generationProbe.running = true
+    }
     if (live.island) probeIsland()
     if (!working) refreshCards()
   }
@@ -421,6 +446,26 @@ PanelWindow {
     id: markerProbe
     command: ["test", "-e", win.markerPath]
     onExited: function(code) { win.markerExists = code === 0 }
+  }
+  // Read-only: the focus helper's own status action, the bar's hide flag and
+  // whether our ownership record is intact.
+  Process {
+    id: focusProbe
+    command: ["python3", win.codeDir + "/bin/focus-mode.py", "status"]
+    stdout: StdioCollector { id: focusProbeOut }
+    onExited: function(code) { win.focusFact = CC.focusFacts(code, focusProbeOut.text) }
+  }
+  // cmp -s: 0 identical · 1 different · 2 trouble (no Omarchy copy to compare with).
+  Process {
+    id: menuProbe
+    command: ["cmp", "-s", win.codeDir + "/vendor/MenuModel.js", win.omarchyRoot + "/shell/plugins/menu/MenuModel.js"]
+    onExited: function(code) { win.menuModelFact = CC.menuModelFacts(code) }
+  }
+  Process {
+    id: generationProbe
+    command: ["cat", CC.pluginRoot(win.codeDir) + "/installed-generation.json"]
+    stdout: StdioCollector { id: generationProbeOut }
+    onExited: function(code) { win.installedGeneration = code === 0 ? CC.generationOf(generationProbeOut.text) : "" }
   }
   Process {
     id: usageProbe
@@ -1003,7 +1048,7 @@ PanelWindow {
                 Caption {
                   topPadding: Style.space(6)
                   width: parent.width; wrapMode: Text.WordWrap
-                  text: "Every check reads live state: the engine, shell.json, the island's IPC state, the takeover marker, usage record times and the card picker's script."
+                  text: "Every check reads live state: the engine, shell.json, the island's IPC state, the takeover marker and its watchdog, the loaded and installed code generation, Quickshell's Hyprland data, the bar's hide flag, Omarchy's menu model, usage record times and the card picker's script. Nothing here changes anything."
                 }
               }
             }

@@ -11,6 +11,8 @@ This carries an existing setup across, so the bar looks the same afterwards:
   plugins[] and disabledPlugins: nerdibeard.amiga-bar -> nerdibeard.tusche-bar,
   nerdibeard.amiga-island -> nerdibeard.tusche-island; the bar's options keep
   the ones that still exist (removed variants map to their nearest one);
+  bar.centerAnchor: the Amiga Island's id -> the Tusche Island's (the old id
+  leaves Omarchy centring the whole middle group);
   bar.layout: amiga.* modules -> tusche.* with their sources in the new plugin
   folder (a drawer or A500 status strip becomes the groups, and the widgets
   the groups do not fold, such as the battery, go back into the bar), the island's entry -> nerdibeard.tusche-island (its settings kept,
@@ -187,6 +189,9 @@ def migrate_shell(dry):
         d['disabledPlugins'] = ids(d['disabledPlugins'])
     if isinstance(d.get('bar'), dict) and 'layout' in d['bar']:
         d['bar']['layout'] = layout(d['bar']['layout'])
+    # the island anchors the bar's centre: the old id would be silently ignored
+    if isinstance(d.get('bar'), dict) and d['bar'].get('centerAnchor') in IDS:
+        d['bar']['centerAnchor'] = IDS[d['bar']['centerAnchor']]
     if json.dumps(d, sort_keys=True) == before:
         return ['shell.json: nothing of the Amiga Bar or Island in it']
     write_json(SHELL, d, dry)

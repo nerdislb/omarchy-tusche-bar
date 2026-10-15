@@ -340,10 +340,13 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
 
 // Control Center model: staging, Save · Use · Cancel plans, search, health.
 {
-  const cc = {Presets: ctx};
+  const watchdogCtx = {};
+  vm.createContext(watchdogCtx);
+  vm.runInContext(fs.readFileSync(path.join(root, 'Watchdog.js'), 'utf8').replace('.pragma library', ''), watchdogCtx);
+  const cc = {Presets: ctx, Watchdog: watchdogCtx};
   vm.createContext(cc);
   vm.runInContext(fs.readFileSync(path.join(root, 'ControlCenter.js'), 'utf8')
-    .replace('.pragma library', '').replace(/^\.import .*$/m, ''), cc);
+    .replace('.pragma library', '').replace(/^\.import .*$/mg, ''), cc);
   const config = {
     bar: {layout: {left: [], center: [{id: 'nerdibeard.tusche-island', notifications: true, noteStyle: 'window'}], right: []}},
     plugins: [{id: 'nerdibeard.tusche-bar', options: {}}, {id: 'nerdibeard.card-picker'}, {id: 'nerdibeard.tusche-island', noteStyle: 'bubble'}]
@@ -430,9 +433,15 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
   // Health: only real facts; unknown facts are not counted as issues.
   const good = {hasBase: true, usageFolded: true, usageIntervalSec: 900, usageAgeSec: 120,
                 islandConfigured: true, islandWants: true, islandState: {serving: true, omarchyDisabled: true}, marker: true,
-                cards: 'enabled', cardsConfigured: true, lastResult: 'ok', savedCount: 2};
+                cards: 'enabled', cardsConfigured: true, lastResult: 'ok', savedCount: 2,
+                // round 2: the safety net, the loaded code, Hyprland data, the hide flag, the menu model, the anchor
+                watchdog: {state: watchdogCtx.initial(), enabled: true, now: 1000},
+                generation: {loaded: 'b15c4a797a1b1527', installed: 'b15c4a797a1b1527'}, hypr: 'snapshot',
+                focus: {hidden: false, owned: false, error: false}, menuModel: 'same',
+                anchor: {anchor: 'nerdibeard.tusche-island', centre: ['nerdibeard.tusche-island'], suggest: ''}};
   assert.deepEqual(plain(cc.healthSummary(cc.healthChecks(good))), {issues: 0, unknown: 0, label: 'OK'});
-  assert.deepEqual(plain(cc.healthChecks(good).map(c => c.id)), ['base', 'usage', 'notes', 'cards', 'apply', 'saved']);
+  assert.deepEqual(plain(cc.healthChecks(good).map(c => c.id)),
+    ['base', 'usage', 'notes', 'cards', 'watchdog', 'generation', 'hypr', 'focus', 'menumodel', 'anchor', 'apply', 'saved']);
   const issues = f => cc.healthChecks(Object.assign({}, good, f)).filter(c => c.state === 'issue').map(c => c.id);
   assert.deepEqual(plain(issues({hasBase: false})), ['base']);
   assert.deepEqual(plain(issues({usageAgeSec: 3 * 900})), ['usage']);
@@ -1074,7 +1083,7 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
       plugins: [{id: 'nerdibeard.amiga-bar', options: {workspaces: 'cli', ai: 'gauge', right: 'compact', edge: 'workbench', logo: 'amiga', centre: 'calm',
                                                       effects: 'on', font: 'topaz', fog: 'on', menu: 'strip', form: 'a500'}},
                 {id: 'nerdibeard.amiga-island'}, 'nerdibeard.card-picker'],
-      bar: {transparent: true, layout: {
+      bar: {transparent: true, centerAnchor: 'nerdibeard.amiga-island', layout: {
         left: [{id: 'amiga.workspaces', source: oldDir + '/Workspaces.qml', variant: 'cli', menu: true, logo: 'amiga'},
                {id: 'amiga.quota', source: oldDir + '/Quota.qml', variant: 'gauge'}],
         center: [oldIsland, 'omarchy.weather'],
@@ -1093,7 +1102,7 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
     assert.deepEqual(shell.plugins, [{id: 'nerdibeard.tusche-bar', options: {workspaces: 'pips', ai: 'gauge', right: 'groups', edge: 'none', logo: 'omarchy', centre: 'calm'}},
       {id: 'nerdibeard.tusche-island'}, 'nerdibeard.card-picker']);
     const newIsland = {id: 'nerdibeard.tusche-island', notifications: true, noteStyle: 'window'};
-    assert.deepEqual(shell.bar, {transparent: true, layout: {
+    assert.deepEqual(shell.bar, {transparent: true, centerAnchor: 'nerdibeard.tusche-island', layout: {
       left: [{id: 'tusche.workspaces', source: newDir + '/Workspaces.qml', variant: 'pips', menu: true, logo: 'omarchy'},
              {id: 'tusche.quota', source: newDir + '/Quota.qml', variant: 'gauge'}],
       center: [newIsland, 'omarchy.weather'],

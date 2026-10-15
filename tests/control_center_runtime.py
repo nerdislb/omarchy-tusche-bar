@@ -55,7 +55,7 @@ QtObject {
  property QtObject bar: QtObject { property color background: "#e9edf0"; property color text: "#171c24" }
 }
 ''')
-        for name in ['ControlCenter.qml','ControlCenter.js','ScreenProfiles.qml','VisualBarEditor.qml','BarSpecimen.qml','MotionPreview.qml','VisualEditor.js','Presets.js','MaterialCard.qml','InkSheet.qml','MetalShape.qml','GlassFrameGlint.qml','GlassMath.js','GlassBackdrop.qml','GlassSurface.qml']:
+        for name in ['Watchdog.js','ControlCenter.qml','ControlCenter.js','ScreenProfiles.qml','VisualBarEditor.qml','BarSpecimen.qml','MotionPreview.qml','VisualEditor.js','Presets.js','MaterialCard.qml','InkSheet.qml','MetalShape.qml','GlassFrameGlint.qml','GlassMath.js','GlassBackdrop.qml','GlassSurface.qml']:
             shutil.copy2(ROOT / name, tmp / name)
         (tmp / 'modules').mkdir()
         for name in ['QuotaFace.qml','StatusFace.qml','WorkspacesFace.qml','WorkspaceMiniature.qml','ArchLogo.qml','SealLogo.qml']:
@@ -77,10 +77,19 @@ QtObject {
  property var stdout: null
  property var stderr: null
  signal exited(int exitCode, int exitStatus)
+ function answer() {
+  var c = root.command, joined = c.join(" ")
+  if (c[0] === "python3" && joined.indexOf("focus-mode.py") >= 0) return '{"hidden": false, "owned": false, "changed": false}'
+  if (c[0] === "python3") return "disabled"
+  if (c[0] === "cat") return '{"generation": "b15c4a797a1b1527", "files": 71}'
+  return "0"
+ }
+ // the injected drift: the vendored menu model differs from Omarchy's (cmp exits 1)
+ function code() { return root.command[0] === "cmp" ? 1 : 0 }
  onRunningChanged: if (running) Qt.callLater(function() {
-  if (root.stdout) root.stdout.text = root.command[0] === "python3" ? "disabled" : "0"
+  if (root.stdout) root.stdout.text = root.answer()
   if (root.stderr) root.stderr.text = ""
-  root.running = false; root.exited(0,0)
+  root.running = false; root.exited(root.code(),0)
  })
 }
 """)
@@ -141,6 +150,9 @@ ShellRoot {
   property var savedPresets: []
   property bool focusBusy: false
   property string focusResult: ""
+  property string pluginDir: ""
+  property var watchdogModel: ({misses:0,handedBacks:0,handedBackAt:-Infinity,lastOk:-Infinity,lastCheck:-Infinity,armed:false})
+  property bool watchdogEnabled: true
   property var nextScreens: ({})
   property int applies: 0
   property Timer writeTimer: Timer { interval: 30;onTriggered:{fakeHost.screenProfiles=fakeHost.nextScreens;fakeHost.lastResult="ok";fakeHost.writing=false} }
@@ -251,7 +263,24 @@ ShellRoot {
   cc.pick("screens."+name,"detailed");cc.use();cc.open=false
   schedule(2600,function(){
    check(!cc.open&&!cc.working&&fakeHost.screenProfiles[name]===undefined,"close during Use completes and reverts screen change")
-   testPreviewKeyboard()
+   testHealthRows()
+  })
+ }
+ function testHealthRows() {
+  fakeHost.pluginDir="/h/.config/omarchy/plugins/nerdibeard.tusche-bar/generations/b15c4a797a1b1527"
+  cc.requestedArea="health";cc.open=true
+  schedule(500,function(){
+   var byId={};cc.healthList.forEach(function(c){byId[c.id]=c})
+   check(!!byId.watchdog&&byId.watchdog.state==="ok","Health shows the armed notification safety net")
+   check(!!byId.generation&&byId.generation.state==="ok","Health: the loaded generation is the installed one")
+   check(!!byId.focus&&byId.focus.state==="ok"&&byId.focus.detail.indexOf("visible")>=0,"Health reads the focus status through its own helper")
+   check(!!byId.menumodel&&byId.menumodel.state==="issue","Health flags a menu model that differs from Omarchy's")
+   check(!!byId.hypr&&byId.hypr.state==="ok"&&!!byId.anchor&&byId.anchor.state==="ok","Health: workspace data and centre anchor are fine on the fixture")
+   fullyInViewport(button("Check again"),"Health refresh control with the new rows")
+   var shown=findItem(cc.contentItem,function(item){return item.settingId==="health.watchdog"})
+   check(!!shown&&shown.height>0,"the safety-net row is part of the Health page")
+   cc.cancel()
+   schedule(300,function(){check(!cc.open&&!cc.working,"Health closes cleanly");fakeHost.pluginDir="";testPreviewKeyboard()})
   })
  }
  function testPreviewKeyboard() {
