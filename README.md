@@ -410,12 +410,15 @@ group may differ) and `state` reports it in `lastResult`.
 Tests: `node tests/regressions.cjs` (with the Tusche Island checkout next to this repository) and `python3 tests/boot_logo.py`.
 
 Presentation checks: `node tests/presentation.cjs`, `python3 tests/focus_mode.py`,
-`node tests/workspace_geometry.cjs`, `node tests/announce.cjs`, and
-`node tests/visual_editor.cjs`. Native isolated renderer checks:
+`node tests/workspace_geometry.cjs`, `node tests/announce.cjs`, `node tests/watchdog.cjs`,
+`node tests/health.cjs`, `node tests/focus_seal.cjs` and `node tests/visual_editor.cjs`.
+Native isolated renderer checks (Qt, Quickshell, Xvfb or offscreen):
 `python3 tests/workspace_runtime.py --output /tmp/workspace-proof`,
-`python3 tests/announce_runtime.py` and
-`python3 tests/visual_editor_runtime.py --output /tmp/editor-proof` (Qt, Quickshell,
-Xvfb). These use authored fixtures, not the live desktop or private data.
+`python3 tests/announce_runtime.py`, `python3 tests/watchdog_runtime.py`,
+`python3 tests/focus_seal_runtime.py`, `python3 tests/native_material_runtime.py`,
+`python3 tests/visual_editor_runtime.py --output /tmp/editor-proof` and
+`python3 tests/control_center_runtime.py --output /tmp/cc-proof`.
+These use authored fixtures, not the live desktop or private data.
 
 ## Licences and trademarks
 
