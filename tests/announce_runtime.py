@@ -30,7 +30,7 @@ Item {
  Component {
   id: make
   Announcer {
-   enabled: true
+   active: true
    config: JSON.parse(canvas.quiet)
    clock: function() { return canvas.stamp() }
    emit: function(argv) { canvas.lines = canvas.lines.concat([argv]) }
@@ -39,7 +39,7 @@ Item {
  Component {
   id: makeCovered
   Announcer {
-   enabled: true
+   active: true
    config: JSON.parse(canvas.island)
    clock: function() { return canvas.stamp() }
    emit: function(argv) { canvas.lines = canvas.lines.concat([argv]) }
@@ -140,14 +140,14 @@ Item {
 
   function test_06_disabled_is_inert_and_enabling_starts_a_fresh_baseline() {
    Pipewire.defaultAudioSink = canvas.newSink("a", "A")
-   var a = createTemporaryObject(make, canvas, {enabled: false})
+   var a = createTemporaryObject(make, canvas, {active: false})
    wait(100)
    canvas.offset += 1000
    Pipewire.defaultAudioSink = canvas.newSink("b", "B")
    wait(160)
    compare(canvas.lines.length, 0)
    compare(a.outputSample.ready, false)                                   // it does not even read the services
-   a.enabled = true
+   a.active = true
    wait(160)
    canvas.offset += 1000
    compare(canvas.lines.length, 0)                                        // the move that happened meanwhile is not replayed
@@ -155,7 +155,7 @@ Item {
    wait(160)
    compare(canvas.lines.length, 1)
    compare(canvas.lines[0][4], "C")
-   a.enabled = false
+   a.active = false
    compare(a.stateObject().seq, 0)
   }
 

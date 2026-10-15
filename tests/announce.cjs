@@ -238,7 +238,7 @@ test('Announcer observes only public services, never polls, and goes through the
   assert(announcer.includes('Announce.argv('), 'the command line comes from the model');
   assert((announcer.match(/Announce\.stillTrue\(/g) || []).length === 2, 'a waiting line is re-checked when the source changes and when its turn comes');
   const engine = read('Engine.qml');
-  assert(engine.includes('options.statusHints === "on"'));
+  assert(engine.includes('active: root.configLoaded && root.options.statusHints === "on"'));
   assert(engine.includes('emit: function(argv) { Quickshell.execDetached(argv) }'), 'a plain argv, no shell');
 });
 test('the bar module carries no announcement code any more', () => {

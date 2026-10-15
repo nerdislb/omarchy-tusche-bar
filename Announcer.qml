@@ -18,7 +18,8 @@ Item {
   visible: false
   width: 0; height: 0
 
-  property bool enabled: false
+  // `active`, not `enabled`: this is an Item, and Item already has an `enabled`
+  property bool active: false
   property var config: null                 // shell.json, for the island's Bluetooth setting
   property var emit: null                   // function(argv): the engine passes Quickshell.execDetached
   property var clock: function() { return Date.now() }
@@ -27,13 +28,13 @@ Item {
   PwObjectTracker { objects: root.sink ? [root.sink] : [] }
 
   readonly property var outputSample: {
-    var s = root.enabled ? root.sink : null
+    var s = root.active ? root.sink : null
     return { ready: !!s, id: s ? String(s.name || "") : "",
              name: s ? String(s.description || s.nickname || s.name || "") : "" }
   }
   readonly property var bluetoothSample: {
-    var a = root.enabled ? Bluetooth.defaultAdapter : null
-    var devices = root.enabled && Bluetooth.devices ? Bluetooth.devices.values : []
+    var a = root.active ? Bluetooth.defaultAdapter : null
+    var devices = root.active && Bluetooth.devices ? Bluetooth.devices.values : []
     return { ready: !!a, id: a ? String(a.adapterId || a.name || "adapter") : "", on: !!(a && a.enabled),
       devices: devices.filter(function(d) { return !!d }).map(function(d) {
         return { id: String(d.address || d.name || ""), name: String(d.name || d.deviceName || "Bluetooth device"), connected: !!d.connected }
@@ -46,24 +47,24 @@ Item {
   property int announced: 0
 
   Component.onCompleted: reset()
-  onEnabledChanged: reset()
+  onActiveChanged: reset()
   onOutputSampleChanged: schedule()
   onBluetoothSampleChanged: schedule()
   onIslandShowsBluetoothChanged: schedule()
 
   function reset() {
-    model = Announce.configure(model, enabled)
+    model = Announce.configure(model, active)
     gateState = { last: -Infinity, pending: null }
     announced = 0
     gateTimer.stop()
     sampleTimer.stop()
-    if (enabled) schedule()
+    if (active) schedule()
   }
   // Related properties of one device change together (name, connection, radio):
   // take one reading after they settle.
-  function schedule() { if (enabled) sampleTimer.restart() }
+  function schedule() { if (active) sampleTimer.restart() }
   function sampleNow() {
-    if (!enabled) return
+    if (!active) return
     var now = root.clock()
     var next = Announce.configure(model, true)
     next = Announce.observe(next, "output", outputSample, now, false)
@@ -97,7 +98,7 @@ Item {
   }
 
   function stateObject() {
-    return { enabled: enabled, seq: model.seq, announced: announced, waiting: !!gateState.pending,
+    return { enabled: active, seq: model.seq, announced: announced, waiting: !!gateState.pending,
              output: outputSample.ready ? outputSample.name : "", bluetoothByIsland: islandShowsBluetooth }
   }
 }

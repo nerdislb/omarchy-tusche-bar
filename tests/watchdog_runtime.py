@@ -27,7 +27,7 @@ Item {
   NotificationsWatchdog {
    markerPath: root.marker
    firstMs: 30; fastMs: 30; slowMs: 90
-   enabled: false
+   active: false
   }
  }
  function probes() { return IoProbe.calls.filter(function(c) { return c[2].indexOf("notifications ping") >= 0 }) }
@@ -46,7 +46,7 @@ Item {
 
   function test_02_enabled_looks_after_the_first_delay_and_then_slowly() {
    var w = createTemporaryObject(make, root)
-   w.enabled = true
+   w.active = true
    wait(10)
    compare(IoProbe.calls.length, 0)
    tryVerify(function() { return root.probes().length >= 1 }, 600)
@@ -64,7 +64,7 @@ Item {
   function test_03_a_missing_marker_is_one_look_then_idle_until_shell_json_changes() {
    IoProbe.fallback = "nomarker"
    var w = createTemporaryObject(make, root)
-   w.enabled = true
+   w.active = true
    tryVerify(function() { return root.probes().length >= 1 }, 600)
    wait(500)                                            // several slow periods would have passed
    compare(root.probes().length, 1)                     // nothing is scheduled without the island's marker
@@ -86,7 +86,7 @@ Item {
   function test_04_three_silent_answers_hand_the_service_back_once() {
    IoProbe.fallback = "silent"
    var w = createTemporaryObject(make, root)
-   w.enabled = true
+   w.active = true
    tryVerify(function() { return root.handbacks().length === 1 }, 1500)
    verify(root.probes().length >= 3)
    var call = root.handbacks()[0]
@@ -96,7 +96,7 @@ Item {
    verify(w.stateObject().note.indexOf("handed back") >= 0)
    wait(600)                                            // the island is still silent: the pause holds
    compare(root.handbacks().length, 1)
-   w.enabled = false                                    // the engine sees the service enabled again
+   w.active = false                                    // the engine sees the service enabled again
    compare(w.stateObject().handedBacks, 1)              // what happened stays visible for Health
    var seen = IoProbe.calls.length
    wait(300)
@@ -106,7 +106,7 @@ Item {
   function test_05_one_silent_answer_between_good_ones_never_acts() {
    IoProbe.sequence = ["ok", "silent", "ok", "silent", "ok"]
    var w = createTemporaryObject(make, root)
-   w.enabled = true
+   w.active = true
    tryVerify(function() { return root.probes().length >= 7 }, 1500)
    compare(root.handbacks().length, 0)
    compare(w.stateObject().handedBacks, 0)
@@ -116,7 +116,7 @@ Item {
    IoProbe.fallback = "silent"
    IoProbe.handbackExit = 3
    var w = createTemporaryObject(make, root)
-   w.enabled = true
+   w.active = true
    tryVerify(function() { return root.handbacks().length === 1 }, 1500)
    tryVerify(function() { return w.stateObject().note.indexOf("failed (exit 3)") >= 0 }, 500)
    compare(w.stateObject().handedBacks, 0)
@@ -124,13 +124,13 @@ Item {
 
   function test_07_turning_it_off_and_on_starts_a_fresh_first_delay() {
    var w = createTemporaryObject(make, root)
-   w.enabled = true
+   w.active = true
    tryVerify(function() { return root.probes().length >= 1 }, 600)
-   w.enabled = false
+   w.active = false
    var seen = IoProbe.calls.length
    wait(250)
    compare(IoProbe.calls.length, seen)
-   w.enabled = true
+   w.active = true
    wait(10)
    compare(IoProbe.calls.length, seen)
    tryVerify(function() { return IoProbe.calls.length > seen }, 600)

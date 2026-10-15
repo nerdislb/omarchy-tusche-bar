@@ -15,7 +15,8 @@ Item {
   visible: false
   width: 0; height: 0
 
-  property bool enabled: false            // the engine: config loaded and omarchy.notifications is disabled
+  // `active`, not `enabled`: this is an Item, and Item already has an `enabled`
+  property bool active: false             // the engine: config loaded and omarchy.notifications is disabled
   property int rearm: 0                   // the engine bumps it whenever shell.json was read again
   property string markerPath: ""
   property int firstMs: Watchdog.FIRST_MS
@@ -27,15 +28,15 @@ Item {
   property string note: ""                // what the last hand-back did, for Health
 
   Component.onCompleted: sync()
-  onEnabledChanged: sync()
+  onActiveChanged: sync()
   // The island takes the service over by touching its marker and then disabling
   // the plugin, which rewrites shell.json: a rewrite is the cue to look again
   // while nobody owns the takeover (nothing is scheduled in that state).
-  onRearmChanged: if (enabled && !probe.running && !handback.running && !model.armed) { look.interval = firstMs; look.restart() }
+  onRearmChanged: if (active && !probe.running && !handback.running && !model.armed) { look.interval = firstMs; look.restart() }
 
   function sync() {
     look.stop()
-    if (!enabled) {
+    if (!active) {
       probe.running = false
       // what already went back, and when, is kept: Health shows it and the pause holds
       model = Object.assign(Watchdog.initial(), { handedBacks: model.handedBacks, handedBackAt: model.handedBackAt })
@@ -45,12 +46,12 @@ Item {
     look.restart()
   }
   function schedule() {
-    if (!enabled) return
+    if (!active) return
     look.interval = Watchdog.nextDelay(model) === Watchdog.FAST_MS ? fastMs : slowMs
     look.restart()
   }
   function onAnswer(text) {
-    if (!enabled) return
+    if (!active) return
     var answer = Watchdog.classify(text)
     var result = Watchdog.step(model, answer, clock())
     model = result.state
@@ -65,7 +66,7 @@ Item {
     schedule()
   }
 
-  Timer { id: look; onTriggered: if (root.enabled && !probe.running) probe.running = true }
+  Timer { id: look; onTriggered: if (root.active && !probe.running) probe.running = true }
 
   Process {
     id: probe
@@ -92,7 +93,7 @@ Item {
   }
 
   function stateObject() {
-    return { enabled: enabled, armed: model.armed, misses: model.misses, handedBacks: model.handedBacks,
+    return { enabled: active, armed: model.armed, misses: model.misses, handedBacks: model.handedBacks,
              lastOk: model.lastOk === -Infinity ? null : model.lastOk, note: note }
   }
 }

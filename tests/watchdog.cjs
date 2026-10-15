@@ -120,7 +120,7 @@ test('the QML passes the marker as an argument, limits the ping and uses the isl
   assert((qml.match(/"sh", root\.markerPath\]/g) || []).length === 2, 'the marker path is the argument after the shell name');
   assert(!/repeat:\s*true/.test(qml), 'it re-arms a single-shot timer; there is no fixed polling loop');
   assert(/if \(answer === "nomarker"\) return/.test(qml), 'without the island\'s marker nothing is scheduled');
-  assert(qml.includes('onRearmChanged: if (enabled && !probe.running && !handback.running && !model.armed)'), 'a shell.json rewrite re-arms an idle watchdog');
+  assert(qml.includes('onRearmChanged: if (active && !probe.running && !handback.running && !model.armed)'), 'a shell.json rewrite re-arms an idle watchdog');
 });
 test('the real probe and hand-back scripts, run against fake omarchy programs, behave as promised', () => {
   const os = require('node:os');
@@ -202,7 +202,7 @@ test('the real probe and hand-back scripts, run against fake omarchy programs, b
 test('the engine arms it only while Omarchy\'s notification service is disabled', () => {
   const engine = read('Engine.qml');
   assert(engine.includes('NotificationsWatchdog {'));
-  assert(engine.includes('enabled: root.configLoaded && root.takeoverDisabled'));
+  assert(engine.includes('active: root.configLoaded && root.takeoverDisabled'));
   assert(engine.includes('rearm: root.configSerial') && engine.includes('root.configSerial++'), 'the engine bumps a serial on every read of shell.json');
   assert(engine.includes('markerPath: root.stateRoot + "/tusche-island/notifications-takeover"'));
   assert(/takeoverDisabled: !!\(config && Array\.isArray\(config\.disabledPlugins\) && config\.disabledPlugins\.indexOf\("omarchy\.notifications"\) >= 0\)/.test(engine));

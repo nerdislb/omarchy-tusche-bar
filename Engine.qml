@@ -93,7 +93,7 @@ Item {
   // go to Omarchy's OSD (the island's HUD when it owns the OSD).
   Announcer {
     id: announcer
-    enabled: root.configLoaded && root.options.statusHints === "on"
+    active: root.configLoaded && root.options.statusHints === "on"
     config: root.config
     emit: function(argv) { Quickshell.execDetached(argv) }
   }
@@ -105,13 +105,13 @@ Item {
   readonly property bool takeoverDisabled: !!(config && Array.isArray(config.disabledPlugins) && config.disabledPlugins.indexOf("omarchy.notifications") >= 0)
   NotificationsWatchdog {
     id: watchdog
-    enabled: root.configLoaded && root.takeoverDisabled
+    active: root.configLoaded && root.takeoverDisabled
     rearm: root.configSerial
     markerPath: root.stateRoot + "/tusche-island/notifications-takeover"
   }
   // for the Control Center's Health page
   readonly property var watchdogModel: watchdog.model
-  readonly property bool watchdogEnabled: watchdog.enabled
+  readonly property bool watchdogEnabled: watchdog.active
   FocusSeal { host: root }
   property string focusResult: ""
   property bool focusReleasePending: false
