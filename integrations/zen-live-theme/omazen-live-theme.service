@@ -1,0 +1,12 @@
+[Unit]
+Description=Synchronize Zen's existing Omazen palette
+ConditionFileIsExecutable=%h/.local/bin/omazen
+ConditionPathExists=%h/.local/state/omarchy/current/theme/colors.toml
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/omazen sync
+TimeoutStartSec=15
+UMask=0077
+NoNewPrivileges=yes

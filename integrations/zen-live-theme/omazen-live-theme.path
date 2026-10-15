@@ -1,0 +1,13 @@
+[Unit]
+Description=Follow Omarchy palette changes for Zen without waiting for app retints
+
+[Path]
+# Omarchy replaces the entire theme directory. Watch its parent as well as
+# in-place palette edits, so watches are re-armed after every directory swap.
+PathChanged=%h/.local/state/omarchy/current
+PathChanged=%h/.local/state/omarchy/current/theme
+PathChanged=%h/.local/state/omarchy/current/theme/colors.toml
+Unit=omazen-live-theme.service
+
+[Install]
+WantedBy=default.target

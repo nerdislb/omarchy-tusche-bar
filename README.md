@@ -433,3 +433,10 @@ These use authored fixtures, not the live desktop or private data.
 - **Code:** MIT (`LICENSE`).
 - **`vendor/MenuModel.js`:** an unchanged copy of Omarchy's menu model library (Omarchy, MIT).
 - **Trademarks:** the Arch Linux logo (drawn unaltered in `modules/ArchLogo.qml`, used under the [Arch Linux trademark policy](https://terms.archlinux.org/docs/trademark-policy/) for non-commercial community use) and the Omarchy logo belong to their owners. This is an independent project; no affiliation or endorsement is implied.
+
+### Optional Zen live-theme repair
+
+If an already configured Omazen bridge stops following theme changes while
+Omarchy's other app retints are queued, enable the independent user palette
+watcher described in [Zen live theme sync](integrations/zen-live-theme/README.md).
+It does not restart browsers, change their profiles or modify other app hooks.
