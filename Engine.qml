@@ -114,8 +114,10 @@ Item {
   property string focusResult: ""
   property bool focusReleasePending: false
   readonly property bool focusBusy: focusProcess.running
+  // "toggle": park the bar, or bring it back when it is hidden (for a key binding)
   function focusAction(action) {
-    if (["start", "show", "release"].indexOf(action) < 0) return "unknown focus action"
+    if (["start", "show", "release", "toggle"].indexOf(action) < 0) return "unknown focus action"
+    if (action === "toggle") action = edgeBar && edgeBar.barHidden ? "show" : "start"
     if (action === "start" && options.seal !== "on") return "enable Focus seal first"
     if (focusProcess.running) {
       if (action === "release") focusReleasePending = true

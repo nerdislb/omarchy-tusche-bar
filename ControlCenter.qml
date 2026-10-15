@@ -829,7 +829,7 @@ PanelWindow {
                 }
                 Caption {
                   width: parent.width; wrapMode: Text.WordWrap
-                  text: "Apply the focus seal with Use or Save first. Start temporarily hides the native bar; its services keep running. Right-click the seal to show the bar again."
+                  text: "Apply the focus seal with Use or Save first. Start temporarily hides the native bar; its services keep running. Click the seal to bring the bar back (middle-click opens this window). The seal stays calm: a thin line appears when the battery is low, a small square when a workspace needs you. For a key: bind omarchy-shell tusche-bar focus toggle."
                 }
                 Caption {
                   visible: !!win.host && String(win.host.focusResult).indexOf("error:") === 0

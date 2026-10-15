@@ -362,9 +362,15 @@ Three optional look settings default **off** and survive preset changes:
   uses the native bar's fullscreen stacking. Hidden/vertical bars show no line.
 - **Focus seal**: after applying this option, **Quick → Start focus mode** parks
   the native bar offscreen while its widgets/services remain alive. A small seal
-  opens the Control Center; right/middle-click or **Show the bar** restores it.
-  Disabling the option releases only its own unchanged hide flag, preserving a
-  pre-existing or later manual hide. Recovery: `omarchy-toggle-bar off`.
+  brings the bar back with a click (left or right); the middle button opens the
+  Control Center. The seal stays calm and says only what the bar would have: a thin
+  line under it while the battery is at or below 30 % and discharging (urgent
+  colour at 15 % and below), and a small square in its corner when a workspace
+  needs you (from the bar's workspace module, when it is in the bar). For a key:
+  `omarchy-shell tusche-bar focus toggle` parks the bar, or brings it back when it
+  is hidden; bind it yourself, nothing adds a binding. Disabling the option
+  releases only its own unchanged hide flag, preserving a pre-existing or later
+  manual hide. Recovery: `omarchy-toggle-bar off`.
 
 Focus ownership is stored privately in
 `~/.local/state/tusche-bar/focus-owner.json`. A failed native command is rolled
@@ -393,7 +399,7 @@ group may differ) and `state` reports it in `lastResult`.
 ## IPC
 
 - `omarchy-shell tusche-bar options` (Control Center, toggle) · `cc quick|bar|screens|motion|island|cards|health` · `preset today|tidy|focus` · `set <element> <variant>` · `save|load <name>` · `menu` (drop-down) · `search` (drop-down as a launcher) · `apps` (drop-down on the Apps list) · `recaptureBase` · `state`.
-- `omarchy-shell tusche-bar screenProfile <output> inherit|compact|detailed` applies a presentation profile directly; `focus start|show|release` controls the optional focus seal.
+- `omarchy-shell tusche-bar screenProfile <output> inherit|compact|detailed` applies a presentation profile directly; `focus start|show|release|toggle` controls the optional focus seal.
 - Module IPC (tests, keybinds): `tusche-quota toggle|select <agent>|state`, `tusche-status group net|phone|system|all`, `tusche-status member <widget-id>`, `tusche-centre state`.
 - `tusche-bar ask <payload>` is the menu shims' entry (an `omarchy-menu-select`/`-input` payload; answers `ok` when a drop-down took it).
 
