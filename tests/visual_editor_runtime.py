@@ -56,6 +56,7 @@ QtObject {
         for theme in ['papier','tusche','frost','smoke','chrom','platin']:
             themes[theme] = {'material':json.loads((ROOT / 'themes' / theme / 'bar-material.json').read_text()), 'palette':tomllib.loads((ROOT / 'themes' / theme / 'colors.toml').read_text())}
         qml = r'''import QtQuick
+import QtTest 1.2
 import Quickshell
 import qs.Commons
 import qs.Commons as Commons
@@ -71,6 +72,7 @@ FloatingWindow {
  Item {
   id: canvas; anchors.fill: parent
   Rectangle { anchors.fill: parent; color: Commons.Color.popups.background }
+  TestEvent { id: keyDriver }
   Text { x:20;y:8;text:"Isolated test fixture · production faces";textFormat:Text.PlainText;color:Commons.Color.popups.text;font.pixelSize:12 }
   VisualBarEditor { id: editor; x:20;y:40;width:960;height:implicitHeight;options:window.opts;liveOptions:window.opts;snapshot:window.fixture;showPresets:false;showMotion:false;material:window.themes.papier.material; onPicked: window.picks++ }
   MotionPreview { id: motion; x:20;y:1100;width:960;height:implicitHeight;options:window.opts;material:editor.material }
@@ -100,8 +102,63 @@ FloatingWindow {
  function next() {
   var cases=[{t:"tusche",p:"ai"},{t:"frost",p:"logo"},{t:"smoke",p:"right"},{t:"chrom",p:"ai"},{t:"platin",p:"workspaces"}]
   if(step<cases.length) {var c=cases[step++];setTheme(c.t);editor.selectedPart=c.p;schedule(500,function(){shot(c.t+"-"+c.p,next)});return}
-  editor.snapshot={};schedule(100,function(){check(editor.snapshot.workspaces===undefined,"missing snapshot stays missing");editor.snapshot=fixture;testMotion()})
+  editor.snapshot={};schedule(100,function(){check(editor.snapshot.workspaces===undefined,"missing snapshot stays missing");editor.snapshot=fixture;testStrip()})
  }
+ function findItem(item,pred) {
+  if(!item) return null
+  if(pred(item)) return item
+  var kids=item.children||[]
+  for(var i=0;i<kids.length;i++){var f=findItem(kids[i],pred);if(f) return f}
+  return null
+ }
+ function testStrip() {
+  setTheme("papier");editor.selectedPart="workspaces"
+  schedule(350,function(){
+   var strip=findItem(editor,function(i){return i.strip===true&&typeof i.move==="function"})
+   check(!!strip,"the complete proof is one strip")
+   var row=findItem(strip,function(i){return i.spacing===0&&i.children&&i.children.some(function(c){return c.modelData!==undefined})})
+   var cells=row.children.filter(function(c){return c.modelData!==undefined})
+   check(cells.length===4,"all four parts are in the strip")
+   check(cells.every(function(c){return c.y===cells[0].y}),"every part sits on the same line")
+   var ordered=true;for(var i=1;i<cells.length;i++) ordered=ordered&&cells[i].x>=cells[i-1].x+cells[i-1].width-0.5
+   check(ordered,"parts follow each other without overlap")
+   var last=cells[3];check(last.x+last.width<=strip.width+0.5,"the whole strip fits the editor width")
+   check(cells.map(function(c){return c.numbered}).join("|")==="1  Logo|2  Workspaces|3  AI quotas|4  Right side","parts are numbered in the bar's order")
+   check(Math.abs(strip.implicitHeight-(strip.labelHeight+strip.barSize+12+8))<0.5,"the strip is one row high")
+   check(cells[1].selected&&!cells[0].selected,"the selected part is marked")
+   // arrow keys walk along the strip and never stage a setting
+   var before=JSON.stringify(opts),picked=picks
+   cells[1].forceActiveFocus(Qt.TabFocusReason)
+   schedule(80,function(){
+    check(cells[1].activeFocus,"a part owns keyboard focus")
+    check(keyDriver.keyClick(Qt.Key_Right,Qt.NoModifier,0),"Right was delivered")
+    schedule(80,function(){
+     check(editor.selectedPart==="ai"&&cells[2].activeFocus,"Right moves selection and focus to the next part")
+     keyDriver.keyClick(Qt.Key_Left,Qt.NoModifier,0)
+     schedule(80,function(){
+      keyDriver.keyClick(Qt.Key_Left,Qt.NoModifier,0)
+      schedule(80,function(){
+       check(editor.selectedPart==="logo"&&cells[0].activeFocus,"Left walks back to the first part")
+       keyDriver.keyClick(Qt.Key_Left,Qt.NoModifier,0)
+       schedule(80,function(){
+        check(editor.selectedPart==="logo","Left at the first part stays")
+        editor.selectedPart="right";cells[3].forceActiveFocus(Qt.TabFocusReason)
+        schedule(60,function(){
+         keyDriver.keyClick(Qt.Key_Right,Qt.NoModifier,0)
+         schedule(80,function(){
+          check(editor.selectedPart==="right","Right at the last part stays")
+          check(picks===picked&&JSON.stringify(opts)===before,"walking along the strip stages nothing")
+          testMotion()
+         })
+        })
+       })
+      })
+     })
+    })
+   })
+  })
+ }
+
  function testMotion() {
   setTheme("smoke")
   check(!motion.popupRunning&&!motion.frameRunning,"motion idle initially")

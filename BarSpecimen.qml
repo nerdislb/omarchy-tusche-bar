@@ -32,10 +32,23 @@ Item {
   readonly property var quiet: Visual.quietMaterial(material)
   readonly property var metal: quiet && quiet.metal ? quiet.metal : null
   readonly property var parts: part ? [part] : Visual.PARTS
-  readonly property int columns: part ? 1 : width >= Style.space(760) ? 4 : 2
+  // The complete proof is one strip: the parts in the bar's own order, each at its
+  // natural width, numbered above, inside one bar-coloured frame. A single part
+  // (a variant card) fills its card.
+  readonly property bool strip: part === ""
+  readonly property real labelHeight: Style.space(22)
   readonly property real cellHeight: barSize + Style.space(43)
-  implicitHeight: Math.ceil(parts.length / columns) * cellHeight + (part ? 0 : Style.space(8))
+  implicitHeight: strip ? labelHeight + barSize + Style.space(12) + Style.space(8) : cellHeight
   signal partPicked(string key)
+  // arrow keys walk along the strip; choosing a part only changes what is shown, never a setting
+  function move(from, delta) {
+    if (!interactive || !strip) return
+    var to = from + delta
+    if (to < 0 || to >= parts.length) return
+    partPicked(parts[to])
+    var next = cells.itemAt(to)
+    if (next) next.forceActiveFocus(Qt.TabFocusReason)
+  }
 
   component Label: Text {
     textFormat: Text.PlainText
@@ -49,53 +62,81 @@ Item {
     opacity: 0.65
     color: root.foreground
   }
-  Repeater {
-    model: root.parts
-    delegate: FocusScope {
-      id: cell
-      required property string modelData
-      required property int index
-      readonly property bool selected: root.interactive && root.selectedPart === modelData
-      x: (index % root.columns) * (root.width / root.columns)
-      y: Math.floor(index / root.columns) * root.cellHeight
-      width: root.width / root.columns - (root.part ? 0 : Style.space(6))
-      height: root.cellHeight - Style.space(6)
-      activeFocusOnTab: root.interactive
-      Accessible.role: Accessible.Button
-      Accessible.name: Presets.ELEMENTS[modelData].label
-      Accessible.description: "Select this part to see its variants"
-      Accessible.onPressAction: if (root.interactive) root.partPicked(modelData)
-      Keys.onReturnPressed: if (root.interactive) root.partPicked(modelData)
-      Keys.onEnterPressed: if (root.interactive) root.partPicked(modelData)
-      Keys.onSpacePressed: if (root.interactive) root.partPicked(modelData)
-      Label {
-        x: Style.space(8)
-        text: Presets.ELEMENTS[cell.modelData].label
-        color: cell.selected ? root.accent : Commons.Color.popups.text
-      }
-      Rectangle {
-        y: Style.space(22)
-        width: parent.width
-        height: root.barSize + Style.space(12)
-        color: root.background
-        border.width: cell.selected || cell.activeFocus ? 2 : 1
-        border.color: cell.selected || cell.activeFocus ? root.accent : Util.alpha(Commons.Color.popups.text, 0.16)
-        clip: true
-        Loader {
-          id: face
-          anchors.centerIn: parent
-          height: root.barSize
-          width: item ? Math.min(parent.width - Style.space(12), item.implicitWidth || item.width) : 0
-          sourceComponent: cell.modelData === "logo" ? logoFace
-            : cell.modelData === "workspaces" ? workspaceFace
-            : cell.modelData === "ai" ? quotaFace : statusFace
+  // one frame behind the whole strip: it reads as the bar
+  Rectangle {
+    visible: root.strip
+    y: root.labelHeight
+    width: Math.min(root.width, partRow.width)
+    height: root.barSize + Style.space(12)
+    color: root.background
+    border.width: 1
+    border.color: Util.alpha(Commons.Color.popups.text, 0.22)
+  }
+  Row {
+    id: partRow
+    spacing: 0
+    Repeater {
+      id: cells
+      model: root.parts
+      delegate: FocusScope {
+        id: cell
+        required property string modelData
+        required property int index
+        readonly property bool selected: root.interactive && root.selectedPart === modelData
+        readonly property string title: Presets.ELEMENTS[modelData].label
+        readonly property string numbered: root.strip ? (index + 1) + "  " + title : title
+        // strip: as wide as the face (or its label) needs; card: the card
+        width: root.strip ? Math.max(Math.ceil(heading.implicitWidth) + Style.space(18), face.width + Style.space(28)) : root.width
+        height: root.labelHeight + root.barSize + Style.space(12)
+        activeFocusOnTab: root.interactive
+        Accessible.role: Accessible.Button
+        Accessible.name: (root.strip ? "Part " + (index + 1) + ", " : "") + title
+        Accessible.description: "Select this part to see its variants"
+        Accessible.onPressAction: if (root.interactive) root.partPicked(modelData)
+        Keys.onReturnPressed: if (root.interactive) root.partPicked(modelData)
+        Keys.onEnterPressed: if (root.interactive) root.partPicked(modelData)
+        Keys.onSpacePressed: if (root.interactive) root.partPicked(modelData)
+        Keys.onLeftPressed: root.move(index, -1)
+        Keys.onRightPressed: root.move(index, 1)
+        Label {
+          id: heading
+          x: Style.space(8)
+          text: cell.numbered
+          color: cell.selected ? root.accent : Commons.Color.popups.text
+          font.bold: cell.selected
         }
-      }
-      MouseArea {
-        anchors.fill: parent
-        enabled: root.interactive
-        cursorShape: Qt.PointingHandCursor
-        onClicked: { cell.forceActiveFocus(); root.partPicked(cell.modelData) }
+        Rectangle {
+          y: root.labelHeight
+          width: parent.width
+          height: root.barSize + Style.space(12)
+          // the strip draws one frame for all parts; a selected or focused part gets its own
+          color: root.strip ? "transparent" : root.background
+          border.width: cell.selected || cell.activeFocus ? 2 : (root.strip ? 0 : 1)
+          border.color: cell.selected || cell.activeFocus ? root.accent : Util.alpha(Commons.Color.popups.text, 0.16)
+          clip: true
+          Loader {
+            id: face
+            anchors.centerIn: parent
+            height: root.barSize
+            width: item ? (root.strip ? (item.implicitWidth || item.width) : Math.min(parent.width - Style.space(12), item.implicitWidth || item.width)) : 0
+            sourceComponent: cell.modelData === "logo" ? logoFace
+              : cell.modelData === "workspaces" ? workspaceFace
+              : cell.modelData === "ai" ? quotaFace : statusFace
+          }
+        }
+        // a hairline between neighbouring parts of the strip
+        Rectangle {
+          visible: root.strip && cell.index > 0 && !cell.selected
+          x: 0; y: root.labelHeight + Style.space(5)
+          width: 1; height: root.barSize + Style.space(2)
+          color: Util.alpha(Commons.Color.popups.text, 0.16)
+        }
+        MouseArea {
+          anchors.fill: parent
+          enabled: root.interactive
+          cursorShape: Qt.PointingHandCursor
+          onClicked: { cell.forceActiveFocus(); root.partPicked(cell.modelData) }
+        }
       }
     }
   }

@@ -49,7 +49,7 @@ Item {
     Heading { width: parent.width; text: "Your bar · preview" }
     Note {
       width: parent.width
-      text: "Select a part to see its variants. Hover or keyboard focus previews; click, Enter or Space stages a choice. Use / Save applies it."
+      text: "The parts of your bar, left to right as in the bar (the centre with the clock, island and weather stays native). Select a part, or walk along with the arrow keys, to see its variants. Hover or keyboard focus previews; click, Enter or Space stages a choice. Use / Save applies it."
     }
     BarSpecimen {
       width: parent.width
