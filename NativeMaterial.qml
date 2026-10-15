@@ -100,11 +100,18 @@ QtObject {
                  dressed: panels.filter(function(p) { return dressed.indexOf(p) !== -1 }).length })
     }
     return { slots: slots.length, natives: out, dressedTotal: dressed.length,
-             cards: decorations.filter(function(d) { return !!d.panel && !!d.card }).map(function(d) { return d.card.stateObject() }) }
+             cards: decorations.filter(alive).map(function(d) { return d.card.stateObject() }) }
+  }
+  // A decoration is alive while both its panel and its card still are objects. A
+  // destroyed QML object leaves a truthy JS wrapper behind whose properties throw,
+  // so `!!d.card` is not enough (a plugin reload destroys cards and left the
+  // status report throwing for good).
+  function alive(d) {
+    try { return !!d && !!d.panel && !!d.card && d.panel.borderSpec !== undefined && typeof d.card.stateObject === "function" } catch (e) { return false }
   }
   // a destroyed widget takes its panels (and their MaterialCards) along: forget them
   function forget() {
     dressed = dressed.filter(function(p) { return !!p && p.borderSpec !== undefined })
-    decorations = decorations.filter(function(d) { return !!d.panel && !!d.card })
+    decorations = decorations.filter(alive)
   }
 }
