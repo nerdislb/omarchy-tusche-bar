@@ -1,5 +1,5 @@
 background       = "#e9edf0"
-background-alpha = 1.0
+background-alpha = 0.82
 text             = "#444c59"
 active           = "#000000"
 scale-with-font  = true

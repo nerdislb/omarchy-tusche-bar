@@ -46,7 +46,7 @@
     "spring": true,
     "light": true,
     "tint": "#f0f5fa",
-    "backing": 0.62,
+    "backing": 0.42,
     "blur": 18,
     "bevel": 9,
     "bend": 4,

@@ -69,10 +69,12 @@ default; the others are one `omarchy theme bg next` away.
 
 They are AI-generated stills (`tools/glass-backgrounds/PROMPTS.md`), 1920×1080,
 calm in the upper third where the menu and the audio popup open. The glass
-keeps menu and popup text at 5.5 : 1 or better on all six (measured on the
-rendered pixels in the design round). The bar is opaque
-(`background-alpha = 1.0`), so its text does not depend on the picture; only
-the still haze under the bar and the bar's lower edge meet it. The previews
+kept menu and popup text at 5.5 : 1 or better on all six in the original
+design round; those measurements describe that round's material, not every
+later tuning. The local transparency trial (15.10.2026) gives the bar 82%
+opacity (`background-alpha = 0.82`), with text and icons remaining opaque.
+Popup tint backing is 42% for Frost and 46% for Smoke, retaining the existing
+blur and shader contrast protection. The previews
 (`preview.png`) are rendered with a schematic bar, not captured from the live
 desktop. The pictures are still images: video wallpapers keep the solid
 fallback described below.
@@ -89,7 +91,7 @@ when the card is gone or the material is disabled.
 
 `GlassSurface.qml` pre-blurs the source before the original
 `shaders/glass.frag` samples it, including at the refracted 9 px bevel.
-Backdrop brightness is bounded before tinting (0.62 Frost / 0.66 Smoke) to
+Backdrop brightness is bounded before tinting (0.42 Frost / 0.46 Smoke) to
 protect foreground text. A 650 ms light sweep runs once on entry. Shader
 source and QSB ship with both companions. No Omacale source is copied.
 
