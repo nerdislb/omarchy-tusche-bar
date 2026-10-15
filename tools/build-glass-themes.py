@@ -75,6 +75,8 @@ def build(name, base, colors):
         txt = re.sub(r'#[a-fA-F0-9]{6}\b', lambda m: colors.get(m[0].lower(), m[0]), p.read_text())
         if p.name == 'colors.toml':
             txt = re.sub(r'^#.*\n', f'# {name.title()} — Bevel Lens glass family. Red is the signal colour.\n', txt, count=1)
+        if p.name == 'shell.bar.toml':
+            txt = re.sub(r'(?m)^(background-alpha\s*=\s*)[\d.]+', r'\g<1>0.82', txt)
         p.write_text(txt)
     light = name == 'frost'
     mat = json.loads((src / 'bar-material.json').read_text())
@@ -82,7 +84,7 @@ def build(name, base, colors):
     mat['glass'] = {
         'enabled': True, 'spring': True, 'light': light,
         'tint': '#f0f5fa' if light else '#0e1116',
-        'backing': 0.62 if light else 0.66, 'blur': 18 if light else 22,
+        'backing': 0.42 if light else 0.46, 'blur': 18 if light else 22,
         'bevel': 9, 'bend': 4, 'omega': 24.5, 'damping': 0.78,
         'frame': FRAME[name],
     }
