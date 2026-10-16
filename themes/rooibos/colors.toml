@@ -1,0 +1,36 @@
+# Rooibos: tea glass, the glass family steeped in amber. Red is the signal colour.
+mode = "dark"
+accent = "#eda55a"
+selection = "#46261b"
+muted = "#a7836c"
+
+background = "#1b0e0a"
+dark_background = "#140a07"
+darker_background = "#0d0604"
+lighter_background = "#2a1711"
+
+foreground = "#f3e0cd"
+dark_foreground = "#cba78f"
+light_foreground = "#ead2bd"
+bright_foreground = "#fff4e8"
+
+red = "#ee7a64"
+orange = "#eda55a"
+yellow = "#e9c47c"
+green = "#adb98c"
+blue = "#a2b4bb"
+cyan = "#93b8aa"
+magenta = "#d6919a"
+purple = "#c39ab6"
+brown = "#9a5b3e"
+
+bright_red = "#f68f79"
+bright_orange = "#f4b773"
+bright_yellow = "#f2d394"
+bright_green = "#c1cba0"
+bright_blue = "#b6c6cc"
+bright_cyan = "#a9c9bd"
+bright_magenta = "#e2a6ad"
+
+hyprland_active_border = "rgba(5a2a14ff) rgba(f6c98aff) rgba(b8733aff) rgba(2a120aff) rgba(7a3c1cff) rgba(f3b86eff) rgba(9a5a2cff) rgba(2a120aff) rgba(6a321aff) rgba(f6c98aff) 45deg"
+hyprland_inactive_border = "rgba(2e1912ff)"

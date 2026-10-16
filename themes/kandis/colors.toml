@@ -1,0 +1,36 @@
+# Kandis: tea glass, the glass family steeped in amber. Red is the signal colour.
+mode = "light"
+accent = "#9a5216"
+selection = "#f0dbb2"
+muted = "#7f624a"
+
+background = "#f7efdf"
+dark_background = "#eee2cc"
+darker_background = "#e2d2b6"
+lighter_background = "#fcf8ef"
+
+foreground = "#2d1b10"
+dark_foreground = "#5a3f2a"
+light_foreground = "#24150b"
+bright_foreground = "#140b05"
+
+red = "#a63d2c"
+orange = "#9a5216"
+yellow = "#7d5b0b"
+green = "#56673a"
+blue = "#3f5e6a"
+cyan = "#3b6a60"
+magenta = "#8e4a59"
+purple = "#6c5068"
+brown = "#6b4227"
+
+bright_red = "#96331f"
+bright_orange = "#8a4810"
+bright_yellow = "#6e5007"
+bright_green = "#4c5c2c"
+bright_blue = "#33505c"
+bright_cyan = "#2f5c52"
+bright_magenta = "#7c3d4c"
+
+hyprland_active_border = "rgba(9a5a26ff) rgba(fff0d2ff) rgba(d39a5cff) rgba(5a3214ff) rgba(b07038ff) rgba(ffe6bcff) rgba(c88a4cff) rgba(5a3214ff) rgba(a8662eff) rgba(fff0d2ff) 45deg"
+hyprland_inactive_border = "rgba(dccab0ff)"

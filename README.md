@@ -1,13 +1,13 @@
 # Tusche Bar
 
-Presets, modules and motion for the **native** Omarchy bar, made for Tusche & Papier, the metal pair Chrom & Platin, and the glass pair Frost & Smoke (all included). It adds:
+Presets, modules and motion for the **native** Omarchy bar, made for Tusche & Papier, the metal pair Chrom & Platin, the glass pair Frost & Smoke and its tea pair Rooibos & Kandis (all included). It adds:
 
 - **Logo and workspaces:** a compact workspace row with your own logo (Omarchy, the Arch mark or the Nerdibeard seal);
 - **Status:** AI quota gauges and status groups (network, phone, system);
 - **Menu:** a drop-down logo menu that holds the whole Omarchy menu, searchable;
 - **Popups:** your popups and Omarchy's own ones (volume, battery, Wi-Fi …) in the theme's material: rolling cards on Papier and Tusche, an ink bloom with a dried rim on the Lavur themes, thin liquid-chrome rims on Chrom and Platin.
 
-Everything is switchable in its own Control Center. The bar stays Omarchy's own: every widget keeps its own service. It works with any Omarchy theme; the material comes with themes that ship a `bar-material.json` (the eight themes in `themes/`).
+Everything is switchable in its own Control Center. The bar stays Omarchy's own: every widget keeps its own service. It works with any Omarchy theme; the material comes with themes that ship a `bar-material.json` (the ten themes in `themes/`).
 
 ### Frost & Smoke
 
@@ -22,6 +22,18 @@ Prisma; Smoke has Rauchband, Regenglas and Rauchquarz. They carry no chrome
 (that is Chrom's and Platin's): the bar's rings, logo and clock segment are
 plain, and the window frame's focus glint is a soft, cool light band like the
 popups' own, not a chrome spark.
+
+### Rooibos & Kandis
+
+Dark **Rooibos** and light **Kandis** are the glass pair steeped in tea: the
+same Bevel Lens surface, spring, gloss and frame glint as Frost & Smoke, with
+an amber tint instead of a clear one, warm brown and honey colours, one red
+for signals, and muted sage, Earl Grey blue and hibiscus only for code and
+terminal output. The window frame is a still amber stripe with Frost's soft
+dark shadow. Pictures (generated, upscaled with Real-ESRGAN to 1080p):
+Rooibos has Teekanne, Abendbar and Lesesessel; Kandis has Fensterbank,
+Milchschaum and Teeglas. Built by `tools/build-tea-themes.py`, checked by
+`tests/tea.cjs`.
 
 ![The bar in Tusche Lavur](docs/screenshots/bar-tusche-lavur.png)
 ![The bar in Papier](docs/screenshots/bar-papier.png)
@@ -52,7 +64,7 @@ Companions: [Tusche Island](https://github.com/nerdislb/omarchy-tusche-island) (
 
 ### The whole look
 
-Installs the eight themes (Tusche & Papier with their Lavur variants, Chrom & Platin, Frost & Smoke), this bar, the Tusche Island and the Card Picker, with the author's bar combination `paper`:
+Installs the ten themes (Tusche & Papier with their Lavur variants, Chrom & Platin, Frost & Smoke, Rooibos & Kandis), this bar, the Tusche Island and the Card Picker, with the author's bar combination `paper`:
 
 ```sh
 git clone https://github.com/nerdislb/omarchy-tusche-bar.git ~/src/omarchy-tusche-bar
@@ -67,7 +79,7 @@ The script:
 - puts the island in the place of Omarchy's clock;
 - restarts the shell and switches to Papier.
 
-Options: `--theme tusche|papier-lavur|tusche-lavur|chrom|platin|frost|smoke`, `--no-card-picker` and `--boot-logo` (the seal on the boot screen, asks for sudo). Details are in [setup/README.md](setup/README.md). Undo with `setup/revert.sh <backup folder>`, which the script names at the end.
+Options: `--theme tusche|papier-lavur|tusche-lavur|chrom|platin|frost|smoke|rooibos|kandis`, `--no-card-picker` and `--boot-logo` (the seal on the boot screen, asks for sudo). Details are in [setup/README.md](setup/README.md). Undo with `setup/revert.sh <backup folder>`, which the script names at the end.
 
 ### Only the bar
 
@@ -161,7 +173,7 @@ The sections below are the reference: how it is built, every option, IPC and tes
 Presets: `today` (your bar), `tidy` (pips · gauge · groups), `focus` (stack · on demand · deviations).
 
 **Edge from the theme** (`edge: theme`) reads `bar-material.json` from the
-current Omarchy theme (the eight themes here ship one; other themes show
+current Omarchy theme (the ten themes here ship one; other themes show
 no edge) and follows theme switches. `edge.kind` `dry`: a line over the bar's
 lower edge on Overlay (light in Tusche, ink in Papier), and under it a short
 hard shadow, a glow and a still haze on the Top layer — while the workspace

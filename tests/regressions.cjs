@@ -16,7 +16,7 @@ assert(islandDir, 'the Tusche Island repository next to the bar (../omarchy-tusc
     ['modules/Quota.qml', /Root\.BarMaterialCard \{ panel: popup;/],
     ['MotionPreview.qml', /BarMaterialCard \{ id: popupMaterialRenderer;/],
   ]) assert.match(fs.readFileSync(path.join(root, file), 'utf8'), re, file + ': persistent frame is wired');
-  for (const t of ['tusche-lavur', 'papier-lavur', 'chrom', 'platin', 'frost', 'smoke']) {
+  for (const t of ['tusche-lavur', 'papier-lavur', 'chrom', 'platin', 'frost', 'smoke', 'rooibos', 'kandis']) {
     const mat = JSON.parse(fs.readFileSync(path.join(root, 'themes', t, 'bar-material.json'), 'utf8'));
     assert.equal(mat.card.frame, undefined, t + ': retains its own rim');
   }
@@ -1289,7 +1289,7 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
     const reds = [...colors.matchAll(/"#([0-9a-f]{6})"/g)].map(m => m[1]).filter(h => parseInt(h.slice(0, 2), 16) - Math.max(parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)) > 60);
     assert.ok(reds.length >= 1 && new Set(reds).size <= 2, `${t}: red is the one signal colour`);
   }
-  assert.match(read('setup/install.sh'), /themes=\(tusche papier tusche-lavur papier-lavur chrom platin frost smoke\)/);
+  assert.match(read('setup/install.sh'), /themes=\(tusche papier tusche-lavur papier-lavur chrom platin frost smoke rooibos kandis\)/);
   // the wiring
   const edge = read('ThemeEdge.qml');
   assert.match(edge, /readonly property var metal: !!spec && spec\.kind === "metal" \? Bridge\.ModuleBus\.metal : null/);

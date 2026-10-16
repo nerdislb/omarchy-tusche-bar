@@ -1,0 +1,66 @@
+{
+  "family": "glass",
+  "edge": {
+    "kind": "dry",
+    "line": {
+      "color": "#fff6e6",
+      "alpha": 0.55,
+      "width": 1
+    },
+    "haze": {
+      "color": "#2a170c",
+      "height": 16,
+      "stops": [
+        [
+          0,
+          0.18
+        ],
+        [
+          0.5,
+          0.06
+        ],
+        [
+          1,
+          0
+        ]
+      ]
+    }
+  },
+  "card": {
+    "roll": true,
+    "halo": {
+      "color": "#1a0d06",
+      "alpha": 0.34,
+      "blur": 28
+    }
+  },
+  "source": {
+    "fill": "#2d1b10",
+    "text": "#f7efdf"
+  },
+  "tones": {
+    "strong": "#2d1b10"
+  },
+  "glass": {
+    "enabled": true,
+    "spring": true,
+    "light": true,
+    "tint": "#f2d09a",
+    "backing": 0.54,
+    "blur": 18,
+    "bevel": 9,
+    "bend": 4,
+    "gloss": 1.0,
+    "omega": 24.5,
+    "damping": 0.78,
+    "frame": {
+      "ms": 650,
+      "band": 0.1,
+      "amount": 0.7,
+      "shadeAmt": 0.16,
+      "bloom": 0.8,
+      "tint": "#ffe9c4",
+      "shade": "#5a3214"
+    }
+  }
+}
