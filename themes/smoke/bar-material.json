@@ -31,7 +31,7 @@
     "halo": {
       "color": "#101722",
       "alpha": 0.5,
-      "blur": 24
+      "blur": 28
     }
   },
   "source": {
@@ -50,6 +50,7 @@
     "blur": 22,
     "bevel": 9,
     "bend": 4,
+    "gloss": 0.8,
     "omega": 24.5,
     "damping": 0.78,
     "frame": {

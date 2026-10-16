@@ -48,6 +48,11 @@ FRAME = {
 }
 
 
+# how much plate the card shows at rest (glass.frag `gloss`, 0 = the plain bevel): inner edge line, shaded thickness and
+# two still reflections. Frost needs more: pale glass on a pale picture has little contrast to show it with.
+GLOSS = {'frost': 1.0, 'smoke': 0.8}
+
+
 def own_pictures(name, dst):
     """Replace the pictures (and the preview) inherited from the base theme with the glass pair's own."""
     own = PICTURES / name
@@ -85,7 +90,7 @@ def build(name, base, colors):
         'enabled': True, 'spring': True, 'light': light,
         'tint': '#f0f5fa' if light else '#0e1116',
         'backing': 0.42 if light else 0.46, 'blur': 18 if light else 22,
-        'bevel': 9, 'bend': 4, 'omega': 24.5, 'damping': 0.78,
+        'bevel': 9, 'bend': 4, 'gloss': GLOSS[name], 'omega': 24.5, 'damping': 0.78,
         'frame': FRAME[name],
     }
     mat['edge'] = {
@@ -93,7 +98,7 @@ def build(name, base, colors):
         'line': {'color': '#ffffff' if light else '#c3cedd', 'alpha': 0.55 if light else 0.22, 'width': 1},
         'haze': {'color': '#17202d', 'height': 16, 'stops': [[0, 0.18], [0.5, 0.06], [1, 0]]},
     }
-    mat['card'] = {'roll': True, 'halo': {'color': '#101722', 'alpha': 0.23 if light else 0.5, 'blur': 24}}
+    mat['card'] = {'roll': True, 'halo': {'color': '#101722', 'alpha': 0.34 if light else 0.5, 'blur': 28}}
     mat['tones'] = {'strong': '#171c24' if light else '#f0f3f7'}
     mat['source'] = {'fill': '#171c24' if light else '#f0f3f7', 'text': '#e9edf0' if light else '#111419'}
     # No chrome: the metal block switches on the logo frame, rings, meters, hover tube, segment rim, pulse and the

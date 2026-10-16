@@ -30,8 +30,8 @@
     "roll": true,
     "halo": {
       "color": "#101722",
-      "alpha": 0.23,
-      "blur": 24
+      "alpha": 0.34,
+      "blur": 28
     }
   },
   "source": {
@@ -50,6 +50,7 @@
     "blur": 18,
     "bevel": 9,
     "bend": 4,
+    "gloss": 1.0,
     "omega": 24.5,
     "damping": 0.78,
     "frame": {

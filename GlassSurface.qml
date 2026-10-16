@@ -114,6 +114,7 @@ Item {
     property real reveal: Math.max(0, Math.min(1, root.reveal))
     property real sweep: root.sweep
     property real strength: root.strength
+    property real gloss: root.spec && root.spec.gloss ? Number(root.spec.gloss) : 0
     property color tint: root.tint
     fragmentShader: Qt.resolvedUrl("shaders/glass.frag.qsb")
     blending: true
