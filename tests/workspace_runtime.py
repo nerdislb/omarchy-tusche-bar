@@ -19,6 +19,12 @@ def run(output=None):
         modules.mkdir()
         for name in ['Workspaces.qml', 'WorkspacesFace.qml', 'WorkspaceMiniature.qml', 'ArchLogo.qml', 'SealLogo.qml']:
             shutil.copy2(ROOT / 'modules' / name, modules / name)
+        import re
+        popout_src = (ROOT / 'modules' / 'WorkspacePopout.qml').read_text()
+        popout_src = re.sub(r'anchors\s*\{\s*top:\s*true[\s\S]*?\}', '', popout_src, count=1)
+        (modules / 'WorkspacePopout.qml').write_text(
+            '\n'.join(l for l in popout_src.splitlines() if not l.strip().startswith('WlrLayershell.')) + '\n'
+        )
         shutil.copy2(ROOT / 'WorkspaceGeometry.js', tmp / 'WorkspaceGeometry.js')
 
         def write(name, text):
@@ -26,14 +32,15 @@ def run(output=None):
             dest.parent.mkdir(parents=True, exist_ok=True)
             dest.write_text(text)
 
-        write('imports/qs/Commons/qmldir', 'module qs.Commons\nsingleton Style 1.0 Style.qml\nsingleton Util 1.0 Util.qml\nsingleton Color 1.0 Color.qml\n')
+        write('imports/qs/Commons/qmldir', 'module qs.Commons\nsingleton Style 1.0 Style.qml\nsingleton Util 1.0 Util.qml\nsingleton Color 1.0 Color.qml\nsingleton Border 1.0 Border.qml\nTransformWatcher 1.0 TransformWatcher.qml\n')
         write('imports/qs/Commons/Style.qml', '''pragma Singleton
 import QtQuick
 QtObject {
  property bool reduceMotion: false
  property real cornerRadius: 2
+ property int gapsOut: 6
  property var bar: ({sizeHorizontal:30})
- property var font: ({family:"monospace",body:12,bodySmall:10,icon:14})
+ property var font: ({family:"monospace",body:12,bodySmall:10,caption:9,icon:14})
  function space(n) { return n }
  function duration(n) { return reduceMotion ? 0 : n }
 }''')
@@ -46,12 +53,58 @@ QtObject {
         write('imports/qs/Commons/Color.qml', '''pragma Singleton
 import QtQuick
 QtObject {
- property var bar: ({text:"#222222"})
+ property var bar: ({text:"#222222",background:"#eee9df"})
+ property var popups: ({text:"#222222",background:"#f5f0e6",border:"#888888"})
  property color accent: "#813629"
  property color urgent: "#990000"
 }''')
-        write('imports/qs/Ui/qmldir', 'module qs.Ui\nPlaceholder 1.0 Placeholder.qml\n')
+        write('imports/qs/Commons/Border.qml', '''pragma Singleton
+import QtQuick
+QtObject {
+ function surfaceSpec(a,b,c,w) { return {width:w||1,color:c} }
+ function left(s) { return s && s.width ? s.width : 1 }
+ function right(s) { return s && s.width ? s.width : 1 }
+ function top(s) { return s && s.width ? s.width : 1 }
+ function bottom(s) { return s && s.width ? s.width : 1 }
+}''')
+        write('imports/qs/Commons/TransformWatcher.qml', '''import QtQuick
+QtObject { property var a: null; property var b: null; property int transform: 0 }''')
+        write('imports/qs/Ui/qmldir', 'module qs.Ui\nPlaceholder 1.0 Placeholder.qml\nBorderSurface 1.0 BorderSurface.qml\n')
         write('imports/qs/Ui/Placeholder.qml', 'import QtQuick\nItem {}\n')
+        write('imports/qs/Ui/BorderSurface.qml', '''import QtQuick
+Rectangle {
+ property var borderSpec: null
+ property int padding: 8
+ readonly property int contentTopInset: padding
+ readonly property int contentRightInset: padding
+ readonly property int contentBottomInset: padding
+ readonly property int contentLeftInset: padding
+}''')
+        write('imports/Quickshell/qmldir', 'module Quickshell\nsingleton Quickshell 1.0 Quickshell.qml\nPanelWindow 1.0 PanelWindow.qml\nRegion 1.0 Region.qml\nExclusionMode 1.0 ExclusionMode.qml\n')
+        write('imports/Quickshell/Quickshell.qml', '''pragma Singleton
+import QtQuick
+QtObject { property var screens: [({name:"mock",width:1200,height:900})] }''')
+        write('imports/Quickshell/ExclusionMode.qml', '''import QtQuick
+QtObject { enum Mode { Ignore = 0 } }''')
+        write('imports/Quickshell/Region.qml', '''import QtQuick
+QtObject { property var item: null }''')
+        write('imports/Quickshell/PanelWindow.qml', '''import QtQuick
+Item {
+ property var screen: null
+ property color color: "transparent"
+ property int exclusionMode: 0
+ property var mask: null
+}''')
+        write('imports/Quickshell/Wayland/qmldir', 'module Quickshell.Wayland\nScreencopyView 1.0 ScreencopyView.qml\n')
+        write('imports/Quickshell/Wayland/ScreencopyView.qml', '''import QtQuick
+Item {
+ property var captureSource: null
+ property bool live: false
+ property bool paintCursor: false
+ property bool hasContent: true
+ property size constraintSize: Qt.size(0, 0)
+ signal stopped()
+}''')
         write('imports/Quickshell/Hyprland/qmldir', 'module Quickshell.Hyprland\nsingleton Hyprland 1.0 Hyprland.qml\n')
         write('imports/Quickshell/Hyprland/Hyprland.qml', '''pragma Singleton
 import QtQuick
@@ -59,7 +112,7 @@ QtObject {
  property var focusedWorkspace: ({id:27})
  property var activeToplevel: ({address:"abc"})
  property var monitors: ({values:[{lastIpcObject:{id:1,name:"mock",width:1200,height:900,x:0,y:0,scale:1,reserved:[0,30,0,0]}}]})
- property var toplevels: ({values:[{lastIpcObject:{address:"0xabc",monitor:1,workspace:{id:27},at:[0,30],size:[400,870]}}]})
+ property var toplevels: ({values:[{address:"abc",title:"Terminal",wayland:({appId:"Alacritty",title:"Terminal"}),lastIpcObject:{address:"0xabc",class:"Alacritty",monitor:1,workspace:{id:27},at:[0,30],size:[400,870]}}]})
  property var workspaces: ({values:[
   {id:27,name:"27",urgent:false,toplevels:{values:[1]},lastIpcObject:{id:27,name:"27",monitorID:1}},
   {id:120,name:"120",urgent:false,toplevels:{values:[2]},lastIpcObject:{id:120,name:"120",monitorID:1}}
@@ -68,6 +121,7 @@ QtObject {
  property int monitorRefreshes: 0
  property int workspaceRefreshes: 0
  signal rawEvent(var event)
+ function monitorFor(s) { return monitors.values.length ? monitors.values[0] : null }
  function refreshToplevels() { clientRefreshes++ }
  function refreshMonitors() { monitorRefreshes++ }
  function refreshWorkspaces() { workspaceRefreshes++ }
@@ -106,6 +160,8 @@ QtObject {
 }''')
         write('DropMenu.qml', '''import QtQuick
 Item { property var anchorItem; property var owner; property var bar; property bool open: false; property real cardPresence: 0 }''')
+        write('BarMaterialCard.qml', '''import QtQuick
+Item { property var panel; property var material; property real presence: panel && panel.open ? 1 : 0 }''')
         write('MetalShape.qml', '''import QtQuick
 Item { property var spec; property real pad; property real tube; property real radius; function play() {} }''')
         qml = '''import QtQuick
@@ -267,6 +323,40 @@ Item {
    // a quiet gap re-arms the leading edge
    Hyprland.rawEvent({name:"closewindow"})
    compare(Hyprland.clientRefreshes,before+3)
+  }
+  function test_04c_hover_popout_and_window_focus() {
+   mouseMove(canvas,580,350)
+   var item=createTemporaryObject(live,canvas,{x:10,y:10,settings:({variant:"pips",menu:false})})
+   verify(item)
+   compare(item.variant,"pips")
+   verify(!item.hoverPopoutOpen)
+   verify(!item.needsGeometry)
+   compare(Object.keys(item.geometry).length,0)
+   mouseMove(item,20,15)
+   tryVerify(function(){return item.hoverPopoutOpen})
+   verify(item.popoutRequested)
+   verify(item.needsGeometry)
+   tryVerify(function(){return item.geometryOwner})
+   compare(item.popoutIds,[27,120])
+   compare(item.geometry[27].rectangles.length,1)
+   verify(item.popoutItem)
+   // Move pointer off the bar indicator and onto the first workspace tile's window thumbnail
+   var tx=item.popoutItem.cardOrigin.x+35
+   var ty=item.popoutItem.cardOrigin.y+55
+   mouseMove(item.popoutItem,tx,ty)
+   verify(item.popoutHovered)
+   verify(item.popoutItem.anyTileHovered)
+   wait(320)
+   verify(item.hoverPopoutOpen)
+   var beforeCmds=canvas.commands.length
+   mouseClick(item.popoutItem,tx,ty)
+   compare(canvas.commands.length,beforeCmds+1)
+   verify(canvas.commands[beforeCmds].indexOf('window = "address:0xabc"')>=0)
+   item.dropOpen=true
+   verify(!item.hoverPopoutOpen)
+   item.dropOpen=false
+   mouseMove(canvas,580,350)
+   tryVerify(function(){return !item.hoverPopoutOpen})
   }
   function test_05_optional_theme_gallery() {
    if(!OUTPUT) return

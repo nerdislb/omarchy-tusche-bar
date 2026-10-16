@@ -1394,3 +1394,41 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
   assert(dm.includes('deleteConfirm.selectedIndex = 0'), 'Cancel is preselected');
   console.log('PASS: uninstall an app from the drop-down (right-click, Delete, question, shell remove)');
 }
+
+// Workspace hover popout: non-stealing overlay, tight card hit-mask, live
+// ScreencopyView thumbnails gated on visibility/DPMS, BarMaterialCard frame,
+// plain-text labels, and in-bar pips held expanded while the popout is open.
+{
+  const pop = fs.readFileSync(path.join(root, 'modules/WorkspacePopout.qml'), 'utf8');
+  const ws = fs.readFileSync(path.join(root, 'modules/Workspaces.qml'), 'utf8');
+  const face = fs.readFileSync(path.join(root, 'modules/WorkspacesFace.qml'), 'utf8');
+  const geomCtx = {};
+  vm.createContext(geomCtx);
+  vm.runInContext(fs.readFileSync(path.join(root, 'WorkspaceGeometry.js'), 'utf8').replace('.pragma library', ''), geomCtx);
+
+  assert.match(pop, /WlrLayershell\.namespace: "omarchy-keyboard-panel"/, 'uses omarchy-keyboard-panel namespace for no_anim rule');
+  assert.match(pop, /WlrLayershell\.keyboardFocus: WlrKeyboardFocus\.None/, 'hover popout never steals keyboard focus');
+  assert.match(pop, /mask: Region \{\n\s*item: popout\.open \? cardHitBox : emptyMask\n\s*\}/, 'click/hover mask restricted to card when open');
+  assert.match(pop, /Root\.BarMaterialCard \{\n\s*id: materialCard\n\s*panel: popout\n\s*material: Bridge\.ModuleBus\.material\n\s*\}/, 'dressed with BarMaterialCard');
+  assert.match(pop, /readonly property int offscreenCount: layout && layout\.offscreen \? Number\(layout\.offscreen\.total \|\| 0\) : 0/, 'reads offscreen.total from WorkspaceGeometry');
+  assert.match(pop, /readonly property bool ready: active && !!item && item\.hasContent === true/, 'fallback label waits for ScreencopyView.hasContent');
+  assert.match(pop, /ScreencopyView \{[\s\S]*?captureSource: rectItem\.waylandHandle[\s\S]*?live: popout\.open && !popout\.captureBlocked[\s\S]*?onStopped: rectItem\.captureAlive = false/, 'live ScreencopyView gated on open/DPMS with onStopped recovery');
+  for (const m of pop.matchAll(/\bText \{\n([\s\S]*?)\n\s*\}/g))
+    assert(m[1].includes('textFormat: Text.PlainText'), 'every Text in WorkspacePopout uses PlainText');
+
+  const titleFn = new Function('workspaceLabels', 'wsId', pop.match(/function workspaceTitle\(wsId\) \{([\s\S]*?)\n  \}/)[1]);
+  assert.equal(titleFn({'-7': 'dev'}, -7), 'dev', 'named workspace label');
+  assert.equal(titleFn({}, 10), '0', 'workspace 10 badge');
+  assert.equal(titleFn({}, 3), '3', 'numbered workspace badge');
+
+  const guardBody = pop.match(/readonly property bool captureBlocked: \{([\s\S]*?)\n  \}/)[1];
+  const guardFn = new Function('popout', 'Hyprland', 'WorkspaceGeometry', guardBody);
+  assert.equal(guardFn({monitors: []}, {monitors: {values: [{lastIpcObject: {}}]}}, geomCtx), true, 'fails closed when no monitor metadata exists');
+  assert.equal(guardFn({monitors: [{id: 1, dpmsStatus: true}]}, {monitors: {values: [{lastIpcObject: {}}]}}, geomCtx), false, 'Lua fallback allows capture when monitor is awake');
+  assert.equal(guardFn({monitors: [{id: 1, dpmsStatus: false}]}, {monitors: {values: [{lastIpcObject: {}}]}}, geomCtx), true, 'Lua fallback blocks capture when DPMS is off');
+  assert.equal(guardFn({monitors: [{id: 1, dpmsStatus: true, solitaryBlockedBy: ['LOCK']}]}, {monitors: {values: [{lastIpcObject: {}}]}}, geomCtx), true, 'Lua fallback blocks capture under session lock');
+
+  assert.match(face, /readonly property real h: \(hover\.hovered \|\| root\.hovered \|\| root\.holdExpand\) \? 1 : 0/, 'pips stay expanded while hovering the popout');
+  assert.match(ws, /holdExpand: root\.hoverPopoutOpen \|\| root\.popoutVisible/, 'Workspaces holds pips expansion while popout is open');
+  console.log('PASS: workspace hover popout (non-stealing overlay, tight mask, ScreencopyView, BarMaterialCard, holdExpand)');
+}

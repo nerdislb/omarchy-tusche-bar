@@ -158,7 +158,8 @@ function parseSnapshot(text) {
         || !values[3] || !finite(values[3].id)) return null
     return {
         monitors: values[0].filter(function(m) { return !!monitorRect(m) }).map(function(m) {
-            return {id:m.id,name:m.name,x:m.x,y:m.y,width:m.width,height:m.height,scale:m.scale,transform:m.transform,reserved:m.reserved}
+            return {id:m.id,name:m.name,x:m.x,y:m.y,width:m.width,height:m.height,scale:m.scale,transform:m.transform,reserved:m.reserved,
+                dpmsStatus:m.dpmsStatus,solitaryBlockedBy:Array.isArray(m.solitaryBlockedBy)?m.solitaryBlockedBy.slice(0,8):undefined}
         }),
         workspaces: values[1].filter(isRegular).map(function(w) {
             return {id:w.id,name:w.name,monitor:w.monitor,monitorID:w.monitorID,windows:w.windows || 0}

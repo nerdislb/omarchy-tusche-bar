@@ -81,6 +81,7 @@ Item {
   readonly property var minimapIds: WorkspaceGeometry.workspaceIds(workspaces, active)
   readonly property var ids: variant === "minimap" ? minimapIds : compactIds
   readonly property var occupiedIds: ids.filter(function(id) { return occupied(id) || id === active })
+  readonly property var popoutIds: minimapIds.filter(function(id) { return occupied(id) || id === active })
   readonly property var windowCounts: {
     var counts = {}
     for (var i = 0; i < workspaces.length; ++i) counts[workspaces[i].id] = windows(workspaces[i].id)
@@ -91,6 +92,47 @@ Item {
     var labels = {}
     for (var i = 0; i < workspaces.length; ++i) if (workspaces[i].id < 0) labels[workspaces[i].id] = workspaces[i].name
     return labels
+  }
+
+  // Hover popout card below the workspace indicators.
+  property bool hoverPopoutOpen: false
+  property bool popoutRequested: false
+  readonly property Item popoutItem: popoutLoader.item
+  readonly property bool popoutHovered: !!popoutLoader.item && popoutLoader.item.hovered
+  readonly property bool popoutVisible: hoverPopoutOpen || (!!popoutLoader.item && popoutLoader.item.visible)
+  readonly property bool hoverPopoutAllowed: variant !== "none" && !dropOpen && (!bar || !bar.activePopout)
+  readonly property bool needsGeometry: variant === "minimap" || hoverPopoutOpen || popoutVisible
+  onHoverPopoutOpenChanged: if (hoverPopoutOpen) popoutRequested = true
+
+  function syncHoverPopout() {
+    if (!hoverPopoutAllowed) {
+      hoverOpenTimer.stop()
+      hoverCloseTimer.stop()
+      hoverPopoutOpen = false
+      return
+    }
+    if (face.hovered || popoutHovered) {
+      hoverCloseTimer.stop()
+      if (!hoverPopoutOpen && face.hovered) hoverOpenTimer.start()
+    } else {
+      hoverOpenTimer.stop()
+      if (hoverPopoutOpen) hoverCloseTimer.restart()
+    }
+  }
+  onHoverPopoutAllowedChanged: syncHoverPopout()
+  onPopoutHoveredChanged: syncHoverPopout()
+
+  Timer {
+    id: hoverOpenTimer
+    interval: 85
+    repeat: false
+    onTriggered: if (root.hoverPopoutAllowed && (face.hovered || root.popoutHovered)) root.hoverPopoutOpen = true
+  }
+  Timer {
+    id: hoverCloseTimer
+    interval: 250
+    repeat: false
+    onTriggered: if (!face.hovered && !root.popoutHovered) root.hoverPopoutOpen = false
   }
 
   // Reuse Quickshell's existing, shared IPC model, not another process/service.
@@ -119,7 +161,7 @@ Item {
     }
     return result
   }
-  readonly property var geometry: variant === "minimap" ? collectGeometry() : ({})
+  readonly property var geometry: needsGeometry ? collectGeometry() : ({})
   // An inert snapshot for visual settings: reading never refreshes IPC or
   // instantiates another native widget/service. The caller owns preview input.
   function previewData() {
@@ -131,13 +173,15 @@ Item {
     var candidates = Bridge.ModuleBus.instances.workspaces || []
     if (!nativeGeometryReady) return snapshotOwner === root
     for (var i = 0; i < candidates.length; ++i) {
-      if (candidates[i] && candidates[i].variant === "minimap") return candidates[i] === root
+      if (candidates[i] && candidates[i].needsGeometry) return candidates[i] === root
     }
     return false
   }
   property bool monitorsPending: false
   property bool snapshotAgain: false
   property bool geometryTrailing: false
+  readonly property bool geometryCooldownRunning: geometryCooldown.running
+  readonly property bool snapshotRunning: snapshotProcess.running
   // Leading edge: the first event of a burst refreshes at once, because on the
   // snapshot path the active workspace is read from the snapshot and a wait
   // would show as a late marker. Further events inside the cooldown collapse
@@ -162,6 +206,16 @@ Item {
     }
     monitorsPending = false
     Hyprland.refreshToplevels()
+  }
+  function requestGeometryRefresh(monitors) {
+    var candidates = Bridge.ModuleBus.instances.workspaces || []
+    for (var i = 0; i < candidates.length; ++i) {
+      var owner = candidates[i]
+      if (owner && owner.geometryOwner) {
+        if (!owner.geometryCooldownRunning && !owner.snapshotRunning) owner.scheduleGeometry(monitors)
+        return
+      }
+    }
   }
   onGeometryOwnerChanged: {
     if (geometryOwner) scheduleGeometry(true)
@@ -209,14 +263,16 @@ Item {
   }
   HoverHandler {
     enabled: root.variant === "minimap"
-    onHoveredChanged: if (hovered) {
-      var candidates = Bridge.ModuleBus.instances.workspaces || []
-      for (var i = 0; i < candidates.length; ++i) if (candidates[i] && candidates[i].geometryOwner) { candidates[i].scheduleGeometry(true); break }
-    }
+    onHoveredChanged: if (hovered) root.requestGeometryRefresh(true)
   }
 
   function focusWorkspace(id) {
     if (bar) bar.run("hyprctl dispatch " + Util.shellQuote("hl.dsp.focus({ workspace = " + JSON.stringify(WorkspaceGeometry.workspaceSelector(byId(id), id)) + " })"))
+  }
+  function focusWindow(id, address) {
+    var clean = WorkspaceGeometry.address(address)
+    if (!clean) { focusWorkspace(id); return }
+    if (bar) bar.run("hyprctl dispatch " + Util.shellQuote("hl.dsp.focus({ window = " + JSON.stringify("address:0x" + clean) + " })"))
   }
   function step(delta) {
     if (!ids.length) return
@@ -280,6 +336,7 @@ Item {
   Component.onCompleted: { Bridge.ModuleBus.register("workspaces", root); syncClickRegistration() }
   Component.onDestruction: {
     dropOpen = false
+    hoverPopoutOpen = false
     if (registeredBar && registeredBar.unregisterClickTarget) registeredBar.unregisterClickTarget(menuSlot)
     Bridge.ModuleBus.unregister("workspaces", root); syncDrop()
   }
@@ -491,8 +548,39 @@ Item {
     barColor: Bridge.ModuleBus.barColor
     barLight: Bridge.ModuleBus.barLight
     interactive: true
+    holdExpand: root.hoverPopoutOpen || root.popoutVisible
+    onHoveredChanged: {
+      if (hovered) {
+        root.popoutRequested = true
+        root.requestGeometryRefresh(true)
+      }
+      root.syncHoverPopout()
+    }
     onWorkspacePicked: function(id) { root.focusWorkspace(id) }
     onStepped: function(delta) { root.step(delta) }
+  }
+
+  Loader {
+    id: popoutLoader
+    active: root.variant !== "none" && (root.popoutRequested || root.hoverPopoutOpen)
+    sourceComponent: Component {
+      WorkspacePopout {
+        anchorItem: face
+        owner: root
+        bar: root.bar
+        open: root.hoverPopoutOpen
+        workspaceIds: root.popoutIds
+        activeWorkspace: root.active
+        windowCounts: root.windowCounts
+        urgentIds: root.urgentIds
+        geometry: root.geometry
+        workspaceLabels: root.workspaceLabels
+        monitors: root.geometryMonitors
+        onWorkspacePicked: function(id) { root.focusWorkspace(id) }
+        onWindowPicked: function(id, addr) { root.focusWindow(id, addr) }
+        onStepped: function(delta) { root.step(delta) }
+      }
+    }
   }
 
   // Wheel over the menu logo retains the module-wide workspace navigation.

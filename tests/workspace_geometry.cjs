@@ -115,11 +115,13 @@ test('geometry events are selective; title/keyboard/network noise does not refre
   assert.equal(ctx.eventAffectsMonitors('monitoraddedv2'), true);
 });
 test('native-metadata fallback parses concatenated JSON safely and discards private fields', () => {
-  const data = [[monitor], [{...workspace, windows: 1, lastwindowtitle: 'private window'}],
+  const data = [[{...monitor, dpmsStatus: false, solitaryBlockedBy: ['LOCK']}], [{...workspace, windows: 1, lastwindowtitle: 'private window'}],
     [client('a',0,0,1900,1030,{title:'}] [ escaped " \\ newline\n',pid:123})], {...workspace, private:'unused'}];
   const text = data.map(x=>JSON.stringify(x)).join('\n\n\n');
   const snapshot = ctx.parseSnapshot(text);
   assert(snapshot);
+  assert.equal(snapshot.monitors[0].dpmsStatus, false);
+  assert.deepEqual(plain(snapshot.monitors[0].solitaryBlockedBy), ['LOCK']);
   assert.equal(snapshot.workspaces[0].id, 27);
   assert.equal(snapshot.active.id, 27);
   assert.equal(snapshot.clients[0].address, 'a');

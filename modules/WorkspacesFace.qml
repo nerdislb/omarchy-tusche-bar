@@ -21,6 +21,8 @@ Item {
   property color barColor: "black"
   property bool barLight: false
   property bool interactive: false
+  property bool holdExpand: false
+  readonly property bool hovered: faceHover.hovered || (loader.item && loader.item.childHovered === true)
   readonly property color dim: Util.alpha(fg, 0.45)
   signal workspacePicked(int id)
   signal stepped(int delta)
@@ -33,6 +35,11 @@ Item {
   Behavior on activeF { NumberAnimation { duration: Style.duration(180); easing.type: Easing.OutCubic } }
   implicitHeight: barSize
   implicitWidth: loader.item ? loader.item.implicitWidth : 0
+
+  HoverHandler {
+    id: faceHover
+    enabled: root.interactive && root.variant !== "none"
+  }
 
   Loader {
     id: loader
@@ -58,7 +65,8 @@ Item {
     id: pipsView
     Item {
       id: pips
-      readonly property real h: hover.hovered ? 1 : 0
+      readonly property bool childHovered: hover.hovered
+      readonly property real h: (hover.hovered || root.hovered || root.holdExpand) ? 1 : 0
       property real grow: h
       Behavior on grow { NumberAnimation { duration: Style.duration(160); easing.type: Easing.OutCubic } }
       readonly property real cell: Style.space(8) + (Style.space(20) - Style.space(8)) * grow
