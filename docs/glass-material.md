@@ -95,6 +95,13 @@ Backdrop brightness is bounded before tinting (0.42 Frost / 0.46 Smoke) to
 protect foreground text. A 650 ms light sweep runs once on entry. Shader
 source and QSB ship with both companions. No Omacale source is copied.
 
+At rest the card shows its plate through `glass.gloss` (0 = the plain bevel;
+Frost 1.0, Smoke 0.8): a crisp inner edge line, shaded thickness on the unlit
+sides, a wide and a thin still reflection on the entry light's diagonal and,
+on light glass, a little depth towards the far corner. Additive, cool or
+neutral, no animation clock. Frost's card halo is stronger (alpha 0.34) so a
+pale card does not merge into a pale picture.
+
 `GlassMath.js` advances an analytic, lightly under-damped spring. Reversing
 or reopening retains velocity and position; completion stops its frame
 clock. The reveal mask clamps overshoot so the card's dimensions and corners
