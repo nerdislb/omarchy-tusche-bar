@@ -273,6 +273,48 @@ Item {
    b.face.play("stop")
    b.destroy()
   }
+  function test_05e_the_shared_omi_sets_his_face_when_nothing_else_is_going_on() {
+   Style.reduceMotion = false
+   var b = createTemporaryObject(make, root, { x: 10, y: 10 })
+   tryVerify(function() { return b.face.available }, 3000)
+   var calm = { face: "calm", tone: "accent", level: 0.9, badge: null }
+   b.face.companion = calm
+   compare(b.face.omiMode, "idle")
+   b.face.shared = { mode: "logo", from: null, since: 1, instant: true }
+   compare(b.face.omiMode, "idle", "nothing set yet: the logo is no news")
+   b.face.shared = { mode: "thinking", from: "logo", since: 2, instant: false }
+   compare(b.face.omiMode, "thinking")
+   tryCompare(b.face.omi, "showing", "thinking", 1000)
+   b.face.shared = { mode: "success", from: "thinking", since: 3, instant: false }
+   compare(b.face.omiMode, "success", "a reaction works as a state")
+   b.face.shared = { mode: "party-time", from: "success", since: 4, instant: false }
+   compare(b.face.omiMode, "idle", "a mode the kit lacks is not shown")
+   b.face.shared = { mode: "sad", from: "success", since: 5, instant: false }
+   compare(b.face.omiMode, "sad")
+   b.face.shared = { mode: "idle", from: "sad", since: 6, instant: false }
+   compare(b.face.omiMode, "idle", "back to idle")
+   // his own failures, the battery and a waiting agent come first; a working agent does not
+   b.face.shared = { mode: "thinking", from: "idle", since: 7, instant: false }
+   b.face.companion = { face: "alert", tone: "urgent", level: 0.9, badge: null }
+   compare(b.face.omiMode, "angry")
+   b.face.companion = { face: "waiting", tone: "accent", level: 0.9, badge: null }
+   compare(b.face.omiMode, "listening")
+   b.face.companion = { face: "battery", tone: "urgent", level: 0.1, badge: null }
+   compare(b.face.omiMode, "logo")
+   b.face.companion = { face: "working", tone: "accent", level: 0.9, badge: null }
+   compare(b.face.omiMode, "thinking")
+   // while the shared Omi has something to show, the idle life stands down; it carries on when he is idle again
+   b.face.companion = calm
+   b.face.intensity = "lively"
+   wait(300)
+   b.face.shared = { mode: "idle", from: "thinking", since: 8, instant: false }
+   b.face.userIdle = true
+   tryVerify(function() { return b.face.omi.look[0] !== 0 || b.face.omi.look[1] !== 0 }, 7000)
+   b.face.shared = { mode: "working", from: "idle", since: 9, instant: false }
+   tryVerify(function() { return b.face.omi.look[0] === 0 && b.face.omi.look[1] === 0 }, 2000)
+   b.face.userIdle = false
+   b.destroy()
+  }
   function test_06_the_director_drives_him_while_you_are_away() {
    Style.reduceMotion = false
    var b = createTemporaryObject(make, root, { x: 10, y: 10 })
@@ -379,7 +421,7 @@ def run(pack, keep=None):
             out.mkdir()
             (tmp / 'modules').mkdir()
             shutil.copy2(ROOT / 'modules/OmiFace.qml', tmp / 'modules/OmiFace.qml')
-            for name in ['FocusSeal.js', 'OmiArt.js', 'IdleDirector.js']:
+            for name in ['FocusSeal.js', 'OmiArt.js', 'IdleDirector.js', 'OmiShare.js']:
                 shutil.copy2(ROOT / name, tmp / name)
             plugin = tmp / 'pack'
             plugin.mkdir()

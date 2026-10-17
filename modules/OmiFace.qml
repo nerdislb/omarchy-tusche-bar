@@ -3,6 +3,7 @@ import qs.Commons
 import "../FocusSeal.js" as Model
 import "../OmiArt.js" as Art
 import "../IdleDirector.js" as Director
+import "../OmiShare.js" as Share
 
 // Omi, the Omarchy mascot (https://github.com/tahayvr/omi), as the face of
 // the focus seal (option seal: omi). The plugin does not ship him: the player and
@@ -39,6 +40,9 @@ Item {
   // nobody has touched anything for a while; `hovered` the pointer on him.
   property string intensity: "lively"
   property bool userIdle: false
+  // The shared Omi (OmiShare.qml): { mode, … }. While nothing else is going on his face is whatever
+  // the apps of the machine set; `logo` (nothing set yet) and `idle` mean there is nothing to show.
+  property var shared: null
   property bool hovered: false
   // The pointer's place inside this item while it is hovered: his eyes follow it.
   property point pointer: Qt.point(0, 0)
@@ -47,7 +51,9 @@ Item {
   readonly property var modeIds: omi && omi.modes ? omi.modes.map(function(m) { return m.id }) : []
   readonly property bool available: !!omi && modeIds.length > 0
   property bool asleep: false
-  readonly property string omiMode: Art.modeFor(asleep && companion.face === "calm" ? "asleep" : companion.face, modeIds)
+  readonly property string sharedMode: companion.face === "calm" || companion.face === "working" ? Share.shown(shared, modeIds) : ""
+  readonly property string omiMode: sharedMode !== "" ? sharedMode
+    : Art.modeFor(asleep && companion.face === "calm" ? "asleep" : companion.face, modeIds)
   readonly property color tone: companion.tone === "urgent" ? urgent : accent
   readonly property color badgeTone: !showClock && companion.badge && companion.badge.tone === "urgent" ? urgent : accent
   readonly property bool showBattery: available && companion.face === "battery"
@@ -233,7 +239,7 @@ Item {
   function directorStep() {
     if (Date.now() < previewUntil && companion.face === "calm") return
     var now = new Date()
-    var r = Director.step(director, { profileName: intensity, now: now.getTime(), idle: userIdle, calm: companion.face === "calm" || companion.face === "working", working: companion.face === "working",
+    var r = Director.step(director, { profileName: intensity, now: now.getTime(), idle: userIdle, calm: calmFace, working: companion.face === "working",
                                       reduced: Style.reduceMotion, hour: now.getHours(), modes: modeIds, rnd: Math.random })
     director = r.model
     for (var i = 0; i < r.actions.length; i++) perform(r.actions[i])
@@ -242,7 +248,7 @@ Item {
   // Anything else to say (a failure, a waiting agent, the battery) ends whatever the idle life
   // is playing at once, whoever started it.
   // (A working agent does not count: he glances and fidgets on, but does not yawn or sleep.)
-  readonly property bool calmFace: companion.face === "calm" || companion.face === "working"
+  readonly property bool calmFace: (companion.face === "calm" || companion.face === "working") && sharedMode === ""
   onCalmFaceChanged: if (!calmFace) { asleep = false; previewWake.stop(); stopFidgets() }
   onIdleLifeChanged: if (!idleLife) { asleep = false; stopFidgets(); director = Director.initial() }
 

@@ -813,7 +813,7 @@ PanelWindow {
                 SectionHead { text: "PRESETS" }
                 PresetFlow {}
                 SectionHead { text: "FOCUS MODE" }
-                Repeater { model: ["bar.seal", "bar.sealIdle"]; delegate: settingRow }
+                Repeater { model: ["bar.seal", "bar.sealIdle", "bar.sealShare"]; delegate: settingRow }
                 Flow {
                   width: parent.width; spacing: Style.space(6)
                   CcButton {
@@ -829,7 +829,7 @@ PanelWindow {
                 }
                 Caption {
                   width: parent.width; wrapMode: Text.WordWrap
-                  text: "Apply the focus seal with Use or Save first. Start temporarily hides the native bar; its services keep running. Click the seal to bring the bar back (middle-click opens this window). The seal stays calm: a thin line appears when the battery is low, a small square when a workspace needs you. The Omi face (install it with setup/omi-fetch.sh) also shows a face for failures, waiting and working agents, and a speech bubble with the unread count; away from the keyboard he glances about, fidgets, chases a fly, yawns and falls asleep (hover him for the time). For a key: bind omarchy-shell tusche-bar focus toggle."
+                  text: "Apply the focus seal with Use or Save first. Start temporarily hides the native bar; its services keep running. Click the seal to bring the bar back (middle-click opens this window). The seal stays calm: a thin line appears when the battery is low, a small square when a workspace needs you. The Omi face (install it with setup/omi-fetch.sh) also shows a face for failures, waiting and working agents, and a speech bubble with the unread count; away from the keyboard he glances about, fidgets, chases a fly, yawns and falls asleep (hover him: his eyes follow the pointer, then the time); scripts can set his face over the Omi state protocol. For a key: bind omarchy-shell tusche-bar focus toggle."
                 }
                 Caption {
                   visible: !!win.host && String(win.host.focusResult).indexOf("error:") === 0

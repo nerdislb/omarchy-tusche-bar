@@ -195,4 +195,16 @@ test('the Omi install in use is a validated directory name from the pointer file
   assert(fetch.includes('mv -f -- "$base/current.tmp" "$current"'), 'the pointer changes in one atomic step');
   assert(/sha256sum/.test(fetch) && fetch.includes('refusing to install'));
 });
+test('the shared Omi is wired to the face and its own option, and runs only for an installed Omi', () => {
+  const seal = read('FocusSeal.qml'), face = read('modules/OmiFace.qml'), share = read('OmiShare.qml'), presets = read('Presets.js'), fetch = read('setup/omi-fetch.sh');
+  assert(seal.includes('active: sealWindow.wantsOmi && sealWindow.shareOn && omiFace.available'), 'only while Omi is wanted, installed, and sharing is on');
+  assert(seal.includes('modes: omiFace.modeIds') && seal.includes('shared: omiShare.state'));
+  assert(face.includes('readonly property string sharedMode: companion.face === "calm" || companion.face === "working" ? Share.shown(shared, modeIds) : ""'), 'his own states come first');
+  assert(face.includes('readonly property bool calmFace: (companion.face === "calm" || companion.face === "working") && sharedMode === ""'), 'the idle life stands down for the shared face');
+  assert(/sealShare: \{[\s\S]*?\{ id: "on"[\s\S]*?\{ id: "off"/.test(presets), 'on by default, off');
+  assert(share.includes('Proto.socketPath(Quickshell.env("OMI_SOCKET"), Quickshell.env("XDG_RUNTIME_DIR"))'), 'only the user\'s own runtime directory');
+  assert(!/execDetached|Process\b/.test(share), 'the service starts no processes');
+  assert(fetch.includes('46a90e835622f9c1f1623a9f668694ff2d966b1be4cf384c84a4518ea6ee8ceb'), 'the shell hook is pinned too');
+  assert(read('Engine.qml').includes('omi: sealUi.omiState()'));
+});
 console.log(`${passed} focus seal checks passed`);

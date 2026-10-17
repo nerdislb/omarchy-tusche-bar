@@ -23,6 +23,13 @@ var ELEMENTS = {
       { id: "off", label: "Off: he only blinks" }
     ]
   },
+  sealShare: {
+    label: "Omi follows the shared Omi",
+    variants: [
+      { id: "on", label: "On: apps and shell hooks can set his face (Omi state protocol)" },
+      { id: "off", label: "Off" }
+    ]
+  },
   workspaces: {
     label: "Workspaces",
     variants: [
@@ -102,7 +109,7 @@ var ELEMENTS = {
 
 // Look options that sit on top of any preset: presets keep the current
 // value, and preset matching ignores them.
-var LOOK = ["edge", "keys", "frames", "glass", "glassMotion", "statusHints", "dayline", "seal", "sealIdle"]
+var LOOK = ["edge", "keys", "frames", "glass", "glassMotion", "statusHints", "dayline", "seal", "sealIdle", "sealShare"]
 
 // Presentation only: these never change the native layout, display geometry,
 // services or their settings. Native widgets ("today") keep their own renderer.

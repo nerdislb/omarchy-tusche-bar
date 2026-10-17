@@ -61,6 +61,13 @@ PanelWindow {
   readonly property bool useOmi: wantsOmi && omiFace.available
   readonly property string dataDir: (Quickshell.env("XDG_DATA_HOME") || (Quickshell.env("HOME") + "/.local/share")) + "/tusche-bar"
   OmiKit { id: omiKit; dir: sealWindow.dataDir }
+  // The shared Omi: what apps and shell hooks set over the Omi state protocol shows on his face.
+  readonly property bool shareOn: !!host && host.options.sealShare !== "off"
+  OmiShare {
+    id: omiShare
+    active: sealWindow.wantsOmi && sealWindow.shareOn && omiFace.available
+    modes: omiFace.modeIds
+  }
   CompanionFeed { id: feed; active: sealWindow.visible && sealWindow.useOmi }
   // His idle life ("lively", "gentle", "off") and whether you are away (IdleWatch.qml).
   readonly property string intensity: !!host ? String(host.options.sealIdle) : "lively"
@@ -73,8 +80,9 @@ PanelWindow {
   function omiPlay(name) { return omiFace.play(String(name)) }
   // For the engine's state IPC: is he there, is his idle life on, are you away, is he asleep.
   function omiState() {
-    return { wanted: wantsOmi, available: omiFace.available, shown: useOmi && visible, intensity: intensity,
-             idleMonitor: idleWatch.active, away: idleWatch.idle, asleep: omiFace.asleep, face: companion.face }
+    return { wanted: wantsOmi, available: omiFace.available, onScreen: useOmi && visible, intensity: intensity,
+             idleMonitor: idleWatch.active, away: idleWatch.idle, asleep: omiFace.asleep, face: companion.face,
+             share: omiShare.stateObject(), showing: omiFace.omiMode }
   }
   readonly property var companion: Model.companion({ battery: facts.battery, urgent: urgentCount, island: feed.island })
   property var lastIsland: null
@@ -99,6 +107,7 @@ PanelWindow {
     packUrl: omiKit.url
     intensity: sealWindow.intensity
     userIdle: idleWatch.idle
+    shared: omiShare.state
     hovered: hover.hovered
     pointer: hover.point.position
     companion: sealWindow.companion

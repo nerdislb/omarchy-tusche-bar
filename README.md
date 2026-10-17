@@ -436,6 +436,27 @@ and `off`; reduced motion turns it off. Preview any piece without waiting:
 (`state` shows whether the idle monitor sees you away). The decisions are in `IdleDirector.js`
 (`node tests/idle_director.cjs`).
 
+**One Omi for the machine.** With the option *Omi follows the shared Omi* (on by default) the shell
+runs the [Omi state protocol](https://github.com/tahayvr/omi/blob/master/protocol/README.md) as a service on
+`$XDG_RUNTIME_DIR/omi.sock` (`$OMI_SOCKET` overrides): any script or app of yours sets what Omi is doing, and
+his face shows it whenever nothing of his own is going on (a failure, a waiting agent, the battery and a
+workspace that wants you come first):
+
+```
+echo '{"type":"set","mode":"thinking"}' | socat - UNIX-CONNECT:$XDG_RUNTIME_DIR/omi.sock
+echo '{"type":"set","mode":"success","for":2,"then":"idle"}' | nc -U $XDG_RUNTIME_DIR/omi.sock
+```
+
+`logo` (nothing set yet) and `idle` mean there is nothing to show; a mode the kit lacks is refused with an
+error; `for`/`then` is a timer that the next change cancels. If another service already answers on the socket
+(Omi's own Node reference service, say) the shell never takes over: it follows that one as a client, and serves
+itself when it stops. `setup/omi-fetch.sh` also fetches upstream's `omi.bashrc` to a stable path; add
+`source ~/.local/share/tusche-bar/omi.bashrc` to your `~/.bashrc` (nothing does it for you) and a command that
+runs longer than two seconds makes Omi think, then show success, or a short sadness when it failed. The
+protocol's decisions are `OmiShare.js` (`node tests/omi_share.cjs`); `python3 tests/omi_share_runtime.py` runs the
+real service in an isolated, offscreen Quickshell against real sockets (serving, a stale socket, following
+another service). `omarchy-shell tusche-bar state` shows the service's role and the face he is showing.
+
 Focus ownership is stored privately in
 `~/.local/state/tusche-bar/focus-owner.json`. A failed native command is rolled
 back when possible, otherwise ownership remains for recovery. Explicit Show
@@ -483,7 +504,7 @@ Omarchy's centre-box layout (`centerBegin`, `center`, `centerEnd`) and the tray 
 
 Presentation checks: `node tests/presentation.cjs`, `python3 tests/focus_mode.py`,
 `node tests/workspace_geometry.cjs`, `node tests/announce.cjs`, `node tests/watchdog.cjs`,
-`node tests/health.cjs`, `node tests/focus_seal.cjs`, `node tests/omi_art.cjs`, `node tests/idle_director.cjs` and `node tests/visual_editor.cjs`.
+`node tests/health.cjs`, `node tests/focus_seal.cjs`, `node tests/omi_art.cjs`, `node tests/idle_director.cjs`, `node tests/omi_share.cjs` and `node tests/visual_editor.cjs`.
 Native isolated renderer checks (Qt, Quickshell, Xvfb or offscreen):
 `python3 tests/workspace_runtime.py --output /tmp/workspace-proof`,
 `python3 tests/announce_runtime.py`, `python3 tests/watchdog_runtime.py`,
