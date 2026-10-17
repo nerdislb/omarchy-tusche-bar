@@ -204,7 +204,9 @@ test('the shared Omi is wired to the face and its own option, and runs only for 
   assert(/sealShare: \{[\s\S]*?\{ id: "on"[\s\S]*?\{ id: "off"/.test(presets), 'on by default, off');
   assert(share.includes('Proto.socketPath(Quickshell.env("OMI_SOCKET"), Quickshell.env("XDG_RUNTIME_DIR"))'), 'only the user\'s own runtime directory');
   assert(!/execDetached|Process\b/.test(share), 'the service starts no processes');
-  assert(fetch.includes('46a90e835622f9c1f1623a9f668694ff2d966b1be4cf384c84a4518ea6ee8ceb'), 'the shell hook is pinned too');
+  const hook = read('setup/omi-shell.bash');
+  assert(hook.includes('trap __omi_exit EXIT') && hook.includes('trap __omi_before DEBUG'), 'the hook ends cleanly with its shell');
+  assert(!/bashrc/.test(fetch), 'nothing from upstream is sourced into a shell: our own hook is used');
   assert(read('Engine.qml').includes('omi: sealUi.omiState()'));
 });
 console.log(`${passed} focus seal checks passed`);
