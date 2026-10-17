@@ -450,9 +450,14 @@ echo '{"type":"set","mode":"success","for":2,"then":"idle"}' | nc -U $XDG_RUNTIM
 `logo` (nothing set yet) and `idle` mean there is nothing to show; a mode the kit lacks is refused with an
 error; `for`/`then` is a timer that the next change cancels. If another service already answers on the socket
 (Omi's own Node reference service, say) the shell never takes over: it follows that one as a client, and serves
-itself when it stops. `setup/omi-fetch.sh` also fetches upstream's `omi.bashrc` to a stable path; add
-`source ~/.local/share/tusche-bar/omi.bashrc` to your `~/.bashrc` (nothing does it for you) and a command that
-runs longer than two seconds makes Omi think, then show success, or a short sadness when it failed. The
+itself when it stops. `setup/omi-shell.bash` is a hook for bash, in the shape of upstream's `omi.bashrc`
+(which leaves Omi thinking after `exit`: its timer outlives the shell): add `source /path/to/setup/omi-shell.bash`
+at the end of your `~/.bashrc` (nothing does it for you) and a command that runs longer than two seconds
+(`OMI_AFTER`, whole seconds) makes Omi think, then show success, or a short sadness when it failed; it keeps
+the `PROMPT_COMMAND`, DEBUG and EXIT trap you already have, and a closed terminal leaves Omi idle. Known
+limits: Quickshell logs a warning for every client that disconnects (each `omi` call, so a few lines per long
+command), and its line parser has no maximum length, so a local process that streams endless bytes without a
+newline makes the shell hold them (the socket is in your private runtime directory). The
 protocol's decisions are `OmiShare.js` (`node tests/omi_share.cjs`); `python3 tests/omi_share_runtime.py` runs the
 real service in an isolated, offscreen Quickshell against real sockets (serving, a stale socket, following
 another service). `omarchy-shell tusche-bar state` shows the service's role and the face he is showing.
