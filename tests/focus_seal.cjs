@@ -163,4 +163,20 @@ test('the feed ignores a read that finishes after it was switched off', () => {
   assert(/onActiveChanged:[\s\S]*?island = null/.test(feed), 'going quiet forgets the reading');
   assert(!/sendMessage|write\(|execDetached/.test(feed), 'read only');
 });
+test('the idle life asks the compositor only while Omi is on screen, respects inhibitors, and has an off switch', () => {
+  const watch = read('IdleWatch.qml'), seal = read('FocusSeal.qml'), face = read('modules/OmiFace.qml'), presets = read('Presets.js');
+  assert(watch.includes('IdleMonitor {') && watch.includes('respectInhibitors: true'));
+  assert(watch.includes('enabled: watch.active && watch.seconds > 0'));
+  assert(seal.includes('active: sealWindow.visible && sealWindow.useOmi && sealWindow.intensity !== "off"'), 'no monitor while the bar is shown or the idle life is off');
+  assert(seal.includes('seconds: IdleLife.idleSeconds(sealWindow.intensity)'));
+  assert(seal.includes('userIdle: idleWatch.idle') && seal.includes('hovered: hover.hovered'));
+  assert(face.includes('readonly property bool idleLife: available && active && intensity !== "off" && !Style.reduceMotion'), 'reduced motion and off silence him');
+  assert(/running: face\.idleLife; onTriggered: face\.directorStep\(\)/.test(face), 'the director only ticks while his idle life is on');
+  assert(face.includes('onIdleLifeChanged: if (!idleLife) { asleep = false; stopFidgets()'), 'switching it off wakes him');
+  assert(/sealIdle: \{[\s\S]*?variants: \[\s*\{ id: "lively"[\s\S]*?\{ id: "gentle"[\s\S]*?\{ id: "off"/.test(presets), 'lively by default, gentle, off');
+  const engine = read('Engine.qml');
+  assert(engine.includes('function omi(action: string): string { return sealUi.omiPlay(action || "") }'));
+  assert(engine.includes('omi: sealUi.omiState()'));
+  assert(!/execDetached|Process/.test(watch + face), 'the idle life starts no processes');
+});
 console.log(`${passed} focus seal checks passed`);

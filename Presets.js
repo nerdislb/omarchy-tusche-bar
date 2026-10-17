@@ -15,6 +15,14 @@ var ELEMENTS = {
       { id: "omi", label: "Omi, the mascot, when the bar is hidden (setup/omi-fetch.sh)" }
     ]
   },
+  sealIdle: {
+    label: "Omi's idle life",
+    variants: [
+      { id: "lively", label: "Lively: glances, fidgets, a fly, a yawn, sleep, while you are away" },
+      { id: "gentle", label: "Gentle: the same, rarer and later" },
+      { id: "off", label: "Off: he only blinks" }
+    ]
+  },
   workspaces: {
     label: "Workspaces",
     variants: [
@@ -94,7 +102,7 @@ var ELEMENTS = {
 
 // Look options that sit on top of any preset: presets keep the current
 // value, and preset matching ignores them.
-var LOOK = ["edge", "keys", "frames", "glass", "glassMotion", "statusHints", "dayline", "seal"]
+var LOOK = ["edge", "keys", "frames", "glass", "glassMotion", "statusHints", "dayline", "seal", "sealIdle"]
 
 // Presentation only: these never change the native layout, display geometry,
 // services or their settings. Native widgets ("today") keep their own renderer.

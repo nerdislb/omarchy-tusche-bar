@@ -422,6 +422,20 @@ Until then, `seal: omi` shows the plain seal. The pack is a concept and changes 
 `node tests/omi_art.cjs`, and `python3 tests/omi_face_runtime.py [--keep DIR]` renders every
 face offscreen with the real player (skipped without it).
 
+**Idle life.** While nothing else is going on he behaves like a game character nobody steers.
+While you work he only blinks. Once you have been away (the compositor's idle notification,
+which respects idle inhibitors, so a playing video keeps him calm) he looks about, then fidgets now
+and then (wink, a raised brow, shyness, humming, drumming, a laugh, a peek over the frame, or a fly
+that circles him and his eyes follow), yawns, and finally falls asleep with a drifting *z*. The first
+input wakes him with a start, and anything else to say (a failure, a waiting agent) interrupts at once.
+Late at night the yawn and the sleep come twice as early; he never repeats a fidget twice in a row.
+Hover him for a moment and the bubble shows the time. The option *Omi's idle life* has `lively`
+(default: first fidgets after 40 s away, yawn at 2.5 min, sleep at 5), `gentle` (rarer, 90 s, 5 and 10 min)
+and `off`; reduced motion turns it off. Preview any piece without waiting:
+`omarchy-shell tusche-bar omi glance|wink|skeptical|shy|humming|drumming|laugh|peek|fly|yawn|sleep|wake|clock|stop`
+(`state` shows whether the idle monitor sees you away). The decisions are in `IdleDirector.js`
+(`node tests/idle_director.cjs`).
+
 Focus ownership is stored privately in
 `~/.local/state/tusche-bar/focus-owner.json`. A failed native command is rolled
 back when possible, otherwise ownership remains for recovery. Explicit Show
@@ -469,7 +483,7 @@ Omarchy's centre-box layout (`centerBegin`, `center`, `centerEnd`) and the tray 
 
 Presentation checks: `node tests/presentation.cjs`, `python3 tests/focus_mode.py`,
 `node tests/workspace_geometry.cjs`, `node tests/announce.cjs`, `node tests/watchdog.cjs`,
-`node tests/health.cjs`, `node tests/focus_seal.cjs`, `node tests/omi_art.cjs` and `node tests/visual_editor.cjs`.
+`node tests/health.cjs`, `node tests/focus_seal.cjs`, `node tests/omi_art.cjs`, `node tests/idle_director.cjs` and `node tests/visual_editor.cjs`.
 Native isolated renderer checks (Qt, Quickshell, Xvfb or offscreen):
 `python3 tests/workspace_runtime.py --output /tmp/workspace-proof`,
 `python3 tests/announce_runtime.py`, `python3 tests/watchdog_runtime.py`,

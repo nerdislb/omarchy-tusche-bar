@@ -7,6 +7,7 @@ import qs.Commons
 import qs.Commons as Commons
 import qs.Ui
 import "FocusSeal.js" as Model
+import "IdleDirector.js" as IdleLife
 import "bridge" as Bridge
 import "modules" as Modules
 
@@ -60,6 +61,20 @@ PanelWindow {
   readonly property bool useOmi: wantsOmi && omiFace.available
   readonly property string dataDir: (Quickshell.env("XDG_DATA_HOME") || (Quickshell.env("HOME") + "/.local/share")) + "/tusche-bar"
   CompanionFeed { id: feed; active: sealWindow.visible && sealWindow.useOmi }
+  // His idle life ("lively", "gentle", "off") and whether you are away (IdleWatch.qml).
+  readonly property string intensity: !!host ? String(host.options.sealIdle) : "lively"
+  IdleWatch {
+    id: idleWatch
+    active: sealWindow.visible && sealWindow.useOmi && sealWindow.intensity !== "off"
+    seconds: IdleLife.idleSeconds(sealWindow.intensity)
+  }
+  // The IPC preview: `omarchy-shell tusche-bar omi fly|yawn|sleep|wake|clock|stop|…`.
+  function omiPlay(name) { return omiFace.play(String(name)) }
+  // For the engine's state IPC: is he there, is his idle life on, are you away, is he asleep.
+  function omiState() {
+    return { wanted: wantsOmi, available: omiFace.available, shown: useOmi && visible, intensity: intensity,
+             idleMonitor: idleWatch.active, away: idleWatch.idle, asleep: omiFace.asleep, face: companion.face }
+  }
   readonly property var companion: Model.companion({ battery: facts.battery, urgent: urgentCount, island: feed.island })
   property var lastIsland: null
   Connections {
@@ -80,7 +95,11 @@ PanelWindow {
     // window costs nothing (Omi only animates while on screen).
     active: sealWindow.wantsOmi
     packUrl: "file://" + sealWindow.dataDir + "/omi/Omi.qml"
+    intensity: sealWindow.intensity
+    userIdle: idleWatch.idle
+    hovered: hover.hovered
     companion: sealWindow.companion
+    HoverHandler { id: hover }
     ground: Commons.Color.popups.background
     accent: Commons.Color.accent
     urgent: Commons.Color.urgent

@@ -112,7 +112,7 @@ Item {
   // for the Control Center's Health page
   readonly property var watchdogModel: watchdog.model
   readonly property bool watchdogEnabled: watchdog.active
-  FocusSeal { host: root }
+  FocusSeal { id: sealUi; host: root }
   // Both faces of the seal ("on": the seal, "omi": the mascot) give the bar a way back.
   readonly property bool sealEnabled: options.seal === "on" || options.seal === "omi"
   property string focusResult: ""
@@ -680,6 +680,8 @@ Item {
     function preset(id: string): string { return root.applyPreset(id) }
     function set(element: string, variant: string): string { return root.setVariant(element, variant) }
     function focus(action: string): string { return root.focusAction(action || "start") }
+    // Preview Omi's idle life now, without waiting to be away: fly, yawn, sleep, wake, clock, glance, wink, …
+    function omi(action: string): string { return sealUi.omiPlay(action || "") }
     function screenProfile(name: string, profile: string): string {
       if (!Presets.screenNameValid(name) || ["inherit", "compact", "detailed"].indexOf(profile) < 0) return "invalid screen or profile"
       var next = Object.assign({}, root.screenProfiles)
@@ -706,6 +708,7 @@ Item {
                               usage: { folded: root.usageFolded, intervalSec: root.usageIntervalSec, running: usageUpdate.running, command: usageUpdate.command },
                               ask: root.askState(),
                               natives: (function() { var s = Bridge.ModuleBus.pick("status"); return s && s.nativeReport ? s.nativeReport() : null })(),
+                              omi: sealUi.omiState(),
                               cc: controlCenter.stateObject() })
     }
   }

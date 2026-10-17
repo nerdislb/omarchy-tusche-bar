@@ -130,6 +130,103 @@ Item {
    verify(Math.max.apply(null, scales) > 1.1, "the first bubble pops too: " + scales)
    b.destroy()
   }
+  function test_05_the_idle_life_plays_and_is_interrupted() {
+   Style.reduceMotion = false
+   var b = createTemporaryObject(make, root, { x: 10, y: 10 })
+   tryVerify(function() { return b.face.available }, 3000)
+   var calm = { face: "calm", tone: "accent", level: 0.9, badge: null }
+   b.face.companion = calm
+   b.face.intensity = "lively"
+   wait(300)
+   // asleep: the mode follows, waking ends it
+   compare(b.face.play("sleep"), "ok")
+   compare(b.face.asleep, true)
+   tryCompare(b.face, "omiMode", "sleeping", 500)
+   b.face.userIdle = false              // you are plainly there, but a preview holds him asleep for a while
+   wait(1500)
+   compare(b.face.asleep, true)
+   b.face.previewUntil = 0              // the hold is over: the director wakes him on its next tick
+   tryCompare(b.face, "asleep", false, 2000)
+   tryCompare(b.face, "omiMode", "idle", 500)
+   // a glance looks somewhere, then ahead again
+   compare(b.face.play("glance"), "ok")
+   verify(b.face.omi.look[0] !== 0, "he looks aside")
+   tryVerify(function() { return b.face.omi.look[0] === 0 }, 4000)
+   // the fly: appears, his eyes follow, it goes, he raises a brow
+   compare(b.face.play("fly"), "ok")
+   var seen = false, looked = false
+   for (var i = 0; i < 40; i++) {
+    if (b.face.flyNow && b.face.flyNow.visible) { seen = true; if (b.face.omi.look[0] !== 0 || b.face.omi.look[1] !== 0) looked = true }
+    wait(100)
+   }
+   verify(seen, "the fly is on screen")
+   verify(looked, "his eyes follow it")
+   b.face.flyStart = Date.now() - 8700
+   tryVerify(function() { return b.face.flyNow === null }, 2000)
+   tryVerify(function() { return b.face.omi.look[0] === 0 && b.face.omi.look[1] === 0 }, 1000)
+   // the yawn lifts him and puts him back
+   compare(b.face.play("yawn"), "ok")
+   var low = 0
+   for (var j = 0; j < 30; j++) { low = Math.min(low, b.face.lift); wait(100) }
+   verify(low <= -2 * b.face.cell + 0.5, "he stretches up: " + low)
+   tryCompare(b.face, "lift", 0, 3000)
+   // the clock: hovering shows the time, leaving takes it away
+   b.face.hovered = true
+   tryCompare(b.face, "showClock", true, 1500)
+   verify(/^\d\d:\d\d$/.test(b.face.clockText), b.face.clockText)
+   compare(b.face.bubble.text, b.face.clockText)
+   b.face.hovered = false
+   tryCompare(b.face, "showClock", false, 500)
+   verify(b.face.play("nonsense").indexOf("unknown") === 0)
+   b.destroy()
+  }
+  function test_06_the_director_drives_him_while_you_are_away() {
+   Style.reduceMotion = false
+   var b = createTemporaryObject(make, root, { x: 10, y: 10 })
+   tryVerify(function() { return b.face.available }, 3000)
+   b.face.companion = { face: "calm", tone: "accent", level: 0.9, badge: null }
+   b.face.intensity = "lively"
+   wait(1000)
+   compare(b.face.omi.look[0], 0)
+   b.face.userIdle = true               // the first glance comes about three seconds later
+   tryVerify(function() { return b.face.omi.look[0] !== 0 || b.face.omi.look[1] !== 0 }, 7000)
+   b.face.userIdle = false              // back at the keyboard: whatever he was doing stops
+   tryVerify(function() { return b.face.omi.look[0] === 0 && b.face.omi.look[1] === 0 }, 2000)
+   // anything to say stops it too, and reduced motion silences it altogether
+   b.face.userIdle = true
+   tryVerify(function() { return b.face.omi.look[0] !== 0 || b.face.omi.look[1] !== 0 }, 7000)
+   b.face.companion = { face: "alert", tone: "urgent", level: 0.9, badge: null }
+   tryVerify(function() { return b.face.omi.look[0] === 0 && b.face.omi.look[1] === 0 }, 2000)
+   b.face.companion = { face: "calm", tone: "accent", level: 0.9, badge: null }
+   b.face.userIdle = false
+   wait(1100)
+   Style.reduceMotion = true
+   b.face.userIdle = true
+   wait(4500)
+   compare(b.face.omi.look[0], 0)
+   compare(b.face.omi.look[1], 0)
+   Style.reduceMotion = false
+   b.destroy()
+  }
+  function test_07_stills_of_the_idle_pieces() {
+   Style.reduceMotion = true
+   var calm = { face: "calm", tone: "accent", level: 0.9, badge: null }
+   var specs = [
+    { name: "asleep", prep: function(f) { f.asleep = true } },
+    { name: "clock", prep: function(f) { f.clockText = "09:41"; f.showClock = true } },
+    { name: "fly", prep: function(f) { f.flySeed = 0; f.flyT = 4.5 } },
+    { name: "yawn", prep: function(f) { f.lift = -6 } }
+   ]
+   for (var i = 0; i < specs.length; i++) {
+    var b = createTemporaryObject(make, root, { x: 10, y: 10 })
+    tryVerify(function() { return b.face.available }, 3000)
+    b.face.companion = calm
+    specs[i].prep(b.face)
+    wait(specs[i].name === "asleep" ? 2500 : 1700)
+    shot(b, specs[i].name)
+    b.destroy()
+   }
+  }
   function test_04_unloading_and_loading_again_is_quiet() {
    Style.reduceMotion = true
    var b = createTemporaryObject(make, root, { x: 10, y: 10 })
@@ -185,7 +282,7 @@ def run(pack, keep=None):
             out.mkdir()
             (tmp / 'modules').mkdir()
             shutil.copy2(ROOT / 'modules/OmiFace.qml', tmp / 'modules/OmiFace.qml')
-            for name in ['FocusSeal.js', 'OmiArt.js']:
+            for name in ['FocusSeal.js', 'OmiArt.js', 'IdleDirector.js']:
                 shutil.copy2(ROOT / name, tmp / name)
             plugin = tmp / 'pack'
             plugin.mkdir()
@@ -276,7 +373,23 @@ def check_pixels(out, colours, palette):
     assert count(shots['battery'], urgent, middle) > 25, 'a battery in the middle'
     assert count(shots['battery'], accent) == 0
     assert count(shots['calm'], urgent, middle) == 0
-    print(f'PASS ({palette}): faces, outline, bubbles and battery')
+    # the idle pieces
+    for name in ('asleep', 'clock', 'fly', 'yawn'):
+        shots[name] = load(out, name)
+    def topmost(image, colour):
+        for y in range(SIZE):
+            if count(image, colour, (0, y, SIZE, y + 1)) > 3:
+                return y
+        return SIZE
+    assert count(shots['asleep'], accent) > 80, 'asleep: still drawn in the accent'
+    assert sum(1 for p, q in zip(shots['asleep'].tobytes()[0::3], shots['calm'].tobytes()[0::3]) if abs(p - q) > 4) > 40, 'asleep differs from calm'
+    clock_region = (0, 0, SIZE, 28)
+    assert count(shots['clock'], accent, clock_region) > 350, 'the clock bubble is a wide solid block'
+    assert count(shots['clock'], accent, clock_region) > count(shots['calm_3'], accent, clock_region) + 120, 'wider than a count bubble'
+    assert count(shots['clock'], ground, clock_region) > 60, 'the digits are cut out'
+    assert sum(1 for p, q in zip(shots['fly'].tobytes()[0::3], shots['calm'].tobytes()[0::3]) if abs(p - q) > 4) > 8, 'the fly is drawn'
+    assert topmost(shots['yawn'], accent) <= topmost(shots['calm'], accent) - 3, 'the yawn lifts him by about two cells'
+    print(f'PASS ({palette}): faces, outline, bubbles, battery and the idle pieces')
 
 
 if __name__ == '__main__':

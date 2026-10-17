@@ -61,9 +61,11 @@ test('the digits are cut from inside the body and read as the number', () => {
   const sum = a => a.reduce((n, r) => n + r.w * r.h, 0);
   assert.equal(sum(b.digits), (8 + 12) * art.CELL * art.CELL, 'a 1 is eight cells, a 0 twelve');
 });
-test('every digit 0-9 has its own 3 x 5 shape', () => {
-  assert.equal(new Set(Object.values(art.DIGITS).map(rows => rows.join('/'))).size, 10);
-  for (const rows of Object.values(art.DIGITS)) { assert.equal(rows.length, 5); assert(rows.every(r => /^[01]{3}$/.test(r))); }
+test('every digit 0-9 has its own 3 x 5 shape, and the colon its own 1 x 5', () => {
+  const digits = Object.entries(art.DIGITS).filter(([k]) => /\d/.test(k)).map(([, rows]) => rows);
+  assert.equal(new Set(digits.map(rows => rows.join('/'))).size, 10);
+  for (const rows of digits) { assert.equal(rows.length, 5); assert(rows.every(r => /^[01]{3}$/.test(r))); }
+  assert.deepEqual(plain(art.DIGITS[':']), ['0', '1', '0', '1', '0']);
 });
 test('the battery sits in the logo\'s frame, on the grid, and fills cell by cell', () => {
   for (let n = 0; n <= 4; n++) {
@@ -83,6 +85,49 @@ test('a charge under 5 % shows an empty battery, anything above one cell', () =>
   assert.equal(art.batteryCells(0.049), 0);
   assert.equal(art.batteryCells(0), 0);
   assert.equal(art.batteryCells(NaN), 0);
+});
+test('the clock bubble holds HH:MM, sits at the corner and stays inside the view', () => {
+  const b = art.clock('09:41');
+  for (const r of [b.body].concat(b.tail, b.digits)) { assert(inView(r), JSON.stringify(r)); assert(onGrid(r), JSON.stringify(r)); }
+  assert.equal(b.body.w, 19 * art.CELL);
+  assert.equal(b.body.x + b.body.w, art.EDGE.right);
+  assert.equal(art.clock('nonsense').text, '00:00');
+  assert.equal(art.clock('7:5').text, '00:00');
+  const sum = a => a.reduce((n, r) => n + r.w * r.h, 0);
+  // colon: two cells; 0 and 9 are 12 cells each, 4 is 9, 1 is 8
+  assert.equal(sum(b.digits), (12 + 12 + 2 + 9 + 8) * art.CELL * art.CELL);
+  assert.deepEqual(plain(art.speech('21')), plain(art.bubble(21)), 'a count is a speech like any other');
+});
+test('the fly comes in from afar, circles Omi on the grid, and leaves', () => {
+  for (const seed of [0, 1, 2, 7]) {
+    assert.equal(art.fly(0, seed).visible, false, 'starts out of sight');
+    assert.equal(art.fly(art.FLY.duration, seed).alive, false);
+    assert.equal(art.fly(-1, seed).alive, false);
+    assert.equal(art.fly(NaN, seed).alive, false);
+    let visible = 0, flaps = new Set();
+    for (let t = 0; t < art.FLY.duration; t += 1 / 20) {
+      const f = art.fly(t, seed);
+      assert(f.alive);
+      assert(onGrid({ x: f.x, y: f.y, w: 0, h: 0 }), t + ' ' + f.x + ',' + f.y);
+      flaps.add(f.wing);
+      if (f.visible) { visible++; for (const r of art.flyRects(f)) assert(inView(r), seed + ' ' + t + ' ' + JSON.stringify(r)); }
+    }
+    assert(visible > 100, 'in view most of the time: ' + visible);
+    assert.equal(flaps.size, 2, 'the wings flap');
+    const mid = art.fly(4.5, seed);
+    assert(Math.hypot(mid.x + 10 - 150, mid.y + 10 - 150) > 130 && Math.hypot(mid.x + 10 - 150, mid.y + 10 - 150) < 215, 'rings Omi');
+  }
+  assert.notDeepEqual(plain(art.fly(3, 0)), plain(art.fly(3, 1)), 'the seed changes the flight');
+  assert.equal(art.flyRects(art.fly(4.5, 0)).length, 3);
+});
+test('the eyes turn toward a thing, clamped to the unit square', () => {
+  assert.deepEqual(plain(art.lookAt(140, 140)), [0, 0]);
+  assert.equal(art.lookAt(340, 140)[0], 1);
+  assert.equal(art.lookAt(-60, 140)[0], -1);
+  assert.equal(art.lookAt(140, -60)[1], -1);
+  assert.equal(art.lookAt(140, 340)[1], 1);
+  const half = art.lookAt(240, 140)[0];
+  assert(half > 0.4 && half < 0.6, String(half));
 });
 test('no pack data is bundled', () => {
   const src = fs.readFileSync(path.join(root, 'OmiArt.js'), 'utf8');

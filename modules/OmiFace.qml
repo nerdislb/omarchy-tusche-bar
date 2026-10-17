@@ -2,6 +2,7 @@ import QtQuick
 import qs.Commons
 import "../FocusSeal.js" as Model
 import "../OmiArt.js" as Art
+import "../IdleDirector.js" as Director
 
 // Omi, the Omarchy mascot (https://github.com/tahayvr/meet-omi), as the face of
 // the focus seal (option seal: omi). The plugin does not ship him: the player and
@@ -16,6 +17,11 @@ import "../OmiArt.js" as Art
 // with one device pixel of the ground colour so a single-colour face stays
 // readable on any window.
 //
+// While nothing else is going on he has an idle life, like a game character nobody is
+// steering (IdleDirector.js decides, this plays): glances, fidgets from the pack, a fly
+// to chase, a yawn, sleep, and a start when you come back. Hovering him for a moment
+// swaps the bubble for the time.
+//
 // Facts in, pixels out: the window, clicks and data are FocusSeal.qml's.
 Item {
   id: face
@@ -27,13 +33,19 @@ Item {
   // Omi.qml, from the data directory. Empty: nothing is loaded.
   property url packUrl: ""
   property bool active: true
+  // The idle life: "lively", "gentle" or "off"; `userIdle` is the IdleMonitor's word that
+  // nobody has touched anything for a while; `hovered` the pointer on him.
+  property string intensity: "lively"
+  property bool userIdle: false
+  property bool hovered: false
 
   readonly property var omi: loader.item
   readonly property var modeIds: omi && omi.modes ? omi.modes.map(function(m) { return m.id }) : []
   readonly property bool available: !!omi && modeIds.length > 0
-  readonly property string omiMode: Art.modeFor(companion.face, modeIds)
+  property bool asleep: false
+  readonly property string omiMode: Art.modeFor(asleep && companion.face === "calm" ? "asleep" : companion.face, modeIds)
   readonly property color tone: companion.tone === "urgent" ? urgent : accent
-  readonly property color badgeTone: companion.badge && companion.badge.tone === "urgent" ? urgent : accent
+  readonly property color badgeTone: !showClock && companion.badge && companion.badge.tone === "urgent" ? urgent : accent
   readonly property bool showBattery: available && companion.face === "battery"
   readonly property string said: Model.describeCompanion(companion, companion.level)
 
@@ -44,11 +56,36 @@ Item {
   function pop() { if (!Style.reduceMotion) popAnimation.restart() }
   readonly property real badgeScale: badgeLayer.scale
 
-  Loader {
-    id: loader
-    anchors.fill: parent
-    active: face.active && face.packUrl.toString() !== ""
-    source: face.packUrl
+  // Omi and his outline, which lift for a yawn; the bubble, battery and fly stay put.
+  property real lift: 0
+  readonly property real cell: omi ? omi.unit * Art.CELL : 3
+  Item {
+    id: body
+    width: face.width; height: face.height
+    y: Math.round(face.lift)
+
+    Loader {
+      id: loader
+      anchors.fill: parent
+      active: face.active && face.packUrl.toString() !== ""
+      source: face.packUrl
+    }
+
+    // The outline under Omi's own pieces (they move every frame, so it follows `rects`).
+    Repeater {
+      model: face.available ? face.omi.rects.length : 0
+      delegate: Rectangle {
+        required property int index
+        readonly property var r: (face.omi && face.omi.rects && face.omi.rects[index]) || { x: 0, y: 0, w: 0, h: 0, o: 0 }
+        readonly property var p: face.place(r, face.rim)
+        x: p.x; y: p.y; width: p.w; height: p.h
+        color: face.ground
+        // only solid pieces get a rim: the dimmed ones (a drained frame) stay ghosts
+        opacity: Math.max(0, Math.min(1, (r.o - 0.5) * 2))
+        antialiasing: false
+        z: -1
+      }
+    }
   }
 
   Binding { target: face.omi; property: "color"; value: face.tone; when: !!face.omi }
@@ -75,24 +112,13 @@ Item {
     return out
   }
 
-  // The outline under Omi's own pieces (they move every frame, so it follows `rects`).
-  Repeater {
-    model: face.available ? face.omi.rects.length : 0
-    delegate: Rectangle {
-      required property int index
-      readonly property var r: (face.omi && face.omi.rects && face.omi.rects[index]) || { x: 0, y: 0, w: 0, h: 0, o: 0 }
-      readonly property var p: face.place(r, face.rim)
-      x: p.x; y: p.y; width: p.w; height: p.h
-      color: face.ground
-      // only solid pieces get a rim: the dimmed ones (a drained frame) stay ghosts
-      opacity: Math.max(0, Math.min(1, (r.o - 0.5) * 2))
-      antialiasing: false
-      z: -1
-    }
-  }
-
-  // The speech bubble: outline, solid body, tail, the digits cut out of it.
-  readonly property var bubble: companion.badge && available ? Art.bubble(companion.badge.count) : null
+  // The speech bubble: outline, solid body, tail, the glyphs cut out of it.
+  // Hovering him for a moment shows the time in its place.
+  property bool showClock: false
+  property string clockText: "00:00"
+  readonly property var bubble: !available ? null
+    : showClock ? Art.clock(clockText)
+    : companion.badge ? Art.bubble(companion.badge.count) : null
   Item {
     id: badgeLayer
     anchors.fill: parent
@@ -169,4 +195,138 @@ Item {
       }
     }
   }
+
+  // ------------------------------------------------------------------ idle life
+
+  readonly property bool idleLife: available && active && intensity !== "off" && !Style.reduceMotion
+  property var director: Director.initial()
+
+  function perform(a) {
+    if (!omi) return
+    if (a.kind === "look") omi.look = [a.x, a.y]
+    else if (a.kind === "react") omi.react(a.mode, a.seconds)
+    else if (a.kind === "fly") startFly()
+    else if (a.kind === "yawn") yawnAnimation.restart()
+    else if (a.kind === "sleep") asleep = true
+    else if (a.kind === "wake") { asleep = false; stopFidgets(); if (a.startle) omi.react("excited", 1) }
+    else if (a.kind === "cancel") stopFidgets()
+  }
+  // Whatever is playing stops, he looks ahead again.
+  function stopFidgets() {
+    flyTimer.stop(); flyT = -1
+    yawnAnimation.stop(); lift = 0
+    if (omi) { omi.reaction = ""; omi.look = [0, 0] }
+  }
+  // A preview (`play("sleep")`) holds him for a while although you are plainly there.
+  property real previewUntil: 0
+  function directorStep() {
+    if (Date.now() < previewUntil) return
+    var now = new Date()
+    var r = Director.step(director, { profileName: intensity, now: now.getTime(), idle: userIdle, calm: companion.face === "calm",
+                                      reduced: Style.reduceMotion, hour: now.getHours(), modes: modeIds, rnd: Math.random })
+    director = r.model
+    for (var i = 0; i < r.actions.length; i++) perform(r.actions[i])
+  }
+  Timer { interval: 500; repeat: true; running: face.idleLife; onTriggered: face.directorStep() }
+  onIdleLifeChanged: if (!idleLife) { asleep = false; stopFidgets(); director = Director.initial() }
+
+  // A named piece of the idle life on demand (the IPC preview): any fidget of the director's
+  // list by id, "glance", "yawn", "sleep", "wake", "clock", "stop".
+  function play(name) {
+    if (!available) return "Omi is not installed (setup/omi-fetch.sh)"
+    if (name === "stop") { previewUntil = 0; asleep = false; stopFidgets(); showClock = false; director = Director.initial(); return "ok" }
+    if (name === "glance") { perform({ kind: "look", x: Math.random() < 0.5 ? -1 : 1, y: 0 }); lookAhead.restart(); return "ok" }
+    if (name === "yawn") { perform({ kind: "yawn" }); return "ok" }
+    if (name === "sleep") {
+      director = Object.assign(Director.initial(), { phase: "asleep", active: true })
+      previewUntil = Date.now() + 12000
+      perform({ kind: "sleep" }); return "ok"
+    }
+    if (name === "wake") { previewUntil = 0; perform({ kind: "wake", startle: true }); director = Director.initial(); return "ok" }
+    if (name === "clock") { clockText = Qt.formatTime(new Date(), "HH:mm"); showClock = true; clockHold.restart(); return "ok" }
+    for (var i = 0; i < Director.FIDGETS.length; i++) {
+      var f = Director.FIDGETS[i]
+      if (f.id !== name) continue
+      perform(f.kind === "react" ? { kind: "react", mode: f.mode, seconds: f.seconds } : { kind: "fly" })
+      return "ok"
+    }
+    return "unknown: glance yawn sleep wake clock stop " + Director.FIDGETS.map(function(x) { return x.id }).join(" ")
+  }
+  Timer { id: lookAhead; interval: 2000; onTriggered: if (face.omi) face.omi.look = [0, 0] }
+
+  // Yawn: the eyes squeeze shut, he stretches up two cells, holds, and settles back with a dip.
+  SequentialAnimation {
+    id: yawnAnimation
+    ScriptAction { script: if (face.omi) face.omi.react("laughing", 2.4) }
+    NumberAnimation { target: face; property: "lift"; to: -2 * face.cell; duration: 800; easing.type: Easing.OutCubic }
+    PauseAnimation { duration: 700 }
+    NumberAnimation { target: face; property: "lift"; to: face.cell; duration: 450; easing.type: Easing.InQuad }
+    NumberAnimation { target: face; property: "lift"; to: 0; duration: 220; easing.type: Easing.OutQuad }
+  }
+
+  // The fly: a sprite on the grid that his eyes follow; when it has gone he raises a brow.
+  property real flyT: -1
+  property int flySeed: 0
+  property real flyStart: 0
+  readonly property var flyNow: flyT >= 0 ? Art.fly(flyT, flySeed) : null
+  function startFly() {
+    flySeed = Math.floor(Math.random() * 1000)
+    flyStart = Date.now()
+    flyT = 0
+    flyTimer.restart()
+  }
+  Timer {
+    id: flyTimer
+    interval: 50; repeat: true
+    onTriggered: {
+      var t = (Date.now() - face.flyStart) / 1000
+      var f = Art.fly(t, face.flySeed)
+      if (!f.alive) {
+        stop(); face.flyT = -1
+        if (face.omi) { face.omi.look = [0, 0]; face.omi.react("skeptical", 1.2) }
+        return
+      }
+      face.flyT = t
+      if (f.visible && face.omi) face.omi.look = Art.lookAt(f.x, f.y)
+    }
+  }
+  Item {
+    anchors.fill: parent
+    visible: !!face.flyNow && face.flyNow.visible
+    Repeater {
+      model: face.flyNow && face.flyNow.visible ? Art.flyRects(face.flyNow) : []
+      delegate: Rectangle {
+        required property var modelData
+        readonly property var p: face.place(modelData, face.rim)
+        x: p.x; y: p.y; width: p.w; height: p.h
+        color: face.ground
+        antialiasing: false
+      }
+    }
+    Repeater {
+      model: face.flyNow && face.flyNow.visible ? Art.flyRects(face.flyNow) : []
+      delegate: Rectangle {
+        required property var modelData
+        readonly property var p: face.place(modelData, 0)
+        x: p.x; y: p.y; width: p.w; height: p.h
+        color: face.tone
+        antialiasing: false
+      }
+    }
+  }
+
+  // Hovering: after a moment the bubble shows the time, until the pointer leaves.
+  Timer {
+    id: hoverDelay
+    interval: 700
+    running: face.hovered && face.available
+    onTriggered: { face.clockText = Qt.formatTime(new Date(), "HH:mm"); face.showClock = true }
+  }
+  Timer { id: clockHold; interval: 4000; onTriggered: if (!face.hovered) face.showClock = false }
+  Timer {
+    interval: 1000; repeat: true
+    running: face.showClock
+    onTriggered: face.clockText = Qt.formatTime(new Date(), "HH:mm")
+  }
+  onHoveredChanged: if (!hovered && !clockHold.running) showClock = false
 }
