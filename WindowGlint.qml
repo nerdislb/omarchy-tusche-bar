@@ -59,6 +59,8 @@ Scope {
   property real tube: 2
   property var mons: []
   property string address: ""
+  // the last window Hyprland reported focused (activewindowv2's address)
+  property string lastWindow: ""
   property string geometryKey: ""
   property bool running: false
   property real sweep: 0
@@ -102,12 +104,19 @@ Scope {
       if (n === "activewindowv2") {
         root.manual = false
         root.stop()
-        if (!root.eligible()) return
+        // A menu or launcher takes the keyboard and hands it back: Hyprland
+        // names the same window again (on open and on close). That is no
+        // focus change, so no glint; after a workspace switch any focus is.
+        var addr = String(event.data || "")
+        var same = addr !== "" && addr === root.lastWindow
+        if (addr !== "") root.lastWindow = addr
+        if (same || !root.eligible()) return
         // a new window animates in (windowsIn ~0.4 s)
         root.schedule(root.justOpened ? 480 : 300)
         root.justOpened = false
       } else if (n === "workspacev2" || n === "movewindowv2" || n === "fullscreen" || n === "changefloatingmode" || n === "closewindow") {
         root.stop()
+        if (n === "workspacev2" || n === "closewindow") root.lastWindow = ""
       }
     }
   }

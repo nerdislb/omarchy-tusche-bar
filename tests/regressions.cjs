@@ -755,7 +755,7 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
     'unknown providers (or Apps without the library) keep the native menu');
   assert.match(dm, /function runAction\(action\) \{\n    Util\.execDetached\(prefixed\(action, ""\)\)/, 'every action gets the shims');
   assert.match(dm, /proc\.command = launchCommand\(r\.action, token\)/);
-  assert.match(dm, /if \(!menu\.open\) \{ menu\.searchMode = false; menu\.dropClosed\(\); return \}/, 'every close cancels what is pending');
+  assert.match(dm, /if \(!menu\.open\) \{ menu\.dropClosed\(\); return \}/, 'every close cancels what is pending');
   assert.match(dm, /Component\.onDestruction: cancelAll\(\)/);
   assert.match(dm, /visible: row\.isApp && status === Image\.Ready/, "an app's own icon, the glyph until it is there");
 
@@ -1159,7 +1159,12 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
   assert(/function moreRows\(\) \{[\s\S]*!source\.isBuiltin\(r\.id\)[\s\S]*kind: "group"/.test(dm), 'More: extension entries, then the bar groups');
   assert(dm.includes('r.kind === "more" || r.kind === "provider"'), 'More shows the submenu chevron');
   assert(dm.includes('if (searchMode) return apps.concat('), 'launcher search: apps first');
-  assert(dm.includes('if (!menu.open) { menu.searchMode = false;'), 'search mode ends with the menu');
+  assert(dm.includes('onVisibleChanged: if (!visible) { searchMode = false; iconRefresh.restart() }'), 'search mode ends once the card is gone (not mid-roll)');
+  assert(/function toggleDrop\(\) \{[^\n]*m\.searchMode = false; open\(\) \}/.test(ws) && ws.includes('if (!dropOpen) { m.searchMode = false; open() }'), 'other ways in open the menu, not the launcher');
+  // nothing heavy while the card opens: the icon rescan waits until the menu is gone, at most once a minute
+  assert(!/function onOpenChanged\(\) \{[\s\S]{0,600}refreshApps/.test(dm), 'no icon rescan on open');
+  assert(/id: iconRefresh[\s\S]{0,80}interval: 1500[\s\S]{0,80}onTriggered: if \(!menu\.visible\) source\.refreshApps\(\)/.test(dm));
+  assert(/function refreshApps\(\) \{[\s\S]{0,120}now - lastAppsRefresh < 60000\) return/.test(src), 'icon rescans throttled');
   assert(dm.includes('"⌕  ▏Search apps and menu"'));
   assert(/function openApps\(\) \{[\s\S]*root\[i\]\.provider === "apps"[\s\S]*omarchy-menu summon apps/.test(dm), 'Apps level or the native Apps menu');
   assert(ws.includes('m.searchMode = true') && ws.includes('function openApps()'));
@@ -1307,6 +1312,9 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
   assert.match(frag, /if \(frameMode && sweepAmt <= 0\.0\) \{ fragColor = vec4\(0\.0\); return; \}/);
   assert.match(ms, /kind === "frame" \? 3 : 0/);
   const wg = read('WindowGlint.qml');
+  // a menu taking and handing back the keyboard names the same window again: no glint for it
+  assert.match(wg, /var same = addr !== "" && addr === root\.lastWindow\n\s*if \(addr !== ""\) root\.lastWindow = addr\n\s*if \(same \|\| !root\.eligible\(\)\) return/, 'no glint when focus returns to the same window');
+  assert.match(wg, /if \(n === "workspacev2" \|\| n === "closewindow"\) root\.lastWindow = ""/, 'after a workspace switch any focus glints');
   assert.match(wg, /visible: root\.running && reaches/, 'a surface only while the glint runs, on every monitor the frame reaches');
   assert.match(wg, /if \(query\.gen !== root\.generation \|\| !root\.eligible\(\)\) return/, 'a late query never restarts a stopped glint');
   assert.match(wg, /if \(root\.key\(w\) !== root\.geometryKey\) root\.stop\(\)/, 'a drag or resize stops it (watched while it runs)');

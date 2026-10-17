@@ -298,7 +298,8 @@ Item {
   function open() { if (dropAvailable) dropOpen = true }
   function close() { dropOpen = false }
   function closeForPopoutSwitch() { popoutSwitchClosing = true; dropOpen = false; Qt.callLater(function() { root.popoutSwitchClosing = false }) }
-  function toggleDrop() { if (dropOpen) close(); else open() }
+  // (a menu reopened while the launcher still rolls in is the menu again)
+  function toggleDrop() { if (dropOpen) { close(); return } var m = dropLoader.item; if (m) m.searchMode = false; open() }
   // Super+Space: the drop-down as a launcher (search line, apps first); a
   // second press closes it.
   function openSearch() {
@@ -315,7 +316,7 @@ Item {
     // without the shell's app library: Omarchy's own Apps menu, toggled
     if (!m.appLibrary) { close(); bar.run("omarchy-menu toggle apps"); return }
     if (dropOpen && m.level && m.level.provider === "apps") { close(); return }
-    if (!dropOpen) open()
+    if (!dropOpen) { m.searchMode = false; open() }
     Qt.callLater(function() { if (root.dropOpen) m.openApps() })
   }
   // (during a plugin reload the engine may already be gone while this module is torn down)

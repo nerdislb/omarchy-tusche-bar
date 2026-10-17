@@ -446,6 +446,10 @@ KeyboardPanel {
     cancelAll()
   }
   Component.onDestruction: cancelAll()
+  // The launcher's search line stays until the card is gone: ended on close,
+  // the header swapped to the title while the card rolled in, both drawn over
+  // each other. Then the icons are brought up to date (see iconRefresh).
+  onVisibleChanged: if (!visible) { searchMode = false; iconRefresh.restart() }
 
   // As the native finishRequest: the answer into the selection file, then
   // the done file; a cancel is the done file alone. Nothing is written once
@@ -502,12 +506,12 @@ KeyboardPanel {
     Connections {
       target: menu
       function onOpenChanged() {
-        if (!menu.open) { menu.searchMode = false; menu.dropClosed(); return }
+        if (!menu.open) { menu.dropClosed(); return }
+        iconRefresh.stop()
         menu.stack = []; menu.query = ""; menu.current = -1; menu.deleteTarget = null
         keys.keyboard = false; keys.pointerKnown = false
         menu.slideX = 0
         source.evaluate()
-        source.refreshApps()
         // opened for a question: straight onto it
         menu.showRequests(false)
       }
@@ -522,6 +526,14 @@ KeyboardPanel {
 
     Item {
       id: plumbing
+      // The shell's icon rescan (refreshIcons: ~9000 paths, each through
+      // JavaScript) held the GUI thread for ~200 ms; run on every open it froze
+      // the card mid-roll. It runs once the menu is gone, at most once a minute.
+      Timer {
+        id: iconRefresh
+        interval: 1500
+        onTriggered: if (!menu.visible) source.refreshApps()
+      }
       // one per tracked launch (launchAsking)
       Component {
         id: launchComponent

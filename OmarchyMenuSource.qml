@@ -389,9 +389,14 @@ Item {
     }
     return out
   }
-  // On open: icons that arrived since (native: refreshIcons on every open).
+  // After the menu closed (DropMenu's iconRefresh): icons that arrived since
+  // (the native launcher runs refreshIcons on every open), at most once a minute.
+  property double lastAppsRefresh: 0
   function refreshApps() {
     if (!appLibrary) return
+    var now = Date.now()
+    if (now - lastAppsRefresh < 60000) return
+    lastAppsRefresh = now
     appLibrary.refreshIcons()
     if (appRows !== null) loadApps()
   }
