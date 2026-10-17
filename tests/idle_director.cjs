@@ -18,11 +18,11 @@ const MODES = ['logo', 'idle', 'wink', 'skeptical', 'shy', 'thinking-dots', 'typ
 
 // Runs `seconds` of simulated time in 0.5 s ticks; returns [{ t (seconds), a }] for every action.
 function run(opts) {
-  const o = Object.assign({ profileName: 'lively', idle: true, calm: true, reduced: false, hour: 14, modes: MODES, seed: 1, seconds: 600 }, opts);
+  const o = Object.assign({ profileName: 'lively', idle: true, calm: true, working: false, reduced: false, hour: 14, modes: MODES, seed: 1, seconds: 600, base: 1000000 }, opts);
   const rnd = rng(o.seed);
   let model = o.model || dir.initial(), log = [];
   for (let ms = 0; ms <= o.seconds * 1000; ms += 500) {
-    const r = dir.step(model, { profileName: o.profileName, now: 1000000 + ms, idle: o.idle, calm: o.calm, reduced: o.reduced, hour: o.hour, modes: o.modes, rnd });
+    const r = dir.step(model, { profileName: o.profileName, now: o.base + ms, idle: o.idle, calm: o.calm, working: o.working, reduced: o.reduced, hour: o.hour, modes: o.modes, rnd });
     model = r.model;
     for (const a of r.actions) log.push({ t: ms / 1000, a: plain(a) });
   }
@@ -81,6 +81,20 @@ test('a glance still pending when he yawns or falls asleep is put right first', 
   }
   const quiet = at(at(dir.initial(), 0).model, 130000);
   assert.deepEqual(plain(quiet.actions), [{ kind: 'yawn' }], 'no look reset when nothing is pending');
+});
+test('while an agent works he still glances and fidgets, but neither yawns nor sleeps', () => {
+  const { log } = run({ working: true, seconds: 900 });
+  assert.ok(log.length > 20, 'still lively: ' + log.length);
+  assert.ok(!log.some(e => e.a.kind === 'yawn' || e.a.kind === 'sleep'));
+  assert.ok(log.some(e => e.a.kind === 'fly' || e.a.kind === 'react'), 'fidgets too');
+  // he waited long: the moment the work ends he yawns, then sleeps
+  const after = run({ working: false, seconds: 30, base: 1000000 + 400500, model: run({ working: true, seconds: 400 }).model });
+  assert.ok(after.log.some(e => e.a.kind === 'yawn') || after.log.some(e => e.a.kind === 'sleep'), 'drowsy at once');
+  // and when work starts while he sleeps, he wakes (no start: it was not you)
+  const asleep = run({ seconds: 400 });
+  assert.equal(asleep.model.phase, 'asleep');
+  const woke = dir.step(asleep.model, { now: 5000000, idle: true, calm: true, working: true, reduced: false, hour: 14, modes: MODES, rnd: rng(1) });
+  assert.deepEqual(plain(woke.actions), [{ kind: 'wake', startle: false }]);
 });
 test('gentle is slower than lively: later, rarer', () => {
   const lively = run({ seconds: 280 }).log.filter(e => e.a.kind !== 'look' || e.a.x || e.a.y).length;

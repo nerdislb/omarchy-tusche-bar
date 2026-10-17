@@ -68,8 +68,9 @@ function pick(options, rnd) {
   return options[options.length - 1]
 }
 
-// input: { now (ms), idle (you have been away), calm (nothing else to say),
-//          reduced (reduced motion), hour (0-23), modes (ids the pack has), rnd }
+// input: { now (ms), idle (you have been away), calm (nothing else to say), working (an agent
+//          is working: he still glances and fidgets, but neither yawns nor sleeps, as that would
+//          look like nothing is going on), reduced (reduced motion), hour (0-23), modes (ids the pack has), rnd }
 // Returns { model, actions }: actions are
 //   { kind: "look", x, y } · { kind: "react", mode, seconds } · { kind: "fly" }
 //   { kind: "yawn" } · { kind: "sleep" } · { kind: "wake", startle } · { kind: "cancel" }
@@ -78,9 +79,10 @@ function step(model, input) {
   var p = profile(input.profileName === undefined ? "lively" : input.profileName)
   var actions = []
   var now = input.now
+  var working = input.working === true
   var quiet = !p || input.reduced === true || input.calm !== true || input.idle !== true
 
-  if (quiet) {
+  if (quiet || (working && m.phase === "asleep")) {
     if (m.phase === "asleep") actions.push({ kind: "wake", startle: input.idle !== true && input.calm === true })
     else if (m.active) actions.push({ kind: "cancel" })
     return { model: Object.assign(initial(), { recent: m.recent, lastGlance: m.lastGlance }), actions: actions }
@@ -101,13 +103,13 @@ function step(model, input) {
   while (m.queue.length && m.queue[0].at <= now) actions.push(m.queue.shift().action)
   if (m.phase === "asleep") return { model: m, actions: actions }
 
-  if (idleFor >= sleepAt) {
+  if (!working && idleFor >= sleepAt) {
     m.phase = "asleep"
     lookAhead(m, actions)
     actions.push({ kind: "sleep" })
     return { model: m, actions: actions }
   }
-  if (!m.yawned && idleFor >= yawnAt) {
+  if (!working && !m.yawned && idleFor >= yawnAt) {
     m.yawned = true
     m.busyUntil = now + 4000
     m.nextAt = now + 9000

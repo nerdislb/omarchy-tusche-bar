@@ -231,7 +231,7 @@ Item {
   function directorStep() {
     if (Date.now() < previewUntil && companion.face === "calm") return
     var now = new Date()
-    var r = Director.step(director, { profileName: intensity, now: now.getTime(), idle: userIdle, calm: companion.face === "calm",
+    var r = Director.step(director, { profileName: intensity, now: now.getTime(), idle: userIdle, calm: companion.face === "calm" || companion.face === "working", working: companion.face === "working",
                                       reduced: Style.reduceMotion, hour: now.getHours(), modes: modeIds, rnd: Math.random })
     director = r.model
     for (var i = 0; i < r.actions.length; i++) perform(r.actions[i])
@@ -239,7 +239,8 @@ Item {
   Timer { interval: 500; repeat: true; running: face.idleLife; onTriggered: face.directorStep() }
   // Anything else to say (a failure, a waiting agent, the battery) ends whatever the idle life
   // is playing at once, whoever started it.
-  readonly property bool calmFace: companion.face === "calm"
+  // (A working agent does not count: he glances and fidgets on, but does not yawn or sleep.)
+  readonly property bool calmFace: companion.face === "calm" || companion.face === "working"
   onCalmFaceChanged: if (!calmFace) { asleep = false; previewWake.stop(); stopFidgets() }
   onIdleLifeChanged: if (!idleLife) { asleep = false; stopFidgets(); director = Director.initial() }
 

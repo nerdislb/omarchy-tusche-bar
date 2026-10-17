@@ -225,6 +225,20 @@ Item {
    b.face.onScreen = true
    b.destroy()
   }
+  function test_05c_a_working_agent_does_not_stop_the_glances() {
+   Style.reduceMotion = false
+   var b = createTemporaryObject(make, root, { x: 10, y: 10 })
+   tryVerify(function() { return b.face.available }, 3000)
+   b.face.companion = { face: "working", tone: "accent", level: 0.9, badge: null }
+   b.face.intensity = "lively"
+   wait(800)
+   b.face.userIdle = true
+   tryVerify(function() { return b.face.omi.look[0] !== 0 || b.face.omi.look[1] !== 0 }, 7000)
+   compare(b.face.asleep, false)
+   b.face.userIdle = false
+   tryVerify(function() { return b.face.omi.look[0] === 0 && b.face.omi.look[1] === 0 }, 2000)
+   b.destroy()
+  }
   function test_06_the_director_drives_him_while_you_are_away() {
    Style.reduceMotion = false
    var b = createTemporaryObject(make, root, { x: 10, y: 10 })

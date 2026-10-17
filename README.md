@@ -428,7 +428,7 @@ which respects idle inhibitors, so a playing video keeps him calm) he looks abou
 and then (wink, a raised brow, shyness, humming, drumming, a laugh, a peek over the frame, or a fly
 that circles him and his eyes follow), yawns, and finally falls asleep with a drifting *z*. The first
 input wakes him with a start, and anything else to say (a failure, a waiting agent) interrupts at once.
-Late at night the yawn and the sleep come twice as early; he never repeats a fidget twice in a row.
+Late at night the yawn and the sleep come twice as early; he never repeats a fidget twice in a row. While an agent is working he still glances and fidgets (his *working* face looks like his calm one), but neither yawns nor sleeps.
 Hover him for a moment and the bubble shows the time. The option *Omi's idle life* has `lively`
 (default: first fidgets after 40 s away, yawn at 2.5 min, sleep at 5), `gentle` (rarer, 90 s, 5 and 10 min)
 and `off`; reduced motion turns it off. Preview any piece without waiting:
