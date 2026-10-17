@@ -69,6 +69,19 @@ test('one yawn at 150 s, sleep at 300 s of absence, and then nothing until he is
   assert.ok(log.every(e => e.t <= sleep[0].t), 'nothing after he fell asleep');
   assert.ok(log.indexOf(yawn[0]) < log.indexOf(sleep[0]));
 });
+test('a glance still pending when he yawns or falls asleep is put right first', () => {
+  const at = (model, ms) => dir.step(model, { profileName: 'lively', now: 1000000 + ms, idle: true, calm: true, reduced: false, hour: 14, modes: MODES, rnd: () => 0.5 });
+  // lively: the yawn is due 130 s after the idle report, sleep at 280 s; a glance is queued just before
+  for (const [dueMs, kind] of [[130000, 'yawn'], [280000, 'sleep']]) {
+    const start = at(dir.initial(), 0).model;
+    const pending = Object.assign({}, plain(start), { yawned: kind === 'sleep', queue: [{ at: 1000000 + dueMs + 2500, action: { kind: 'look', x: 0, y: 0 } }], nextAt: 1000000 + dueMs + 100000 });
+    const r = at(pending, dueMs);
+    assert.deepEqual(plain(r.actions), [{ kind: 'look', x: 0, y: 0 }, { kind }], kind);
+    assert.deepEqual(plain(r.model.queue), []);
+  }
+  const quiet = at(at(dir.initial(), 0).model, 130000);
+  assert.deepEqual(plain(quiet.actions), [{ kind: 'yawn' }], 'no look reset when nothing is pending');
+});
 test('gentle is slower than lively: later, rarer', () => {
   const lively = run({ seconds: 280 }).log.filter(e => e.a.kind !== 'look' || e.a.x || e.a.y).length;
   const gentle = run({ profileName: 'gentle', seconds: 280 }).log.filter(e => e.a.kind !== 'look' || e.a.x || e.a.y).length;

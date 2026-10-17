@@ -180,6 +180,51 @@ Item {
    verify(b.face.play("nonsense").indexOf("unknown") === 0)
    b.destroy()
   }
+  function test_05b_interruptions_and_previews_end_cleanly() {
+   Style.reduceMotion = false
+   var b = createTemporaryObject(make, root, { x: 10, y: 10 })
+   tryVerify(function() { return b.face.available }, 3000)
+   var calm = { face: "calm", tone: "accent", level: 0.9, badge: null }
+   b.face.companion = calm
+   // a fly in flight is stopped by a failure, the eyes look ahead again, nothing is left over
+   b.face.play("fly")
+   wait(1500)
+   verify(b.face.flyNow !== null)
+   b.face.companion = { face: "alert", tone: "urgent", level: 0.9, badge: null }
+   tryVerify(function() { return b.face.flyNow === null }, 1000)
+   tryVerify(function() { return b.face.omi.look[0] === 0 && b.face.omi.look[1] === 0 }, 1000)
+   wait(300)
+   verify(b.face.omi.showing !== "skeptical", "no stale reaction after the interruption")
+   // falling asleep while a fly is out ends the fly
+   b.face.companion = calm
+   wait(300)
+   b.face.play("fly")
+   wait(800)
+   b.face.perform({ kind: "sleep" })
+   compare(b.face.flyNow, null)
+   compare(b.face.asleep, true)
+   b.face.play("wake")
+   // the sleep preview wakes by itself even when the idle life is off
+   b.face.intensity = "off"
+   b.face.previewSeconds = 1
+   wait(200)
+   b.face.play("sleep")
+   compare(b.face.asleep, true)
+   tryCompare(b.face, "asleep", false, 2500)
+   // ... and a failure during the preview wakes him at once
+   b.face.intensity = "lively"
+   b.face.previewSeconds = 12
+   b.face.play("sleep")
+   compare(b.face.asleep, true)
+   b.face.companion = { face: "waiting", tone: "accent", level: 0.9, badge: null }
+   tryCompare(b.face, "asleep", false, 1000)
+   // off the screen there is no idle life at all
+   b.face.companion = calm
+   b.face.onScreen = false
+   compare(b.face.idleLife, false)
+   b.face.onScreen = true
+   b.destroy()
+  }
   function test_06_the_director_drives_him_while_you_are_away() {
    Style.reduceMotion = false
    var b = createTemporaryObject(make, root, { x: 10, y: 10 })

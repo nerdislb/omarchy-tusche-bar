@@ -94,6 +94,7 @@ PanelWindow {
     // Loaded while the option is on, so the window opens at Omi's size at once; a hidden
     // window costs nothing (Omi only animates while on screen).
     active: sealWindow.wantsOmi
+    onScreen: sealWindow.visible
     packUrl: "file://" + sealWindow.dataDir + "/omi/Omi.qml"
     intensity: sealWindow.intensity
     userIdle: idleWatch.idle

@@ -51,6 +51,13 @@ function copy(m) {
            active: m.active, recent: m.recent.slice(), queue: m.queue.slice(), lastGlance: m.lastGlance }
 }
 
+// A glance still waiting for its "look ahead again" must not be lost when the queue is dropped
+// for a yawn or for sleep: the eyes are put straight ahead now.
+function lookAhead(m, actions) {
+  if (m.queue.length) actions.push({ kind: "look", x: 0, y: 0 })
+  m.queue = []
+}
+
 function between(range, rnd) { return (range[0] + (range[1] - range[0]) * rnd()) * 1000 }
 
 function pick(options, rnd) {
@@ -96,7 +103,7 @@ function step(model, input) {
 
   if (idleFor >= sleepAt) {
     m.phase = "asleep"
-    m.queue = []
+    lookAhead(m, actions)
     actions.push({ kind: "sleep" })
     return { model: m, actions: actions }
   }
@@ -104,7 +111,7 @@ function step(model, input) {
     m.yawned = true
     m.busyUntil = now + 4000
     m.nextAt = now + 9000
-    m.queue = []
+    lookAhead(m, actions)
     actions.push({ kind: "yawn" })
     return { model: m, actions: actions }
   }

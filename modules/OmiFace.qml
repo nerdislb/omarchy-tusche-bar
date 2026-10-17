@@ -33,6 +33,8 @@ Item {
   // Omi.qml, from the data directory. Empty: nothing is loaded.
   property url packUrl: ""
   property bool active: true
+  // The seal's window is on screen (the bar is hidden): only then does he have an idle life.
+  property bool onScreen: true
   // The idle life: "lively", "gentle" or "off"; `userIdle` is the IdleMonitor's word that
   // nobody has touched anything for a while; `hovered` the pointer on him.
   property string intensity: "lively"
@@ -198,7 +200,7 @@ Item {
 
   // ------------------------------------------------------------------ idle life
 
-  readonly property bool idleLife: available && active && intensity !== "off" && !Style.reduceMotion
+  readonly property bool idleLife: available && active && onScreen && intensity !== "off" && !Style.reduceMotion
   property var director: Director.initial()
 
   function perform(a) {
@@ -206,8 +208,8 @@ Item {
     if (a.kind === "look") omi.look = [a.x, a.y]
     else if (a.kind === "react") omi.react(a.mode, a.seconds)
     else if (a.kind === "fly") startFly()
-    else if (a.kind === "yawn") yawnAnimation.restart()
-    else if (a.kind === "sleep") asleep = true
+    else if (a.kind === "yawn") { stopFidgets(); yawnAnimation.restart() }
+    else if (a.kind === "sleep") { stopFidgets(); asleep = true }
     else if (a.kind === "wake") { asleep = false; stopFidgets(); if (a.startle) omi.react("excited", 1) }
     else if (a.kind === "cancel") stopFidgets()
   }
@@ -219,8 +221,15 @@ Item {
   }
   // A preview (`play("sleep")`) holds him for a while although you are plainly there.
   property real previewUntil: 0
+  property real previewSeconds: 12
+  // The preview ends by itself even when the director is not ticking (idle life off).
+  Timer {
+    id: previewWake
+    interval: face.previewSeconds * 1000
+    onTriggered: { face.previewUntil = 0; face.perform({ kind: "wake", startle: true }); face.director = Director.initial() }
+  }
   function directorStep() {
-    if (Date.now() < previewUntil) return
+    if (Date.now() < previewUntil && companion.face === "calm") return
     var now = new Date()
     var r = Director.step(director, { profileName: intensity, now: now.getTime(), idle: userIdle, calm: companion.face === "calm",
                                       reduced: Style.reduceMotion, hour: now.getHours(), modes: modeIds, rnd: Math.random })
@@ -228,21 +237,26 @@ Item {
     for (var i = 0; i < r.actions.length; i++) perform(r.actions[i])
   }
   Timer { interval: 500; repeat: true; running: face.idleLife; onTriggered: face.directorStep() }
+  // Anything else to say (a failure, a waiting agent, the battery) ends whatever the idle life
+  // is playing at once, whoever started it.
+  readonly property bool calmFace: companion.face === "calm"
+  onCalmFaceChanged: if (!calmFace) { asleep = false; previewWake.stop(); stopFidgets() }
   onIdleLifeChanged: if (!idleLife) { asleep = false; stopFidgets(); director = Director.initial() }
 
   // A named piece of the idle life on demand (the IPC preview): any fidget of the director's
   // list by id, "glance", "yawn", "sleep", "wake", "clock", "stop".
   function play(name) {
     if (!available) return "Omi is not installed (setup/omi-fetch.sh)"
-    if (name === "stop") { previewUntil = 0; asleep = false; stopFidgets(); showClock = false; director = Director.initial(); return "ok" }
+    if (name === "stop") { previewUntil = 0; previewWake.stop(); asleep = false; stopFidgets(); showClock = false; director = Director.initial(); return "ok" }
     if (name === "glance") { perform({ kind: "look", x: Math.random() < 0.5 ? -1 : 1, y: 0 }); lookAhead.restart(); return "ok" }
     if (name === "yawn") { perform({ kind: "yawn" }); return "ok" }
     if (name === "sleep") {
       director = Object.assign(Director.initial(), { phase: "asleep", active: true })
-      previewUntil = Date.now() + 12000
+      previewUntil = Date.now() + previewSeconds * 1000
+      previewWake.restart()
       perform({ kind: "sleep" }); return "ok"
     }
-    if (name === "wake") { previewUntil = 0; perform({ kind: "wake", startle: true }); director = Director.initial(); return "ok" }
+    if (name === "wake") { previewUntil = 0; previewWake.stop(); perform({ kind: "wake", startle: true }); director = Director.initial(); return "ok" }
     if (name === "clock") { clockText = Qt.formatTime(new Date(), "HH:mm"); showClock = true; clockHold.restart(); return "ok" }
     for (var i = 0; i < Director.FIDGETS.length; i++) {
       var f = Director.FIDGETS[i]

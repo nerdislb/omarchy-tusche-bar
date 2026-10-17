@@ -170,7 +170,9 @@ test('the idle life asks the compositor only while Omi is on screen, respects in
   assert(seal.includes('active: sealWindow.visible && sealWindow.useOmi && sealWindow.intensity !== "off"'), 'no monitor while the bar is shown or the idle life is off');
   assert(seal.includes('seconds: IdleLife.idleSeconds(sealWindow.intensity)'));
   assert(seal.includes('userIdle: idleWatch.idle') && seal.includes('hovered: hover.hovered'));
-  assert(face.includes('readonly property bool idleLife: available && active && intensity !== "off" && !Style.reduceMotion'), 'reduced motion and off silence him');
+  assert(face.includes('readonly property bool idleLife: available && active && onScreen && intensity !== "off" && !Style.reduceMotion'), 'off the screen, reduced motion and off silence him');
+  assert(seal.includes('onScreen: sealWindow.visible'));
+  assert(face.includes('onCalmFaceChanged: if (!calmFace) { asleep = false; previewWake.stop(); stopFidgets() }'), 'anything else to say ends the idle pieces');
   assert(/running: face\.idleLife; onTriggered: face\.directorStep\(\)/.test(face), 'the director only ticks while his idle life is on');
   assert(face.includes('onIdleLifeChanged: if (!idleLife) { asleep = false; stopFidgets()'), 'switching it off wakes him');
   assert(/sealIdle: \{[\s\S]*?variants: \[\s*\{ id: "lively"[\s\S]*?\{ id: "gentle"[\s\S]*?\{ id: "off"/.test(presets), 'lively by default, gentle, off');
