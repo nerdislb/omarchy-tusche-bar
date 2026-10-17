@@ -755,7 +755,7 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
     'unknown providers (or Apps without the library) keep the native menu');
   assert.match(dm, /function runAction\(action\) \{\n    Util\.execDetached\(prefixed\(action, ""\)\)/, 'every action gets the shims');
   assert.match(dm, /proc\.command = launchCommand\(r\.action, token\)/);
-  assert.match(dm, /if \(!menu\.open\) \{ menu\.dropClosed\(\); return \}/, 'every close cancels what is pending');
+  assert.match(dm, /if \(!menu\.open\) \{ evaluateLater\.stop\(\); menu\.dropClosed\(\); return \}/, 'every close cancels what is pending');
   assert.match(dm, /Component\.onDestruction: cancelAll\(\)/);
   assert.match(dm, /visible: row\.isApp && status === Image\.Ready/, "an app's own icon, the glyph until it is there");
 
@@ -1164,6 +1164,8 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
   // nothing heavy while the card opens: the icon rescan waits until the menu is gone, at most once a minute
   assert(!/function onOpenChanged\(\) \{[\s\S]{0,600}refreshApps/.test(dm), 'no icon rescan on open');
   assert(/id: iconRefresh[\s\S]{0,80}interval: 1500[\s\S]{0,80}onTriggered: if \(!menu\.visible\) source\.refreshApps\(\)/.test(dm));
+  assert(dm.includes('if (source.evaluated) evaluateLater.restart(); else source.evaluate()') && /id: evaluateLater\n\s*interval: 450\n\s*onTriggered: if \(menu\.open\) source\.evaluate\(\)/.test(dm), 'guards asked again once the card is out');
+  assert(engine.includes('onDropMenuOpenChanged: if (dropMenuOpen) { isOpen = false; pluginScanLater.restart() }'), 'plugin list read after the roll');
   assert(/function refreshApps\(\) \{[\s\S]{0,120}now - lastAppsRefresh < 60000\) return/.test(src), 'icon rescans throttled');
   assert(dm.includes('"⌕  ▏Search apps and menu"'));
   assert(/function openApps\(\) \{[\s\S]*root\[i\]\.provider === "apps"[\s\S]*omarchy-menu summon apps/.test(dm), 'Apps level or the native Apps menu');

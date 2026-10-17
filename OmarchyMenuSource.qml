@@ -25,6 +25,8 @@ Item {
   property var items: ({})
   property var itemOrder: []
   property var whenResults: ({})
+  // set once the guards have answered for the first time (DropMenu waits only after that)
+  property bool evaluated: false
   property var checkedResults: ({})
   property var disabledResults: ({})
   property bool pending: false
@@ -159,6 +161,7 @@ Item {
           else if (tag === "d") d[id] = value
         }
         src.whenResults = w; src.checkedResults = c; src.disabledResults = d
+        src.evaluated = true
       }
       if (src.pending) Qt.callLater(src.evaluate)
     }

@@ -506,12 +506,15 @@ KeyboardPanel {
     Connections {
       target: menu
       function onOpenChanged() {
-        if (!menu.open) { menu.dropClosed(); return }
+        if (!menu.open) { evaluateLater.stop(); menu.dropClosed(); return }
         iconRefresh.stop()
         menu.stack = []; menu.query = ""; menu.current = -1; menu.deleteTarget = null
         keys.keyboard = false; keys.pointerKnown = false
         menu.slideX = 0
-        source.evaluate()
+        // The guards (a login shell and a dozen probes) and their answer moved
+        // the rows while the card rolled out: asked again once it is out, the
+        // last answers stand in meanwhile (only the very first open waits).
+        if (source.evaluated) evaluateLater.restart(); else source.evaluate()
         // opened for a question: straight onto it
         menu.showRequests(false)
       }
@@ -529,6 +532,11 @@ KeyboardPanel {
       // The shell's icon rescan (refreshIcons: ~9000 paths, each through
       // JavaScript) held the GUI thread for ~200 ms; run on every open it froze
       // the card mid-roll. It runs once the menu is gone, at most once a minute.
+      Timer {
+        id: evaluateLater
+        interval: 450
+        onTriggered: if (menu.open) source.evaluate()
+      }
       Timer {
         id: iconRefresh
         interval: 1500

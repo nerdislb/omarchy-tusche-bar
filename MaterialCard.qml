@@ -183,10 +183,32 @@ Item {
   }
   NumberAnimation { id: rollOut; target: fp; property: "roll"; to: 1; duration: 260 * fp.openingTimeScale; easing.type: Easing.OutCubic }
   NumberAnimation { id: rollIn; target: fp; property: "roll"; to: 0; duration: 200; easing.type: Easing.InCubic }
+  // A popup's first frames after its window maps, and the frame in which the
+  // glass captures its backdrop, take 70-200 ms each (measured 17.10.2026).
+  // Stepped by them, the roll lost its first quarter at once: the card showed
+  // up a quarter out, then jumped. A fresh roll waits (rolled in, unseen) for
+  // the first steady frame, at most eight frames; after that a slow frame
+  // pauses the spring for that frame instead of jumping it.
+  property bool warming: false
+  property int warmTicks: 0
+  FrameAnimation {
+    running: fp.warming
+    onTriggered: {
+      fp.warmTicks++
+      if (frameTime <= 0.034 || fp.warmTicks >= 8) fp.startRoll()
+    }
+  }
+  function startRoll() {
+    warming = false
+    if (!rolls || !panel || !panel.open) return
+    if (springOn) springRunning = true
+    else rollOut.start()
+    if (glassBody && glassOn) glassBody.play()
+  }
   FrameAnimation {
     running: fp.springRunning && fp.springOn && !fp.reduced
     onTriggered: {
-      var s = GlassMath.step(fp.roll, fp.rollVelocity, fp.rollTarget, frameTime,
+      var s = GlassMath.step(fp.roll, fp.rollVelocity, fp.rollTarget, Math.min(frameTime, 1 / 30),
                              fp.springOmega, fp.glassSpec.damping || 0.82)
       fp.roll = s.x; fp.rollVelocity = s.v
       if (GlassMath.settled(fp.roll, fp.rollVelocity, fp.rollTarget)) {
@@ -235,6 +257,7 @@ Item {
   NumberAnimation { id: ghostFade; property: "opacity"; to: 0; duration: 760; easing.type: Easing.InQuad }
 
   function followRoll() {
+    warming = false
     // Same rule as the bloom below: when rolling stops applying, only stop –
     // never write roll through a Binding that is about to be released.
     if (!rolls) { rollOut.stop(); rollIn.stop(); return }
@@ -243,13 +266,16 @@ Item {
       rollTarget = panel.open ? 1 : 0
       if (reduced || panel.popoutSwitchClosing || (roll <= 0 && !panel.open)) {
         springRunning = false; rollVelocity = 0; roll = rollTarget
+      } else if (panel.open && roll <= 0.001 && !springRunning) {
+        rollVelocity = 0; warmTicks = 0; warming = true     // fresh: wait for steady frames
       } else springRunning = true
       return
     }
     if (panel.open) {
       rollIn.stop()
       if (reduced) { rollOut.stop(); roll = 1; return }
-      rollOut.start()            // from where it is: 0 when fresh, partway when reopened
+      if (roll <= 0.001 && !rollOut.running) { warmTicks = 0; warming = true; return }
+      rollOut.start()            // from where it is: partway when reopened
     } else {
       rollOut.stop()
       if (reduced || roll <= 0 || panel.popoutSwitchClosing) { rollIn.stop(); roll = 0; return }
@@ -263,6 +289,7 @@ Item {
   // Reduced Motion switched on mid-roll or mid-bloom: jump to where it is going
   onReducedChanged: {
     if (!reduced) return
+    if (warming) followRoll()
     if (rolls && (rollOut.running || rollIn.running || springRunning)) followRoll()
     if (active && (opening.running || closing.running)) { opening.stop(); closing.stop(); follow() }
     if (wetting.running) settle()
@@ -301,7 +328,7 @@ Item {
     target: fp.panel
     function onOpenChanged() {
       fp.keepSnap(); fp.follow(); fp.glintPending = fp.panel.open; fp.glint()
-      if (fp.glassBody) { if (fp.panel.open) fp.glassBody.play(); else fp.glassBody.stop() }
+      if (fp.glassBody) { if (!fp.panel.open) fp.glassBody.stop(); else if (!fp.warming) fp.glassBody.play() }
     }
   }
   onActiveChanged: follow()
@@ -493,7 +520,7 @@ Item {
       height: fp.frameH
       radius: fp.card ? fp.card.radius : 0
       reveal: fp.rolls ? fp.reveal : 1
-      onVisibleChanged: if (visible && fp.panel && fp.panel.open) play()
+      onVisibleChanged: if (visible && fp.panel && fp.panel.open && !fp.warming) play()
     }
   }
 

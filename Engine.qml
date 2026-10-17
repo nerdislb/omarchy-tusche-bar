@@ -517,7 +517,9 @@ Item {
   }
   function hasPlugin(id) { return String(id).indexOf("omarchy.") === 0 || installedPlugins.indexOf(String(id)) !== -1 }
   function present(items) { return items.filter(function(e) { return !e.requires || root.hasPlugin(e.requires) }) }
-  onDropMenuOpenChanged: if (dropMenuOpen) { isOpen = false; pluginScan.running = true }
+  // (the plugin list is read again once the drop-down has rolled out, not during it)
+  onDropMenuOpenChanged: if (dropMenuOpen) { isOpen = false; pluginScanLater.restart() }
+  Timer { id: pluginScanLater; interval: 500; onTriggered: if (root.dropMenuOpen) pluginScan.running = true }
   // Super+Alt+M / logo: the drop-down menu under the logo of the focused
   // screen; without a logo shown, Omarchy's own menu. mode "search" opens it
   // as a launcher (Super+Space: search line, apps first), "apps" on the Apps
