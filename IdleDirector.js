@@ -9,8 +9,8 @@
 // idleFor counts from your last input: the IdleMonitor reports after `idleSec`
 // and the stairs below run from there.
 //   glances      from the first idle report: a look left, right, up, down
-//   fidgets      from `fidgetFrom`: a wink, a raised brow, shyness, humming,
-//                drumming fingers, a laugh, a peek, chasing a fly
+//   fidgets      from `fidgetFrom`: a wink, a raised brow, shyness, a laugh, a peek,
+//                chasing a fly
 //   yawn         at `yawnAt`, once; he is drowsy afterwards (fewer fidgets)
 //   sleep        at `sleepAt`, until something wakes him
 // The small hours shorten the last two. Never the same fidget twice in a row.
@@ -22,13 +22,14 @@ var PROFILES = {
 }
 
 // What a fidget is: a mode of the kit played as a reaction (`seconds` after its
-// morph lands), or a prop of ours (the fly). `weight` is how often it comes up.
+// morph lands), or a prop of ours (the fly). `weight` is how often it comes up. Only modes whose
+// meaning does not collide with a state: Omi's own rules say `typing` is "the user is typing or
+// something is written for them" and `thinking-dots` "checking, loading", so those never play as a
+// fidget (they would read as a status).
 var FIDGETS = [
   { id: "wink", kind: "react", mode: "wink", seconds: 1.2, weight: 2, takes: 3 },
   { id: "skeptical", kind: "react", mode: "skeptical", seconds: 2.4, weight: 2, takes: 5 },
   { id: "shy", kind: "react", mode: "shy", seconds: 2, weight: 1, takes: 5 },
-  { id: "humming", kind: "react", mode: "thinking-dots", seconds: 3, weight: 2, takes: 6 },
-  { id: "drumming", kind: "react", mode: "typing", seconds: 3, weight: 1.5, takes: 6 },
   { id: "laugh", kind: "react", mode: "laughing", seconds: 1.6, weight: 1, takes: 4 },
   { id: "peek", kind: "react", mode: "peek", seconds: 3, weight: 1, takes: 6 },
   { id: "fly", kind: "fly", seconds: 0, weight: 2.5, takes: 11 }

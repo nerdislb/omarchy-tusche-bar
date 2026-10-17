@@ -57,7 +57,8 @@ test('before the fidgets begin there are only glances, after it the whole repert
   }
   const kindsSeen = new Set();
   for (let seed = 1; seed <= 20; seed++) for (const e of run({ seed, seconds: 140 }).log) kindsSeen.add(e.a.kind === 'react' ? e.a.mode : e.a.kind);
-  for (const wanted of ['look', 'wink', 'skeptical', 'shy', 'thinking-dots', 'typing', 'laughing', 'peek', 'fly']) assert.ok(kindsSeen.has(wanted), wanted + ' comes up');
+  for (const wanted of ['look', 'wink', 'skeptical', 'shy', 'laughing', 'peek', 'fly']) assert.ok(kindsSeen.has(wanted), wanted + ' comes up');
+  for (const never of ['thinking-dots', 'typing', 'working', 'listening', 'sudo', 'warning', 'low-battery', 'angry']) assert.ok(!kindsSeen.has(never), never + ' is a status, never a fidget');
 });
 test('one yawn at 150 s, sleep at 300 s of absence, and then nothing until he is woken', () => {
   const { log } = run({ seconds: 900 });

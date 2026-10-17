@@ -40,6 +40,8 @@ Item {
   property string intensity: "lively"
   property bool userIdle: false
   property bool hovered: false
+  // The pointer's place inside this item while it is hovered: his eyes follow it.
+  property point pointer: Qt.point(0, 0)
 
   readonly property var omi: loader.item
   readonly property var modeIds: omi && omi.modes ? omi.modes.map(function(m) { return m.id }) : []
@@ -343,5 +345,27 @@ Item {
     running: face.showClock
     onTriggered: face.clockText = Qt.formatTime(new Date(), "HH:mm")
   }
-  onHoveredChanged: if (!hovered && !clockHold.running) showClock = false
+  onHoveredChanged: {
+    if (hovered) followPointer()
+    else { pointerRest.stop(); lookStraight(); if (!clockHold.running) showClock = false }
+  }
+
+  // His eyes follow the pointer over him (as in every one of Omi's own examples) and look ahead
+  // again when it rests or leaves. Not while a fly is out or he sleeps.
+  property var lastLook: [0, 0]
+  onPointerChanged: if (hovered) followPointer()
+  function followPointer() {
+    if (!omi || flyT >= 0 || asleep) return
+    var l = Art.lookFromPointer(pointer.x, pointer.y, width, height)
+    pointerRest.restart()
+    if (Math.abs(l[0] - lastLook[0]) < 0.04 && Math.abs(l[1] - lastLook[1]) < 0.04) return
+    lastLook = l
+    omi.look = l
+  }
+  function lookStraight() {
+    if (!omi || flyT >= 0) return
+    lastLook = [0, 0]
+    omi.look = [0, 0]
+  }
+  Timer { id: pointerRest; interval: 2500; onTriggered: face.lookStraight() }
 }

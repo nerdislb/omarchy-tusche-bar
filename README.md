@@ -425,14 +425,14 @@ face offscreen with the real player (skipped without it).
 **Idle life.** While nothing else is going on he behaves like a game character nobody steers.
 While you work he only blinks. Once you have been away (the compositor's idle notification,
 which respects idle inhibitors, so a playing video keeps him calm) he looks about, then fidgets now
-and then (wink, a raised brow, shyness, humming, drumming, a laugh, a peek over the frame, or a fly
+and then (wink, a raised brow, shyness, a laugh, a peek over the frame, or a fly
 that circles him and his eyes follow), yawns, and finally falls asleep with a drifting *z*. The first
 input wakes him with a start, and anything else to say (a failure, a waiting agent) interrupts at once.
 Late at night the yawn and the sleep come twice as early; he never repeats a fidget twice in a row. While an agent is working he still glances and fidgets (his *working* face looks like his calm one), but neither yawns nor sleeps.
 Hover him for a moment and the bubble shows the time. The option *Omi's idle life* has `lively`
 (default: first fidgets after 40 s away, yawn at 2.5 min, sleep at 5), `gentle` (rarer, 90 s, 5 and 10 min)
 and `off`; reduced motion turns it off. Preview any piece without waiting:
-`omarchy-shell tusche-bar omi glance|wink|skeptical|shy|humming|drumming|laugh|peek|fly|yawn|sleep|wake|clock|stop`
+`omarchy-shell tusche-bar omi glance|wink|skeptical|shy|laugh|peek|fly|yawn|sleep|wake|clock|stop`
 (`state` shows whether the idle monitor sees you away). The decisions are in `IdleDirector.js`
 (`node tests/idle_director.cjs`).
 

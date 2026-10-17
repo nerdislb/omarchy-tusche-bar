@@ -129,6 +129,17 @@ test('the eyes turn toward a thing, clamped to the unit square', () => {
   const half = art.lookAt(240, 140)[0];
   assert(half > 0.4 && half < 0.6, String(half));
 });
+test('the eyes follow a pointer over the item, full at its edge, centred at its middle', () => {
+  assert.deepEqual(plain(art.lookFromPointer(33, 33, 66, 66)), [0, 0]);
+  assert.deepEqual(plain(art.lookFromPointer(66, 33, 66, 66)), [1, 0]);
+  assert.deepEqual(plain(art.lookFromPointer(0, 33, 66, 66)), [-1, 0]);
+  assert.deepEqual(plain(art.lookFromPointer(33, 0, 66, 66)), [0, -1]);
+  assert.deepEqual(plain(art.lookFromPointer(33, 66, 66, 66)), [0, 1]);
+  assert.deepEqual(plain(art.lookFromPointer(500, -500, 66, 66)), [1, -1], 'clamped');
+  assert.deepEqual(plain(art.lookFromPointer(49.5, 33, 66, 66)), [0.5, 0]);
+  assert.deepEqual(plain(art.lookFromPointer(NaN, 33, 66, 66)).length, 2);
+  assert.doesNotThrow(() => art.lookFromPointer(1, 1, 0, 0));
+});
 test('no pack data is bundled', () => {
   const src = fs.readFileSync(path.join(root, 'OmiArt.js'), 'utf8');
   assert(!/"pieces"|\bomi\.json\b.*\{/.test(src));

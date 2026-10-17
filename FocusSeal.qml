@@ -100,6 +100,7 @@ PanelWindow {
     intensity: sealWindow.intensity
     userIdle: idleWatch.idle
     hovered: hover.hovered
+    pointer: hover.point.position
     companion: sealWindow.companion
     HoverHandler { id: hover }
     ground: Commons.Color.popups.background

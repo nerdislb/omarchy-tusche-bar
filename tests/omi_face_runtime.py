@@ -239,6 +239,40 @@ Item {
    tryVerify(function() { return b.face.omi.look[0] === 0 && b.face.omi.look[1] === 0 }, 2000)
    b.destroy()
   }
+  function test_05d_his_eyes_follow_the_pointer() {
+   Style.reduceMotion = false
+   var b = createTemporaryObject(make, root, { x: 10, y: 10 })
+   tryVerify(function() { return b.face.available }, 3000)
+   b.face.companion = { face: "calm", tone: "accent", level: 0.9, badge: null }
+   b.face.hovered = true
+   b.face.pointer = Qt.point(b.face.width, b.face.height / 2)
+   compare(b.face.omi.look[0], 1)
+   compare(b.face.omi.look[1], 0)
+   b.face.pointer = Qt.point(0, 0)
+   compare(b.face.omi.look[0], -1)
+   compare(b.face.omi.look[1], -1)
+   b.face.pointer = Qt.point(b.face.width / 2, b.face.height / 2)
+   compare(b.face.omi.look[0], 0)
+   b.face.pointer = Qt.point(b.face.width / 2 + 0.5, b.face.height / 2)      // a tiny move is no new look
+   compare(b.face.omi.look[0], 0)
+   b.face.pointer = Qt.point(b.face.width / 2 + 8, b.face.height / 2)
+   verify(b.face.omi.look[0] > 0.1 && b.face.omi.look[0] < 0.5, "a small move turns the eyes a little: " + b.face.omi.look[0])
+   // he looks ahead again when the pointer rests, and when it leaves
+   tryVerify(function() { return b.face.omi.look[0] === 0 && b.face.omi.look[1] === 0 }, 3500)
+   b.face.pointer = Qt.point(b.face.width, 10)
+   verify(b.face.omi.look[0] === 1)
+   b.face.hovered = false
+   compare(b.face.omi.look[0], 0)
+   // not while a fly is out
+   b.face.play("fly")
+   wait(400)
+   b.face.hovered = true
+   var before = b.face.omi.look
+   b.face.pointer = Qt.point(0, b.face.height)
+   compare(b.face.omi.look[0], before[0])
+   b.face.play("stop")
+   b.destroy()
+  }
   function test_06_the_director_drives_him_while_you_are_away() {
    Style.reduceMotion = false
    var b = createTemporaryObject(make, root, { x: 10, y: 10 })

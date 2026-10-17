@@ -152,3 +152,11 @@ function lookAt(x, y) {
   var clamp = function(v) { return Math.round(Math.max(-1, Math.min(1, v)) * 100) / 100 }
   return [clamp((Number(x) + CELL / 2 - 150) / 190), clamp((Number(y) + CELL / 2 - 150) / 190)]
 }
+
+// Where his eyes turn for a pointer at (x, y) over an item of w x h, as `look` wants it: each -1..1,
+// full at the item's edge (it is small), two decimals so a moving pointer does not make him fidget.
+function lookFromPointer(x, y, w, h) {
+  var clamp = function(v) { return Math.round(Math.max(-1, Math.min(1, v)) * 100) / 100 }
+  var reach = Math.max(1, Number(w) * 0.5)
+  return [clamp((Number(x) - Number(w) / 2) / reach), clamp((Number(y) - Number(h) / 2) / reach)]
+}
