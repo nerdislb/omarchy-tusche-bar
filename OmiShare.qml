@@ -15,6 +15,10 @@ import "OmiShare.js" as Proto
 // Like the reference service it never takes over from another one: when something already answers on the
 // socket (the reference Node service, say) this follows its state as a client instead, and takes over
 // when it stops. A socket file nobody answers on is left over and is removed by the listening.
+//
+// Known limit: the socket is the user's own (their runtime directory is private), but Quickshell's line
+// parser has no maximum length, so a local process of theirs that streams endless bytes without a newline
+// can make the shell hold them all.
 Item {
   id: share
   visible: false
@@ -50,9 +54,9 @@ Item {
     probeTimeout.restart()
   }
   function end() {
+    role = "off"                                        // (first: closing the probe must not look like a service going away)
     probeTimeout.stop(); retry.stop(); ttl.stop()
     probe.connected = false
-    role = "off"
     clients = []
     model = { state: Proto.initial(Date.now()) }
   }

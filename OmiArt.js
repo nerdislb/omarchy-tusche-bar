@@ -157,6 +157,6 @@ function lookAt(x, y) {
 // full at the item's edge (it is small), two decimals so a moving pointer does not make him fidget.
 function lookFromPointer(x, y, w, h) {
   var clamp = function(v) { return Math.round(Math.max(-1, Math.min(1, v)) * 100) / 100 }
-  var reach = Math.max(1, Number(w) * 0.5)
-  return [clamp((Number(x) - Number(w) / 2) / reach), clamp((Number(y) - Number(h) / 2) / reach)]
+  var reachX = Math.max(1, Number(w) * 0.5), reachY = Math.max(1, Number(h) * 0.5)
+  return [clamp((Number(x) - Number(w) / 2) / reachX), clamp((Number(y) - Number(h) / 2) / reachY)]
 }

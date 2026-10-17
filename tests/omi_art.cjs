@@ -139,6 +139,7 @@ test('the eyes follow a pointer over the item, full at its edge, centred at its 
   assert.deepEqual(plain(art.lookFromPointer(49.5, 33, 66, 66)), [0.5, 0]);
   assert.deepEqual(plain(art.lookFromPointer(NaN, 33, 66, 66)).length, 2);
   assert.doesNotThrow(() => art.lookFromPointer(1, 1, 0, 0));
+  assert.deepEqual(plain(art.lookFromPointer(50, 50, 100, 50)), [0, 1], 'each axis reaches its own edge');
 });
 test('no pack data is bundled', () => {
   const src = fs.readFileSync(path.join(root, 'OmiArt.js'), 'utf8');

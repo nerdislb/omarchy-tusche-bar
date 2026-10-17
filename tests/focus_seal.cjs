@@ -205,7 +205,7 @@ test('the shared Omi is wired to the face and its own option, and runs only for 
   assert(share.includes('Proto.socketPath(Quickshell.env("OMI_SOCKET"), Quickshell.env("XDG_RUNTIME_DIR"))'), 'only the user\'s own runtime directory');
   assert(!/execDetached|Process\b/.test(share), 'the service starts no processes');
   const hook = read('setup/omi-shell.bash');
-  assert(hook.includes('trap __omi_exit EXIT') && hook.includes('trap __omi_before DEBUG'), 'the hook ends cleanly with its shell');
+  assert(hook.includes('__omi_trap EXIT __omi_exit') && hook.includes('__omi_trap DEBUG __omi_before'), 'the hook ends cleanly with its shell and keeps the traps it finds');
   assert(!/bashrc/.test(fetch), 'nothing from upstream is sourced into a shell: our own hook is used');
   assert(read('Engine.qml').includes('omi: sealUi.omiState()'));
 });

@@ -22,6 +22,9 @@
 __omi_hooked=1
 
 : "${OMI_AFTER:=2}" "${OMI_BUSY:=thinking}"
+# whole seconds: the comparison below is bash integer arithmetic
+[[ $OMI_AFTER =~ ^[0-9]+$ ]] || OMI_AFTER=2
+[[ $OMI_BUSY =~ ^[A-Za-z0-9-]+$ ]] || OMI_BUSY=thinking
 
 # Where the service listens: $OMI_SOCKET, else $XDG_RUNTIME_DIR/omi.sock.
 __omi_socket() {
@@ -29,15 +32,18 @@ __omi_socket() {
   elif [[ -n ${XDG_RUNTIME_DIR-} ]]; then echo "$XDG_RUNTIME_DIR/omi.sock"
   fi
 }
-# One message, in the background so the prompt never waits for it.
+# One message, in the background so the prompt never waits for it (with a second argument, now: the shell
+# is ending and a background sender might not outlive it).
 __omi_send() {
   local sock
   sock=$(__omi_socket)
   [[ -n $sock && -S $sock ]] || return 0
   if command -v socat >/dev/null; then
-    (printf '%s\n' "$1" | socat -t 1 - "UNIX-CONNECT:$sock" >/dev/null 2>&1 &)
+    if [[ -n ${2-} ]]; then printf '%s\n' "$1" | socat -t 1 - "UNIX-CONNECT:$sock" >/dev/null 2>&1
+    else (printf '%s\n' "$1" | socat -t 1 - "UNIX-CONNECT:$sock" >/dev/null 2>&1 &); fi
   elif command -v nc >/dev/null; then
-    (printf '%s\n' "$1" | nc -U -w 1 "$sock" >/dev/null 2>&1 &)
+    if [[ -n ${2-} ]]; then printf '%s\n' "$1" | nc -U -w 1 "$sock" >/dev/null 2>&1
+    else (printf '%s\n' "$1" | nc -U -w 1 "$sock" >/dev/null 2>&1 &); fi
   fi
 }
 # omi <mode> [seconds]: set the shared Omi, for that long and then idle
@@ -85,12 +91,32 @@ __omi_prompt() {
 # must not stay busy for a command that will never finish.
 __omi_exit() {
   kill "$__omi_timer" 2>/dev/null
-  if ((__omi_running)) && ((SECONDS - __omi_start >= OMI_AFTER)); then omi idle; fi
+  if ((__omi_running)) && ((SECONDS - __omi_start >= OMI_AFTER)); then
+    __omi_send '{"type":"set","mode":"idle"}' now
+  fi
 }
 
-__omi_pc=${PROMPT_COMMAND-}
-while [[ $__omi_pc == *[\;\ ] ]]; do __omi_pc=${__omi_pc%?}; done
-PROMPT_COMMAND="__omi_status${__omi_pc:+;$__omi_pc};__omi_prompt"
-unset __omi_pc
-trap __omi_before DEBUG
-trap __omi_exit EXIT
+# Put the hook around what is already there. PROMPT_COMMAND is an array in newer bash (and in some prompt
+# frameworks): then ours go first and last in it, whatever it holds; a plain string gets the same.
+if [[ $(declare -p PROMPT_COMMAND 2>/dev/null) == "declare -a"* ]]; then
+  PROMPT_COMMAND=(__omi_status "${PROMPT_COMMAND[@]}" __omi_prompt)
+else
+  __omi_pc=${PROMPT_COMMAND-}
+  while [[ $__omi_pc == *[\;\ ] ]]; do __omi_pc=${__omi_pc%?}; done
+  PROMPT_COMMAND="__omi_status${__omi_pc:+;$__omi_pc};__omi_prompt"
+  unset __omi_pc
+fi
+
+# Traps: keep any the user (or direnv, bash-preexec, ...) already has and run ours first. `trap -p` prints
+# the command quoted by bash itself, which is read back as words.
+__omi_trap() {
+  local signal=$1 ours=$2 printed old=""
+  printed=$(trap -p "$signal")
+  if [[ -n $printed ]]; then
+    eval "printed=($printed)"
+    old=${printed[2]}
+  fi
+  trap -- "$ours${old:+; $old}" "$signal"
+}
+__omi_trap DEBUG __omi_before
+__omi_trap EXIT __omi_exit

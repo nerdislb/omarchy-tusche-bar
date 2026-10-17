@@ -83,6 +83,20 @@ def run():
             bash(env, source + 'omi "x\\"y"\nomi thinking nope\nexit\n')
             assert modes(client, 0.8) == [], 'a bad mode or seconds is refused by the function, nothing is sent'
 
+            # what the user already has keeps working: an array PROMPT_COMMAND, a DEBUG and an EXIT trap, and a
+            # fractional OMI_AFTER (bash arithmetic is integer) falls back to the default instead of failing
+            marks = Path(folder) / 'marks.txt'
+            script = (f"PROMPT_COMMAND=('echo A >> {marks}' 'echo B >> {marks}')\n"
+                      f"trap 'echo EXIT >> {marks}' EXIT\ntrap 'echo DEBUG >> {marks}' DEBUG\n"
+                      "export OMI_AFTER=1.5\n" + source + "sleep 3\nexit\n")
+            bash(env, script)
+            text = marks.read_text().split()
+            assert text.count('EXIT') == 1, text
+            assert text.count('A') >= 2 and text.count('B') >= 2, ('both PROMPT_COMMAND entries still run', text)
+            assert 'DEBUG' in text, ('the earlier DEBUG trap still runs', text)
+            seen = modes(client, 3.5)
+            assert seen == ['thinking', 'success', 'idle'], ('a fractional OMI_AFTER means the default', seen)
+
             # killed (a closed terminal) while a long command runs: Omi is not left busy
             terminal(env, source + 'sleep 8\n', close_after=3.5)
             seen = modes(client, 2.0)
