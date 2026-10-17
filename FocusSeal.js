@@ -123,3 +123,11 @@ function describeCompanion(c, level) {
   if (c.badge) parts.push(c.badge.count === 1 ? "1 unread notification" : c.badge.count + " unread notifications")
   return parts.join(", ")
 }
+
+// The directory of the Omi install in use, from the first line of the `current` file that
+// setup/omi-fetch.sh writes: a plain name made of omi-, letters, digits, dots, dashes; anything
+// else (a path, an empty file, junk) reads as "no Omi" so the file can never point elsewhere.
+function kitDirName(text) {
+  var line = String(text === undefined || text === null ? "" : text).split("\n")[0].trim()
+  return /^omi-[A-Za-z0-9][A-Za-z0-9._-]*$/.test(line) && line.indexOf("..") < 0 ? line : ""
+}

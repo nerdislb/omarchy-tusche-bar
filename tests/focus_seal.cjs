@@ -181,4 +181,18 @@ test('the idle life asks the compositor only while Omi is on screen, respects in
   assert(engine.includes('omi: sealUi.omiState()'));
   assert(!/execDetached|Process/.test(watch + face), 'the idle life starts no processes');
 });
+test('the Omi install in use is a validated directory name from the pointer file, never a path', () => {
+  assert.equal(model.kitDirName('omi-v1.0.0-20261017111138\n'), 'omi-v1.0.0-20261017111138');
+  assert.equal(model.kitDirName('omi-legacy'), 'omi-legacy');
+  for (const bad of ['', '\n', '../../etc', 'omi-../x', '/etc/passwd', 'omi-a/b', 'omi-', 'other-dir', 'omi-x y', null, undefined, 42])
+    assert.equal(model.kitDirName(bad), '', JSON.stringify(bad));
+  assert.equal(model.kitDirName('omi-ok\nsecond line'), 'omi-ok', 'only the first line counts');
+  const kit = read('OmiKit.qml'), seal = read('FocusSeal.qml'), fetch = read('setup/omi-fetch.sh');
+  assert(kit.includes('Model.kitDirName(pointer.text())') && kit.includes('watchChanges: true'));
+  assert(kit.includes('"file://" + dir + "/" + name + "/Omi.qml"'), 'the URL carries the install directory, so a new install is a new URL');
+  assert(seal.includes('packUrl: omiKit.url') && seal.includes('OmiKit { id: omiKit; dir: sealWindow.dataDir }'));
+  assert(!/execDetached|Process\b/.test(kit), 'the pointer is read, nothing is run');
+  assert(fetch.includes('mv -f -- "$base/current.tmp" "$current"'), 'the pointer changes in one atomic step');
+  assert(/sha256sum/.test(fetch) && fetch.includes('refusing to install'));
+});
 console.log(`${passed} focus seal checks passed`);

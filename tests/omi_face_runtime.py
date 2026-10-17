@@ -315,8 +315,12 @@ Item {
 
 
 def default_pack():
-    base = Path(os.environ.get('XDG_DATA_HOME') or Path.home() / '.local/share')
-    return base / 'tusche-bar/omi'
+    """The install setup/omi-fetch.sh made: the directory `current` names (older layouts: `omi`)."""
+    base = Path(os.environ.get('XDG_DATA_HOME') or Path.home() / '.local/share') / 'tusche-bar'
+    pointer = base / 'current'
+    if pointer.is_file():
+        return base / pointer.read_text().splitlines()[0].strip()
+    return base / 'omi'
 
 
 def mode_of(face):

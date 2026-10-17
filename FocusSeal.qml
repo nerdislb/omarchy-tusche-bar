@@ -60,6 +60,7 @@ PanelWindow {
   readonly property bool wantsOmi: !!host && host.options.seal === "omi"
   readonly property bool useOmi: wantsOmi && omiFace.available
   readonly property string dataDir: (Quickshell.env("XDG_DATA_HOME") || (Quickshell.env("HOME") + "/.local/share")) + "/tusche-bar"
+  OmiKit { id: omiKit; dir: sealWindow.dataDir }
   CompanionFeed { id: feed; active: sealWindow.visible && sealWindow.useOmi }
   // His idle life ("lively", "gentle", "off") and whether you are away (IdleWatch.qml).
   readonly property string intensity: !!host ? String(host.options.sealIdle) : "lively"
@@ -95,7 +96,7 @@ PanelWindow {
     // window costs nothing (Omi only animates while on screen).
     active: sealWindow.wantsOmi
     onScreen: sealWindow.visible
-    packUrl: "file://" + sealWindow.dataDir + "/omi/Omi.qml"
+    packUrl: omiKit.url
     intensity: sealWindow.intensity
     userIdle: idleWatch.idle
     hovered: hover.hovered

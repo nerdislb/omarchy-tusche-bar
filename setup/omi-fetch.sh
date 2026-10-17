@@ -7,9 +7,10 @@
 # pinned release into your own data directory, checks its hashes, and the face reads it
 # from there. Nothing here may be published as part of this repo.
 #
-# Each install goes into its own directory, and `omi` is a symlink to the current one that is
-# switched in one atomic step, so a shell that reloads in the middle never sees half of two
-# versions. The previous version stays for a way back.
+# Each install goes into its own directory (omi-<release>-<time>) and the file `current` names the
+# one in use. It is rewritten in one atomic step, and the face loads Omi from the directory it names:
+# Quickshell keeps what it has loaded per URL, so a new version must come with a new URL, or a
+# running shell would mix the old player with the new data. The previous version stays for a way back.
 #
 #   setup/omi-fetch.sh            install (or repair) the pinned release
 #   setup/omi-fetch.sh --remove   delete everything again; the seal falls back to the plain one
@@ -19,7 +20,7 @@ repo="tahayvr/omi"
 tag="v1.0.0"
 commit="007adefdbc254ebc6005acf9575b201a9167feec"
 base="${XDG_DATA_HOME:-$HOME/.local/share}/tusche-bar"
-link="$base/omi"
+current="$base/current"
 # upstream path  ->  name here  ->  sha256
 files=(
   "examples/omarchy/Omi.qml  Omi.qml   c9cd9082c9d3b145aa42f7a9d3fac7869bd113e52dbc06c665d0f6c59d858f5c"
@@ -28,7 +29,7 @@ files=(
 )
 
 if [ "${1:-}" = "--remove" ]; then
-  rm -rf -- "$link" "$base"/omi-* "$base"/omi.tmp
+  rm -rf -- "$base"/omi "$base"/omi-* "$base"/current "$base"/current.tmp
   echo "removed Omi from $base"
   exit 0
 fi
@@ -54,23 +55,24 @@ design is a derivative of the Omarchy logo, owned by the Omacom Foundation, and 
 license to it is granted. Do not copy these files into a repository or a package.
 NOTICE
 
-# A first install over the old, plain directory (before versions got their own): keep it as a version.
-if [ -d "$link" ] && [ ! -L "$link" ]; then
-  mv -- "$link" "$base/omi-legacy"
-  ln -s "omi-legacy" "$link"
+# Older layouts: a plain `omi` directory (the first install) or an `omi` symlink (a short-lived second one).
+if [ -L "$base/omi" ]; then
+  rm -f -- "$base/omi"
+elif [ -d "$base/omi" ]; then
+  mv -- "$base/omi" "$base/omi-legacy"
 fi
 previous=""
-[ -L "$link" ] && previous="$(readlink "$link")"
+[ -f "$current" ] && previous="$(head -n1 "$current")"
 
 mv -- "$tmp" "$dest"
 trap - EXIT
 chmod 755 "$dest"
-ln -sfn "$name_new" "$base/omi.tmp"
-mv -Tf -- "$base/omi.tmp" "$link"
+printf '%s\n' "$name_new" >"$base/current.tmp"
+mv -f -- "$base/current.tmp" "$current"
 
 # Keep the one before as the way back, drop anything older.
 for old in "$base"/omi-*; do
   name="$(basename "$old")"
   [ "$name" = "$name_new" ] || [ "$name" = "$previous" ] || rm -rf -- "$old"
 done
-echo "installed Omi $tag into $dest (omi -> $name_new${previous:+, previous: $previous})"
+echo "installed Omi $tag into $dest (current: $name_new${previous:+, previous: $previous})"

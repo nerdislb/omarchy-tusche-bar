@@ -20,7 +20,7 @@ that loads Omi at runtime (without shipping it) may be published, and under what
 ## What is and is not in here
 
 - **Not in the repository:** Omi's player, kit or pictures. `setup/omi-fetch.sh` downloads one pinned,
-  sha256-checked release (v1.0.0) into the user's own data directory (`~/.local/share/tusche-bar/omi`). The
+  sha256-checked release (v1.0.0) into the user's own data directory (`~/.local/share/tusche-bar/omi-<release>-<time>`, named by `current`). The
   repository's own history was scanned for these files before it was first pushed.
 - **In the repository:** our own code (`FocusSeal.js`, `OmiArt.js`, `IdleDirector.js`, `IdleWatch.qml`,
   `CompanionFeed.qml`, `modules/OmiFace.qml`) and tests. Its speech bubble, battery and fly are our own

@@ -413,7 +413,7 @@ kit and pictures) is a derivative of the Omarchy logo and carries no license, so
 must not be published with this plugin. Install it for yourself:
 
 ```
-setup/omi-fetch.sh            # Omi v1.0.0, sha256-checked, into ~/.local/share/tusche-bar/omi (a symlink to the current version, the one before kept)
+setup/omi-fetch.sh            # Omi v1.0.0, sha256-checked, into ~/.local/share/tusche-bar/omi-<release>-<time>/ ; `current` names it, the one before is kept
 setup/omi-fetch.sh --remove
 ```
 
