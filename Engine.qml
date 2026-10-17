@@ -113,6 +113,8 @@ Item {
   readonly property var watchdogModel: watchdog.model
   readonly property bool watchdogEnabled: watchdog.active
   FocusSeal { host: root }
+  // Both faces of the seal ("on": the seal, "omi": the mascot) give the bar a way back.
+  readonly property bool sealEnabled: options.seal === "on" || options.seal === "omi"
   property string focusResult: ""
   property bool focusReleasePending: false
   readonly property bool focusBusy: focusProcess.running
@@ -120,7 +122,7 @@ Item {
   function focusAction(action) {
     if (["start", "show", "release", "toggle"].indexOf(action) < 0) return "unknown focus action"
     if (action === "toggle") action = edgeBar && edgeBar.barHidden ? "show" : "start"
-    if (action === "start" && options.seal !== "on") return "enable Focus seal first"
+    if (action === "start" && !sealEnabled) return "enable Focus seal first"
     if (focusProcess.running) {
       if (action === "release") focusReleasePending = true
       return "busy"
@@ -136,7 +138,7 @@ Item {
     onExited: if (root.focusReleasePending) { root.focusReleasePending = false; Qt.callLater(function() { root.focusAction("release") }) }
   }
   // Disabling releases only our unchanged hide flag, never a later user hide.
-  readonly property bool releaseFocus: configLoaded && options.seal !== "on"
+  readonly property bool releaseFocus: configLoaded && !sealEnabled
   onReleaseFocusChanged: if (releaseFocus) focusAction("release")
   Variants {
     model: root.themeEdgeVisible ? Quickshell.screens : []

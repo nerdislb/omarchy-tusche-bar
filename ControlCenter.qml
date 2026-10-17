@@ -818,7 +818,7 @@ PanelWindow {
                   width: parent.width; spacing: Style.space(6)
                   CcButton {
                     label: "Start focus mode"
-                    enabled: !win.working && !!win.host && win.live.bar.seal === "on" && !win.host.focusBusy
+                    enabled: !win.working && !!win.host && (win.live.bar.seal === "on" || win.live.bar.seal === "omi") && !win.host.focusBusy
                     onPicked: win.host.focusAction("start")
                   }
                   CcButton {
@@ -829,7 +829,7 @@ PanelWindow {
                 }
                 Caption {
                   width: parent.width; wrapMode: Text.WordWrap
-                  text: "Apply the focus seal with Use or Save first. Start temporarily hides the native bar; its services keep running. Click the seal to bring the bar back (middle-click opens this window). The seal stays calm: a thin line appears when the battery is low, a small square when a workspace needs you. For a key: bind omarchy-shell tusche-bar focus toggle."
+                  text: "Apply the focus seal with Use or Save first. Start temporarily hides the native bar; its services keep running. Click the seal to bring the bar back (middle-click opens this window). The seal stays calm: a thin line appears when the battery is low, a small square when a workspace needs you. The Omi face (install it with setup/omi-fetch.sh) also shows a face for failures, waiting and working agents, and a speech bubble with the unread count. For a key: bind omarchy-shell tusche-bar focus toggle."
                 }
                 Caption {
                   visible: !!win.host && String(win.host.focusResult).indexOf("error:") === 0

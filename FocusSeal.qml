@@ -8,12 +8,16 @@ import qs.Commons as Commons
 import qs.Ui
 import "FocusSeal.js" as Model
 import "bridge" as Bridge
+import "modules" as Modules
 
 // A return path while the real bar is hidden. It reserves no screen space
 // and never steals keyboard focus. Native widgets keep their own services.
 // Calm until it matters: the seal shows a thin battery line when the charge is
 // low and a small square when a workspace wants you (FocusSeal.js). A click
 // brings the bar back, the middle button opens the Control Center.
+// With `seal: omi` the face is Omi (modules/OmiFace.qml, if he is installed): the
+// same facts plus what the island reports (CompanionFeed.qml), said by his face,
+// a speech bubble with a counter and a blinking battery.
 PanelWindow {
   id: sealWindow
   property var host: null
@@ -22,11 +26,11 @@ PanelWindow {
     for (var i = 0; i < Quickshell.screens.length; i++) if (Quickshell.screens[i].name === name) return Quickshell.screens[i]
     return Quickshell.screens.length ? Quickshell.screens[0] : null
   }
-  visible: !!host && host.options.seal === "on" && !!host.edgeBar && host.edgeBar.barHidden && !remap.remapping
+  visible: !!host && (host.options.seal === "on" || host.options.seal === "omi") && !!host.edgeBar && host.edgeBar.barHidden && !remap.remapping
   color: "transparent"; surfaceFormat.opaque: false
   anchors { top: true; right: true }
   margins { top: Style.space(8); right: Style.space(8) }
-  implicitWidth: Style.space(34); implicitHeight: Style.space(34)
+  implicitWidth: Style.space(useOmi ? 66 : 34); implicitHeight: implicitWidth
   exclusionMode: ExclusionMode.Ignore
   WlrLayershell.namespace: "tusche-bar-focus-seal"
   WlrLayershell.layer: WlrLayer.Top
@@ -51,8 +55,46 @@ PanelWindow {
   readonly property var sealState: Model.state(facts)
   readonly property string said: Model.describe(sealState, level)
 
+  // The Omi face, when it is asked for and installed; else the plain seal below.
+  readonly property bool wantsOmi: !!host && host.options.seal === "omi"
+  readonly property bool useOmi: wantsOmi && omiFace.available
+  readonly property string dataDir: (Quickshell.env("XDG_DATA_HOME") || (Quickshell.env("HOME") + "/.local/share")) + "/tusche-bar"
+  CompanionFeed { id: feed; active: sealWindow.visible && sealWindow.useOmi }
+  readonly property var companion: Model.companion({ battery: facts.battery, urgent: urgentCount, island: feed.island })
+  property var lastIsland: null
+  Connections {
+    target: feed
+    function onIslandChanged() {
+      var seen = Model.observe(sealWindow.lastIsland, feed.island)
+      sealWindow.lastIsland = feed.island
+      if (seen.done) omiFace.react()
+      if (seen.pop) omiFace.pop()
+    }
+  }
+
+  Modules.OmiFace {
+    id: omiFace
+    anchors.fill: parent
+    visible: sealWindow.useOmi
+    active: sealWindow.visible && sealWindow.wantsOmi
+    packUrl: "file://" + sealWindow.dataDir + "/omi/Omi.qml"
+    companion: sealWindow.companion
+    ground: Commons.Color.popups.background
+    accent: Commons.Color.accent
+    urgent: Commons.Color.urgent
+    MouseArea {
+      anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+      acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+      onClicked: function(mouse) { sealWindow.act(mouse.button === Qt.MiddleButton ? "middle" : "primary") }
+    }
+    Accessible.role: Accessible.Button
+    Accessible.name: "Focus seal. Show the bar; middle-click opens the Control Center." + (omiFace.said ? " " + omiFace.said + "." : "")
+    Accessible.onPressAction: sealWindow.act("primary")
+  }
+
   FocusSealFace {
     id: seal
+    visible: !sealWindow.useOmi
     anchors.fill: parent
     ground: Commons.Color.popups.background
     ink: Commons.Color.popups.text

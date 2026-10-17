@@ -9,7 +9,11 @@ var ELEMENTS = {
   },
   seal: {
     label: "Focus seal",
-    variants: [{ id: "off", label: "Off" }, { id: "on", label: "A small seal when the bar is hidden" }]
+    variants: [
+      { id: "off", label: "Off" },
+      { id: "on", label: "A small seal when the bar is hidden" },
+      { id: "omi", label: "Omi, the mascot, when the bar is hidden (setup/omi-fetch.sh)" }
+    ]
   },
   workspaces: {
     label: "Workspaces",

@@ -88,7 +88,68 @@ test('the engine accepts toggle and maps it onto the existing guarded start and 
   assert(engine.includes('["start", "show", "release", "toggle"].indexOf(action) < 0'));
   assert(engine.includes('if (action === "toggle") action = edgeBar && edgeBar.barHidden ? "show" : "start"'));
   const toggle = engine.indexOf('if (action === "toggle")');
-  assert(toggle < engine.indexOf('if (action === "start" && options.seal !== "on")'), 'toggle becomes start before the seal guard, so it cannot park the bar without a way back');
+  assert(toggle < engine.indexOf('if (action === "start" && !sealEnabled)'), 'toggle becomes start before the seal guard, so it cannot park the bar without a way back');
+  assert(engine.includes('readonly property bool sealEnabled: options.seal === "on" || options.seal === "omi"'), 'both faces give the bar a way back');
+  assert(engine.includes('readonly property bool releaseFocus: configLoaded && !sealEnabled'), 'turning the seal off releases our hide flag');
   assert(engine.includes('function focus(action: string): string { return root.focusAction(action || "start") }'));
 });
+
+// ---- the companion (seal: omi) ----
+const isl = (o = {}) => ({unread: 0, alerts: 0, dnd: false, blocked: 0, working: 0, doneSerial: 0, ...o});
+const comp = (f = {}) => plain(model.companion({battery: bat(0.9), urgent: 0, island: isl(), ...f}));
+test('the companion is calm without anything to say, and without an island at all', () => {
+  assert.deepEqual(comp(), {face: 'calm', tone: 'accent', level: 0.9, badge: null});
+  assert.equal(comp({island: null}).face, 'calm');
+  for (const odd of [undefined, 'x', 7, [], {unread: 'many'}]) assert.doesNotThrow(() => model.companion({island: odd}));
+  assert.deepEqual(plain(model.companion(null)), {face: 'calm', tone: 'accent', level: 0, badge: null});
+  assert.equal(model.island('x'), null);
+  assert.equal(model.island(null), null);
+});
+test('the face follows the importance: battery, alert, waiting, workspace, drained, working', () => {
+  const everything = {battery: bat(0.1), urgent: 2, island: isl({alerts: 1, blocked: 1, working: 1})};
+  assert.equal(comp(everything).face, 'battery');
+  assert.equal(comp({...everything, battery: bat(0.1, true)}).face, 'alert', 'charging calms the battery');
+  assert.equal(comp({...everything, battery: bat(0.9), island: isl({blocked: 1, working: 1})}).face, 'waiting');
+  assert.equal(comp({...everything, battery: bat(0.9), island: isl({working: 1})}).face, 'attention');
+  assert.equal(comp({battery: bat(0.25), urgent: 0, island: isl({working: 2})}).face, 'drained');
+  assert.equal(comp({island: isl({working: 2})}).face, 'working');
+});
+test('battery and alert are urgent, the rest keeps the accent', () => {
+  assert.equal(comp({battery: bat(0.1)}).tone, 'urgent');
+  assert.equal(comp({island: isl({alerts: 1})}).tone, 'urgent');
+  for (const f of [comp({island: isl({blocked: 1})}), comp({urgent: 1}), comp({battery: bat(0.25)}), comp({island: isl({working: 1})})])
+    assert.equal(f.tone, 'accent');
+});
+test('the badge counts unread notifications, caps at 99, hides in Do Not Disturb, turns urgent with an alert', () => {
+  assert.equal(comp({island: isl({unread: 1})}).badge.count, 1);
+  assert.equal(comp({island: isl({unread: 21})}).badge.count, 21);
+  assert.equal(comp({island: isl({unread: 400})}).badge.count, 99);
+  assert.equal(comp({island: isl({unread: 3, dnd: true})}).badge, null);
+  assert.equal(comp({island: isl({unread: 0})}).badge, null);
+  assert.equal(comp({island: isl({unread: 3})}).badge.tone, 'accent');
+  assert.equal(comp({island: isl({unread: 3, alerts: 1})}).badge.tone, 'urgent');
+  assert.equal(comp({island: isl({unread: 2.9})}).badge.count, 2);
+  assert.equal(comp({island: isl({unread: -4})}).badge, null);
+});
+test('observe: a finished agent and a new notification are events; baselines and resets are not', () => {
+  const n = o => model.island(isl(o));
+  assert.deepEqual(plain(model.observe(null, n())), {done: false, pop: false});
+  assert.deepEqual(plain(model.observe(n(), null)), {done: false, pop: false});
+  assert.deepEqual(plain(model.observe(n({doneSerial: 2}), n({doneSerial: 3}))), {done: true, pop: false});
+  assert.deepEqual(plain(model.observe(n({doneSerial: 3}), n({doneSerial: 0}))), {done: false, pop: false}, 'the island restarted');
+  assert.deepEqual(plain(model.observe(n({unread: 2}), n({unread: 3}))), {done: false, pop: true});
+  assert.deepEqual(plain(model.observe(n({unread: 3}), n({unread: 1}))), {done: false, pop: false}, 'reading is not an event');
+  assert.equal(model.observe(n({unread: 2}), n({unread: 3, dnd: true})).pop, false, 'Do Not Disturb stays quiet');
+});
+test('the companion is described for assistive technology', () => {
+  const d = f => { const c = model.companion(f); return model.describeCompanion(c, c.level); };
+  assert.equal(d({battery: bat(0.9), island: isl()}), '');
+  assert.equal(d({battery: bat(0.1), island: isl({unread: 2})}), 'battery almost empty at 10 percent, 2 unread notifications');
+  assert.equal(d({battery: bat(0.9), island: isl({alerts: 1, unread: 1})}), 'something failed, 1 unread notification');
+  assert.equal(d({battery: bat(0.9), island: isl({blocked: 1})}), 'an agent is waiting for you');
+  assert.equal(d({battery: bat(0.9), urgent: 1, island: isl()}), 'a workspace needs you');
+  assert.equal(d({battery: bat(0.2), island: isl()}), 'battery low at 20 percent');
+  assert.equal(d({battery: bat(0.9), island: isl({working: 1})}), 'an agent is working');
+});
+
 console.log(`${passed} focus seal checks passed`);

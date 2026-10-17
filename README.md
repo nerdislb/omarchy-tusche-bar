@@ -384,6 +384,44 @@ Three optional look settings default **off** and survive preset changes:
   releases only its own unchanged hide flag, preserving a pre-existing or later
   manual hide. Recovery: `omarchy-toggle-bar off`.
 
+#### Omi, the seal's mascot (optional)
+
+`Focus seal → Omi` (option `seal: omi`) replaces the seal with [Omi](https://github.com/tahayvr/meet-omi),
+the Omarchy logo with a face, while the bar is hidden. It needs no screen space, floats
+above windows (not above fullscreen ones) and a click brings the bar back as before. What
+his face says, by importance:
+
+| Face | When |
+|---|---|
+| a battery, blinking, in place of the face | the charge is at or below 15 % and discharging |
+| angry, in the urgent colour | an unread critical notification or failure (a failed unit, a core dump) |
+| listening | an agent waits for you |
+| warning | a workspace wants you |
+| drained | the charge is at or below 30 % and discharging |
+| working | an agent is working |
+| idle | nothing |
+
+A solid **speech bubble** in the corner counts unread notifications (not in Do Not
+Disturb) and pops when a new one arrives; a finished agent gets a short *success*.
+It needs the Tusche Island for everything but the battery and workspaces (the island's
+`state` IPC carries a `companion` object of counts; without it Omi has less to say).
+The seal polls it every two seconds, only while the bar is hidden. Omi's pieces get a
+one-pixel rim in the popup ground colour so the single-colour face stays legible on any window.
+
+**Omi is not shipped here.** The code of meet-omi is MIT, but the Omi *design* (its
+pack and pictures) is a derivative of the Omarchy logo and carries no license, so it
+must not be published with this plugin. Install it for yourself:
+
+```
+setup/omi-fetch.sh            # one pinned commit, sha256-checked, into ~/.local/share/tusche-bar/omi
+setup/omi-fetch.sh --remove
+```
+
+Until then, `seal: omi` shows the plain seal. The pack is a concept and changes upstream;
+`OmiArt.js` falls back along a list of modes when one disappears. Tests:
+`node tests/omi_art.cjs`, and `python3 tests/omi_face_runtime.py [--keep DIR]` renders every
+face offscreen with the real player (skipped without it).
+
 Focus ownership is stored privately in
 `~/.local/state/tusche-bar/focus-owner.json`. A failed native command is rolled
 back when possible, otherwise ownership remains for recovery. Explicit Show
@@ -431,7 +469,7 @@ Omarchy's centre-box layout (`centerBegin`, `center`, `centerEnd`) and the tray 
 
 Presentation checks: `node tests/presentation.cjs`, `python3 tests/focus_mode.py`,
 `node tests/workspace_geometry.cjs`, `node tests/announce.cjs`, `node tests/watchdog.cjs`,
-`node tests/health.cjs`, `node tests/focus_seal.cjs` and `node tests/visual_editor.cjs`.
+`node tests/health.cjs`, `node tests/focus_seal.cjs`, `node tests/omi_art.cjs` and `node tests/visual_editor.cjs`.
 Native isolated renderer checks (Qt, Quickshell, Xvfb or offscreen):
 `python3 tests/workspace_runtime.py --output /tmp/workspace-proof`,
 `python3 tests/announce_runtime.py`, `python3 tests/watchdog_runtime.py`,
