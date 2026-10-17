@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Render the real OmiFace.qml with the real Omi player offscreen and read its pixels.
 
-Omi's player and pack are not part of this repository: they are read from the data
+Omi's player and kit are not part of this repository: they are read from the data
 directory setup/omi-fetch.sh fills (or --pack DIR). Without them the test is skipped.
 Only two things are fixtures: Quickshell.Io's FileView (reads the pack with a
 synchronous XHR) and qs.Commons' Style. OmiFace, FocusSeal.js and OmiArt.js are the

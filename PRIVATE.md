@@ -11,16 +11,16 @@ the open question below is answered.
 
 ## The open question
 
-Omi ([tahayvr/meet-omi](https://github.com/tahayvr/meet-omi)) is a mascot drawn from the Omarchy
-logo. Its *code* is MIT, but its *design* (the pack data, the pictures, anything a player draws from
+Omi ([tahayvr/omi](https://github.com/tahayvr/omi)) is a mascot drawn from the Omarchy
+logo. Its *code* is MIT, but its *design* (the kit data, the pictures, anything a player draws from
 them) is declared a derivative of the Omarchy logo, owned by the Omacom Foundation, with no licence
 granted. We therefore need an answer from the author and/or the Omacom Foundation on whether a plugin
 that loads Omi at runtime (without shipping it) may be published, and under what attribution.
 
 ## What is and is not in here
 
-- **Not in the repository:** Omi's player, pack or pictures. `setup/omi-fetch.sh` downloads one pinned,
-  sha256-checked commit into the user's own data directory (`~/.local/share/tusche-bar/omi`). The
+- **Not in the repository:** Omi's player, kit or pictures. `setup/omi-fetch.sh` downloads one pinned,
+  sha256-checked release (v1.0.0) into the user's own data directory (`~/.local/share/tusche-bar/omi`). The
   repository's own history was scanned for these files before it was first pushed.
 - **In the repository:** our own code (`FocusSeal.js`, `OmiArt.js`, `IdleDirector.js`, `IdleWatch.qml`,
   `CompanionFeed.qml`, `modules/OmiFace.qml`) and tests. Its speech bubble, battery and fly are our own

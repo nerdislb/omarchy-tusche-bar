@@ -4,9 +4,9 @@ import "../FocusSeal.js" as Model
 import "../OmiArt.js" as Art
 import "../IdleDirector.js" as Director
 
-// Omi, the Omarchy mascot (https://github.com/tahayvr/meet-omi), as the face of
+// Omi, the Omarchy mascot (https://github.com/tahayvr/omi), as the face of
 // the focus seal (option seal: omi). The plugin does not ship him: the player and
-// the pack are read from the user's data directory (setup/omi-fetch.sh), and while
+// the kit are read from the user's data directory (setup/omi-fetch.sh), and while
 // they are missing `available` stays false and the seal keeps its plain face.
 //
 // What he says comes from FocusSeal.js `companion`: one face by importance, in the
@@ -18,7 +18,7 @@ import "../IdleDirector.js" as Director
 // readable on any window.
 //
 // While nothing else is going on he has an idle life, like a game character nobody is
-// steering (IdleDirector.js decides, this plays): glances, fidgets from the pack, a fly
+// steering (IdleDirector.js decides, this plays): glances, fidgets from the kit, a fly
 // to chase, a yawn, sleep, and a start when you come back. Hovering him for a moment
 // swaps the bubble for the time.
 //
@@ -101,7 +101,7 @@ Item {
   // One device pixel of the ground colour round every piece.
   readonly property real rim: omi ? 1 / omi.dpr : 1
 
-  // A pack rectangle (grid units) in this item's pixels, snapped as Omi snaps his own.
+  // A kit rectangle (grid units) in this item's pixels, snapped as Omi snaps his own.
   function place(r, grow) {
     if (!omi) return { x: 0, y: 0, w: 0, h: 0 }     // a binding can run once more while Omi unloads
     var u = omi.unit, x0 = omi.snap(r.x * u + omi.ox), y0 = omi.snap(r.y * u + omi.oy)

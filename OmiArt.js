@@ -3,16 +3,16 @@
 // What the Omi skin draws besides Omi himself: which of his modes stands for
 // a face (FocusSeal.js `companion`), a speech-bubble badge with a counter, and
 // a battery that takes the place of the face. All of it is filled rectangles
-// on the logo's own grid (one cell = 20 units, the logo is 300 x 300, the pack's
+// on the logo's own grid (one cell = 20 units, the logo is 300 x 300, the kit's
 // view square is [-70, -70, 440, 440]), so it stays crisp and morphs with the rest.
-// No pack data lives here; Omi's design is not ours to ship (see the README).
+// No kit data lives here; Omi's design is not ours to ship (see the README).
 
 var CELL = 20
 var VIEW = { x: -70, y: -70, w: 440, h: 440 }
 // The outermost cell of the view that is on the logo's grid (the view itself is half a cell off it).
 var EDGE = { right: 360, top: -60 }
 
-// First mode of a face the pack has. A pack that dropped a mode falls back along
+// First mode of a face the kit has. A kit that dropped a mode falls back along
 // the list, ending at `idle` and, last of all, the bare logo.
 var MODES = {
   calm: ["idle"],
@@ -34,7 +34,7 @@ function modeFor(face, available) {
   return have.idle ? "idle" : "logo"
 }
 
-// The mode a skin shows for a face while the pack is not available yet.
+// The mode a skin shows for a face while the kit is not available yet.
 function fallbackMode(face) { return (MODES[face] || MODES.calm)[0] }
 
 // A 3 x 5 pixel digit, one string per row.

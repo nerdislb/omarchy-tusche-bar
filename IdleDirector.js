@@ -21,7 +21,7 @@ var PROFILES = {
   lively: { idleSec: 20, glanceGap: [5, 11], fidgetFrom: 40, fidgetGap: [18, 45], yawnAt: 150, sleepAt: 300 }
 }
 
-// What a fidget is: a mode of the pack played as a reaction (`seconds` after its
+// What a fidget is: a mode of the kit played as a reaction (`seconds` after its
 // morph lands), or a prop of ours (the fly). `weight` is how often it comes up.
 var FIDGETS = [
   { id: "wink", kind: "react", mode: "wink", seconds: 1.2, weight: 2, takes: 3 },
@@ -70,7 +70,7 @@ function pick(options, rnd) {
 
 // input: { now (ms), idle (you have been away), calm (nothing else to say), working (an agent
 //          is working: he still glances and fidgets, but neither yawns nor sleeps, as that would
-//          look like nothing is going on), reduced (reduced motion), hour (0-23), modes (ids the pack has), rnd }
+//          look like nothing is going on), reduced (reduced motion), hour (0-23), modes (ids the kit has), rnd }
 // Returns { model, actions }: actions are
 //   { kind: "look", x, y } · { kind: "react", mode, seconds } · { kind: "fly" }
 //   { kind: "yawn" } · { kind: "sleep" } · { kind: "wake", startle } · { kind: "cancel" }

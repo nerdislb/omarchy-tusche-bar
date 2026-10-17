@@ -386,7 +386,7 @@ Three optional look settings default **off** and survive preset changes:
 
 #### Omi, the seal's mascot (optional)
 
-`Focus seal → Omi` (option `seal: omi`) replaces the seal with [Omi](https://github.com/tahayvr/meet-omi),
+`Focus seal → Omi` (option `seal: omi`) replaces the seal with [Omi](https://github.com/tahayvr/omi),
 the Omarchy logo with a face, while the bar is hidden. It needs no screen space, floats
 above windows (not above fullscreen ones) and a click brings the bar back as before. What
 his face says, by importance:
@@ -408,16 +408,16 @@ It needs the Tusche Island for everything but the battery and workspaces (the is
 The seal polls it every two seconds, only while the bar is hidden. Omi's pieces get a
 one-pixel rim in the popup ground colour so the single-colour face stays legible on any window.
 
-**Omi is not shipped here.** The code of meet-omi is MIT, but the Omi *design* (its
-pack and pictures) is a derivative of the Omarchy logo and carries no license, so it
+**Omi is not shipped here.** The code of Omi is MIT, but the Omi *design* (its
+kit and pictures) is a derivative of the Omarchy logo and carries no license, so it
 must not be published with this plugin. Install it for yourself:
 
 ```
-setup/omi-fetch.sh            # one pinned commit, sha256-checked, into ~/.local/share/tusche-bar/omi
+setup/omi-fetch.sh            # Omi v1.0.0, sha256-checked, into ~/.local/share/tusche-bar/omi (a symlink to the current version, the one before kept)
 setup/omi-fetch.sh --remove
 ```
 
-Until then, `seal: omi` shows the plain seal. The pack is a concept and changes upstream;
+Until then, `seal: omi` shows the plain seal. Omi reached 1.0 on 2026-10-17 (the kit was called *pack* before; the data is the same 30 modes, only its `format` is now `omi-kit`), and the installer is pinned to that release;
 `OmiArt.js` falls back along a list of modes when one disappears. Tests:
 `node tests/omi_art.cjs`, and `python3 tests/omi_face_runtime.py [--keep DIR]` renders every
 face offscreen with the real player (skipped without it).
