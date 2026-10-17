@@ -120,6 +120,27 @@ Item {
    verify(Math.max.apply(null, scales) > 1.1, "the bubble pops: " + scales)
    wait(500)
    compare(b.face.badgeScale, 1)
+   // the first notification: the event can come before the bubble exists
+   b.face.companion = { face: "calm", tone: "accent", level: 0.9, badge: null }
+   wait(100)
+   b.face.pop()
+   b.face.companion = { face: "calm", tone: "accent", level: 0.9, badge: { count: 1, tone: "accent" } }
+   scales = []
+   for (var k = 0; k < 8; k++) { scales.push(b.face.badgeScale); wait(40) }
+   verify(Math.max.apply(null, scales) > 1.1, "the first bubble pops too: " + scales)
+   b.destroy()
+  }
+  function test_04_unloading_and_loading_again_is_quiet() {
+   Style.reduceMotion = true
+   var b = createTemporaryObject(make, root, { x: 10, y: 10 })
+   tryVerify(function() { return b.face.available }, 3000)
+   b.face.companion = { face: "alert", tone: "urgent", level: 0.9, badge: { count: 5, tone: "urgent" } }
+   wait(300)
+   b.face.active = false
+   wait(300)
+   compare(b.face.available, false)
+   b.face.active = true
+   tryVerify(function() { return b.face.available }, 3000)
    b.destroy()
   }
   function test_03_without_the_pack_nothing_is_available() {

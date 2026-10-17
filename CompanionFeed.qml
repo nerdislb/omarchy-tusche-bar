@@ -28,6 +28,7 @@ Item {
   }
   function poll() { if (!reader.running) reader.running = true }
   function take(text) {
+    if (!active) return               // a read that was in flight when the bar came back
     var next = null
     try { next = Model.island(JSON.parse(text).companion) } catch (e) {}
     if (next) { island = next; misses = 0 }

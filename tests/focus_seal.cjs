@@ -105,6 +105,11 @@ test('the companion is calm without anything to say, and without an island at al
   assert.equal(model.island('x'), null);
   assert.equal(model.island(null), null);
 });
+test('island() is idempotent: the normalized reading can pass through it again', () => {
+  const once = model.island(isl({unread: 3, alerts: 1, dnd: true, blocked: 2, working: 4, doneSerial: 7}));
+  assert.deepEqual(plain(model.island(once)), plain(once));
+  assert.equal(once.done, 7);
+});
 test('the face follows the importance: battery, alert, waiting, workspace, drained, working', () => {
   const everything = {battery: bat(0.1), urgent: 2, island: isl({alerts: 1, blocked: 1, working: 1})};
   assert.equal(comp(everything).face, 'battery');
@@ -152,4 +157,10 @@ test('the companion is described for assistive technology', () => {
   assert.equal(d({battery: bat(0.9), island: isl({working: 1})}), 'an agent is working');
 });
 
+test('the feed ignores a read that finishes after it was switched off', () => {
+  const feed = read('CompanionFeed.qml');
+  assert(/function take\(text\) \{\n\s+if \(!active\) return/.test(feed));
+  assert(/onActiveChanged:[\s\S]*?island = null/.test(feed), 'going quiet forgets the reading');
+  assert(!/sendMessage|write\(|execDetached/.test(feed), 'read only');
+});
 console.log(`${passed} focus seal checks passed`);

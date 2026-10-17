@@ -68,7 +68,8 @@ function count(v) {
 function island(raw) {
   if (!raw || typeof raw !== "object") return null
   return { unread: count(raw.unread), alerts: count(raw.alerts), dnd: raw.dnd === true,
-           blocked: count(raw.blocked), working: count(raw.working), done: count(raw.doneSerial) }
+           blocked: count(raw.blocked), working: count(raw.working),
+           done: count(raw.doneSerial !== undefined ? raw.doneSerial : raw.done) }   // idempotent: companion() reads it again
 }
 
 // facts: { battery, urgent, island: the raw companion object or null }

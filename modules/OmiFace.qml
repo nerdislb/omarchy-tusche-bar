@@ -40,7 +40,8 @@ Item {
   // A finished agent: a short reaction, then back to what he was doing.
   function react() { if (omi) omi.react("success") }
   // A new notification: the bubble pops.
-  function pop() { if (!Style.reduceMotion && badgeLayer.visible) popAnimation.restart() }
+  // (Not tied to the bubble being there yet: the count and the event arrive together.)
+  function pop() { if (!Style.reduceMotion) popAnimation.restart() }
   readonly property real badgeScale: badgeLayer.scale
 
   Loader {
@@ -63,6 +64,7 @@ Item {
 
   // A pack rectangle (grid units) in this item's pixels, snapped as Omi snaps his own.
   function place(r, grow) {
+    if (!omi) return { x: 0, y: 0, w: 0, h: 0 }     // a binding can run once more while Omi unloads
     var u = omi.unit, x0 = omi.snap(r.x * u + omi.ox), y0 = omi.snap(r.y * u + omi.oy)
     var x1 = omi.snap((r.x + r.w) * u + omi.ox), y1 = omi.snap((r.y + r.h) * u + omi.oy)
     return { x: x0 - grow, y: y0 - grow, w: Math.max(0, x1 - x0) + 2 * grow, h: Math.max(0, y1 - y0) + 2 * grow }
@@ -78,7 +80,7 @@ Item {
     model: face.available ? face.omi.rects.length : 0
     delegate: Rectangle {
       required property int index
-      readonly property var r: face.omi.rects[index] || { x: 0, y: 0, w: 0, h: 0, o: 0 }
+      readonly property var r: (face.omi && face.omi.rects && face.omi.rects[index]) || { x: 0, y: 0, w: 0, h: 0, o: 0 }
       readonly property var p: face.place(r, face.rim)
       x: p.x; y: p.y; width: p.w; height: p.h
       color: face.ground

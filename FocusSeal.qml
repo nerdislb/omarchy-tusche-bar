@@ -76,7 +76,9 @@ PanelWindow {
     id: omiFace
     anchors.fill: parent
     visible: sealWindow.useOmi
-    active: sealWindow.visible && sealWindow.wantsOmi
+    // Loaded while the option is on, so the window opens at Omi's size at once; a hidden
+    // window costs nothing (Omi only animates while on screen).
+    active: sealWindow.wantsOmi
     packUrl: "file://" + sealWindow.dataDir + "/omi/Omi.qml"
     companion: sealWindow.companion
     ground: Commons.Color.popups.background
