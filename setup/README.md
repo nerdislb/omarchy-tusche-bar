@@ -2,12 +2,15 @@
 
 Brings the Tusche look (the author's setup) to an Omarchy machine:
 
-- the themes **Tusche, Papier, Tusche Lavur, Papier Lavur, Chrom, Platin, Frost, Smoke** (`themes/`);
+- the themes **Tusche, Papier, Tusche Lavur, Papier Lavur, Chrom, Platin, Frost, Smoke, Rooibos, Kandis** (`themes/`);
 - the **Tusche Bar** and the **Tusche Island** with all their motion (logo
   arrival, seal tab, rolling cards, wet bloom, dried rim, system chip …);
 - the **card picker** for themes and backgrounds (Style menu);
 - the saved bar combinations (`paper` is loaded) and the island's settings
   (`look.json`).
+
+**Only want the themes?** Follow the [standalone theme links and copy commands](../README.md#only-the-themes-no-bar-or-island).
+Do not run this setup script: it installs the bar and Island as well.
 
 ## Needs
 
@@ -37,7 +40,7 @@ tusche-look/omarchy-tusche-bar/setup/install.sh
 
 | Option | Effect |
 |---|---|
-| `--theme papier\|tusche\|papier-lavur\|tusche-lavur\|chrom\|platin\|frost\|smoke` | Theme to switch to (default `papier`). |
+| `--theme papier\|tusche\|papier-lavur\|tusche-lavur\|chrom\|platin\|frost\|smoke\|rooibos\|kandis` | Theme to switch to (default `papier`). |
 | `--combination NAME` | Saved bar combination to load (default `paper`; after a carry-over from the Amiga Bar only when given, so the bar keeps its arrangement). |
 | `--no-card-picker` | Leave the card picker out. |
 | `--animated` | Also install the moving backgrounds (quiet 60 s loops, downloaded from the GitHub release and checksummed; `setup/motion-backgrounds.sh` does the same on its own). |

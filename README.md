@@ -9,6 +9,8 @@ Presets, modules and motion for the **native** Omarchy bar, made for Tusche & Pa
 
 Everything is switchable in its own Control Center. The bar stays Omarchy's own: every widget keeps its own service. It works with any Omarchy theme; the material comes with themes that ship a `bar-material.json` (the ten themes in `themes/`).
 
+**Just want the colours and wallpapers?** [Install only the themes](#only-the-themes-no-bar-or-island) — no Tusche Bar, Island or Card Picker required.
+
 ### Frost & Smoke
 
 Light **Frost** and dark **Smoke** add Bevel Lens glass to menus, native
@@ -80,6 +82,60 @@ The script:
 - restarts the shell and switches to Papier.
 
 Options: `--theme tusche|papier-lavur|tusche-lavur|chrom|platin|frost|smoke|rooibos|kandis`, `--no-card-picker` and `--boot-logo` (the seal on the boot screen, asks for sudo). Details are in [setup/README.md](setup/README.md). Undo with `setup/revert.sh <backup folder>`, which the script names at the end.
+
+### Only the themes (no bar or Island)
+
+All ten themes work on their own on the recent Omarchy version described
+above. These links open each theme's source folder; you can also
+[download the repository ZIP](https://github.com/nerdislb/omarchy-tusche-bar/archive/refs/heads/master.zip).
+
+| Theme | Appearance | Folder name |
+|---|---|---|
+| [Tusche](themes/tusche) | Dark, monochrome ink | `tusche` |
+| [Papier](themes/papier) | Light, paper | `papier` |
+| [Tusche Lavur](themes/tusche-lavur) | Dark, ink wash | `tusche-lavur` |
+| [Papier Lavur](themes/papier-lavur) | Light, ink wash | `papier-lavur` |
+| [Chrom](themes/chrom) | Dark, chrome | `chrom` |
+| [Platin](themes/platin) | Light, platinum | `platin` |
+| [Frost](themes/frost) | Light, cool glass palette | `frost` |
+| [Smoke](themes/smoke) | Dark, cool glass palette | `smoke` |
+| [Rooibos](themes/rooibos) | Dark, warm tea palette | `rooibos` |
+| [Kandis](themes/kandis) | Light, warm tea palette | `kandis` |
+
+**Install one theme:** clone the repository once (skip the first command if
+you already have it), then choose a folder name from the table:
+
+```sh
+git clone https://github.com/nerdislb/omarchy-tusche-bar.git ~/src/omarchy-tusche-bar
+theme=tusche
+mkdir -p ~/.config/omarchy/themes/"$theme"
+rsync -a --ignore-existing ~/src/omarchy-tusche-bar/themes/"$theme"/ ~/.config/omarchy/themes/"$theme"/
+omarchy theme set "$theme"
+```
+
+**Or copy all ten themes** from that clone, then select one in Omarchy's
+theme picker or with `omarchy theme set papier`:
+
+```sh
+mkdir -p ~/.config/omarchy/themes
+rsync -a --ignore-existing ~/src/omarchy-tusche-bar/themes/ ~/.config/omarchy/themes/
+```
+
+The copy commands keep existing files and do not delete anything. They do
+not update files already installed; back up any customised theme before
+replacing its files for an update. Neither command installs or enables a
+plugin, changes your bar layout or keybindings, or runs the whole-look
+setup. Applying a theme changes Omarchy's normal colours, backgrounds and
+theme settings. The rolling cards, ink bloom, chrome rims and Bevel Lens
+glass effects shown above require the optional Tusche Bar/Island; the theme
+files alone provide the palettes, still wallpapers and native theme styling.
+
+**Why not `omarchy theme install <link>`?** Omarchy's installer clones a Git
+repository and expects a theme at its root. These ten themes live in
+subfolders of this bar repository, so neither the bar repository URL nor a
+GitHub `tree/master/themes/…` link works as a standalone theme-install URL.
+Use the copy commands above; do not run `setup/install.sh` for a themes-only
+installation.
 
 ### Only the bar
 
