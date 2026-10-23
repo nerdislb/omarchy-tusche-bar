@@ -373,6 +373,8 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
   assert.deepEqual(plain(live.island), {notifications: 'true', noteStyle: 'window'});
   assert.deepEqual(plain(cc.islandValues(cc.islandEntry({plugins: [{id: 'nerdibeard.tusche-island', noteStyle: 'bubble'}]}))),
     {notifications: 'false', noteStyle: 'bubble'});
+  assert.equal(cc.islandValues({noteStyle: 'float'}).noteStyle, 'float');
+  assert.equal(cc.islandValues({noteStyle: 'workbench'}).noteStyle, 'window');
   assert.equal(cc.islandEntry({bar: {layout: {center: ['nerdibeard.tusche-island']}}}), null);
   assert.equal(cc.liveState({}, {}, '').island, null);
   assert.equal(cc.liveState({}, {}, 'missing').cards, null);

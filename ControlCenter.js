@@ -33,7 +33,7 @@ var ISLAND_SETTINGS = [
   { key: "notifications", label: "Notifications", fallback: "false",
     values: [{ id: "true", label: "Island, in the bar" }, { id: "false", label: "Omarchy popups" }] },
   { key: "noteStyle", label: "Note style (themes without material)", fallback: "window",
-    values: [{ id: "window", label: "Window" }, { id: "bubble", label: "Bubble" }] }
+    values: [{ id: "window", label: "Window" }, { id: "bubble", label: "Bubble" }, { id: "float", label: "Float" }] }
 ]
 
 var CARDS_SETTING = { key: "override", label: "Theme & wallpaper menus",
@@ -99,7 +99,7 @@ function islandEntry(config) {
 function islandValues(entry) {
   if (!entry) return null
   return { notifications: entry.notifications === true ? "true" : "false",
-           noteStyle: entry.noteStyle === "bubble" ? "bubble" : "window" }
+           noteStyle: entry.noteStyle === "bubble" || entry.noteStyle === "float" ? entry.noteStyle : "window" }
 }
 function listed(config, id) {
   var plugins = config && Array.isArray(config.plugins) ? config.plugins : []
