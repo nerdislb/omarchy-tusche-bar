@@ -382,7 +382,7 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
   // Registry follows Presets.ELEMENTS (new rows appear automatically).
   assert.deepEqual(plain(cc.barIds()), Object.keys(ctx.ELEMENTS).map(k => 'bar.' + k));
   assert.deepEqual(plain(cc.settings().map(s => s.id)), Object.keys(ctx.ELEMENTS).map(k => 'bar.' + k)
-    .concat(['island.notifications', 'island.noteStyle', 'cards.override']));
+    .concat(['island.notifications', 'island.noteStyle', 'cards.override', 'extras.fullWidth', 'extras.sheet']));
   assert.deepEqual(plain(cc.QUICK), ['bar.edge', 'bar.logo', 'bar.keys', 'island.notifications', 'island.noteStyle']);
   for (const id of cc.QUICK) assert(cc.setting(id), id);
   // Staging is an overlay; staging the live value removes the edit.

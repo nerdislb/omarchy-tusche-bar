@@ -69,7 +69,10 @@ QtObject {
         (ui / 'qmldir').write_text('module qs.Ui\nBorderSurface 1.0 BorderSurface.qml\nBorderOverlay 1.0 BorderOverlay.qml\n')
         io = tmp / 'FixtureIo'
         io.mkdir()
+        # The Full width helper keeps its state across Process objects, like the file would.
+        (io / 'State.js').write_text('.pragma library\nvar fullWidth = "edge"\n')
         (io / 'Process.qml').write_text("""import QtQuick
+import "State.js" as S
 QtObject {
  id: root
  property var command: []
@@ -80,6 +83,7 @@ QtObject {
  function answer() {
   var c = root.command, joined = c.join(" ")
   if (c[0] === "python3" && joined.indexOf("focus-mode.py") >= 0) return '{"hidden": false, "owned": false, "changed": false}'
+  if (c[0] === "python3" && joined.indexOf("full-width.py") >= 0) { if (c[2] === "set") S.fullWidth = c[3]; return S.fullWidth }
   if (c[0] === "python3") return "disabled"
   if (c[0] === "cat") return '{"generation": "b15c4a797a1b1527", "files": 71}'
   return "0"
@@ -280,7 +284,36 @@ ShellRoot {
    var shown=findItem(cc.contentItem,function(item){return item.settingId==="health.watchdog"})
    check(!!shown&&shown.height>0,"the safety-net row is part of the Health page")
    cc.cancel()
-   schedule(300,function(){check(!cc.open&&!cc.working,"Health closes cleanly");fakeHost.pluginDir="";testPreviewKeyboard()})
+   schedule(300,function(){check(!cc.open&&!cc.working,"Health closes cleanly");testExtras()})
+  })
+ }
+ function testExtras() {
+  fakeHost.pluginDir="/h/.config/omarchy/plugins/nerdibeard.tusche-bar/generations/b15c4a797a1b1527"
+  cc.requestedArea="extras";cc.open=true
+  schedule(400,function(){
+   check(cc.area==="extras","Extras area opens by name")
+   check(!!cc.live.extras&&cc.live.extras.fullWidth==="edge"&&cc.live.extras.sheet==="off","Extras read the toggle and find the installed sheet (off: not in shell.json)")
+   check(cc.snapshot.extras.fullWidth==="edge","a toggle read after opening joins the snapshot")
+   fullyInViewport(findItem(cc.contentItem,function(item){return item.settingId==="extras.fullWidth"}),"Full width row")
+   fullyInViewport(findItem(cc.contentItem,function(item){return item.settingId==="extras.sheet"}),"Shortcut sheet row")
+   check(!!button("Open the sheet")&&!button("Open the sheet").enabled,"Open the sheet waits while the sheet is off")
+   var hc=cc.healthList.filter(function(c){return c.id==="extras"})[0]
+   check(!!hc&&hc.state==="ok","Health reports the extras")
+   shot("cc-extras",function(){
+    cc.pick("extras.fullWidth","gaps")
+    check(cc.live.extras.fullWidth==="edge"&&cc.pending.extras.fullWidth==="gaps","Full width stages without running the helper")
+    cc.use()
+    schedule(900,function(){
+     check(!cc.working&&cc.usedLive&&cc.live.extras.fullWidth==="gaps"&&cc.applied.extras===true,"Use switches full width through the helper")
+     shot("cc-extras-used",function(){
+      cc.cancel()
+      schedule(900,function(){
+       check(!cc.open&&!cc.working&&cc.fullWidthStatus==="edge","Cancel switches full width back")
+       fakeHost.pluginDir="";testPreviewKeyboard()
+      })
+     })
+    })
+   })
   })
  }
  function testPreviewKeyboard() {

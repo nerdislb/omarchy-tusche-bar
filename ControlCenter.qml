@@ -20,8 +20,9 @@ import "bridge" as Bridge
 //   Cancel (button, ×, Esc once the search is closed, click outside, or
 //          any other close) restores the state from opening if Use applied
 //          something, then closes.
-// Writes go through the engine's apply (bar), the island's IPC (island) and
-// the card picker's menu-override.py (cards) — see ControlCenter.js.
+// Writes go through the engine's apply (bar), the island's IPC (island), the
+// card picker's menu-override.py (cards), bin/full-width.py and the shell's
+// plugin IPC (extras) — see ControlCenter.js.
 PanelWindow {
   id: win
 
@@ -36,7 +37,7 @@ PanelWindow {
   property var snapshot: null              // live state at opening
   property var edits: ({})                 // staged, not applied: { "<domain>.<key>": value }
   property bool usedLive: false            // Use applied something since opening
-  property var applied: ({})               // domains Use touched: bar · island · cards
+  property var applied: ({})               // domains Use touched: bar · island · cards · extras
   property bool committed: false           // closed with Save
   property string message: ""
   property bool messageError: false
@@ -44,7 +45,8 @@ PanelWindow {
   property string flashId: ""
   property int searchSel: 0
 
-  readonly property var live: CC.liveState(host ? host.options : ({}), host ? host.config : ({}), cardsStatus)
+  readonly property var live: CC.liveState(host ? host.options : ({}), host ? host.config : ({}), cardsStatus,
+                                           { fullWidth: fullWidthStatus, sheetInstalled: sheetInstalled })
   readonly property var pending: CC.pendingState(live, edits)
   readonly property var changeList: CC.changes(edits, live)
   readonly property bool islandAvailable: live.island !== null
@@ -69,6 +71,10 @@ PanelWindow {
   readonly property string markerPath: homeDir + "/.local/state/omarchy/tusche-island/notifications-takeover"
   readonly property string usageDir: (Quickshell.env("XDG_STATE_HOME") || homeDir + "/.local/state") + "/omarchy/agents/usage"
   property string cardsStatus: ""          // enabled · disabled · missing · error · "" (not known yet)
+  readonly property string extrasScript: codeDir !== "" ? codeDir + "/bin/full-width.py" : ""
+  readonly property string sheetManifest: homeDir + "/.config/omarchy/plugins/" + CC.SHEET_ID + "/manifest.json"
+  property string fullWidthStatus: ""      // edge · gaps · error · "" (not read yet)
+  property var sheetInstalled: null        // the Shortcut Sheet plugin folder exists · null: not checked yet
   property var islandNotes: null           // island IPC state.notifications · false: no answer · null: unknown
   property double islandNotesAt: 0         // start time of the probe that produced islandNotes
   property double probeStartedAt: 0
@@ -107,6 +113,7 @@ PanelWindow {
     marker: markerExists,
     cards: cardsStatus,
     cardsConfigured: host ? CC.listed(host.config, CC.CARDS_ID) : false,
+    extras: live.extras,
     lastResult: host ? host.lastResult : "",
     savedError: host && !host.savedReady ? host.saveResult : "",
     savedCount: host ? host.savedPresets.length : 0
@@ -147,6 +154,7 @@ PanelWindow {
     if (id === "screens") return Object.keys(live.screens).length + " overrides"
     if (id === "island") return !live.island ? "not found" : live.island.notifications === "true" ? "in the bar" : "Omarchy"
     if (id === "cards") return cardsStatus === "enabled" ? "on" : cardsStatus === "disabled" ? "off" : cardsStatus === "missing" ? "not installed" : ""
+    if (id === "extras") return live.extras && live.extras.fullWidth === "edge" ? "edge to edge" : live.extras && live.extras.fullWidth === "gaps" ? "gaps" : ""
     if (id === "health") return health.label
     return ""
   }
@@ -182,6 +190,17 @@ PanelWindow {
   onCardsStatusChanged: if (open && snapshot && !snapshot.cards && (cardsStatus === "enabled" || cardsStatus === "disabled")) {
     var s = CC.copy(snapshot); s.cards = { override: cardsStatus }; snapshot = s
   }
+  // Extras read after opening fill in what the snapshot did not know yet.
+  function fillExtrasSnapshot() {
+    if (!open || !snapshot || !snapshot.extras || !live.extras || working) return
+    var s = CC.copy(snapshot), changed = false
+    ;["fullWidth", "sheet"].forEach(function(k) {
+      if (s.extras[k] === "unknown" && live.extras[k] !== "unknown") { s.extras[k] = live.extras[k]; changed = true }
+    })
+    if (changed) snapshot = s
+  }
+  onFullWidthStatusChanged: fillExtrasSnapshot()
+  onSheetInstalledChanged: fillExtrasSnapshot()
 
   function showArea(a) {
     if (!CC.isArea(a)) return false
@@ -190,6 +209,7 @@ PanelWindow {
     editor.contentY = 0
     if (a === "health") refreshHealth()
     else if (a === "cards" && !working) refreshCards()
+    else if (a === "extras" && !working) refreshExtras()
     return true
   }
   function stepArea(d) {
@@ -264,6 +284,7 @@ PanelWindow {
     if (s.domain === "screens") return "Screen presentation · " + s.keys.join(", ")
     if (s.domain === "island") { var spec = CC.setting("island." + s.key); return "Tusche Island · " + spec.label + ": " + CC.valueLabel(spec, s.value) }
     if (s.domain === "cards") return "Card picker · " + CC.valueLabel(CC.setting("cards.override"), s.value)
+    if (s.domain === "extras") { var x = CC.setting("extras." + s.key); return "Extras · " + x.label + ": " + CC.valueLabel(x, s.value) }
     return "Tusche Bar · " + s.keys.length + (s.keys.length === 1 ? " option" : " options") + " (the bar rebuilds)"
   }
   function setPhase(p) { phase = p; phaseAt = Date.now() }
@@ -279,6 +300,17 @@ PanelWindow {
       setPhase("set")
       cardsSet.command = ["python3", cardsScript, step.value === "enabled" ? "enable" : "disable"]
       cardsSet.running = true
+    } else if (step.domain === "extras" && step.key === "fullWidth") {
+      if (extrasScript === "") { failStep("Extras: the plugin's code directory is not known"); return }
+      setPhase("set")
+      fullWidthSet.command = ["python3", extrasScript, "set", String(step.value)]
+      fullWidthSet.running = true
+    } else if (step.domain === "extras" && step.key === "sheet") {
+      // The shell's plugin IPC writes shell.json; tick() waits until the
+      // host's config shows the plugin listed or not.
+      setPhase("set")
+      sheetSet.command = [step.value === "on" ? "omarchy-plugin-enable" : "omarchy-plugin-disable", CC.SHEET_ID]
+      sheetSet.running = true
     } else setPhase("wait")
     stepTimer.restart()
   }
@@ -318,6 +350,8 @@ PanelWindow {
         if (settled || now - phaseAt > 6000) stepDone(true)   // a service disabled by hand is never handed back
         else probeIsland()
       }
+    } else if (s.domain === "extras" && s.key === "sheet") {
+      if (phase === "config" && CC.listed(host.config, CC.SHEET_ID) === (s.value === "on")) stepDone(true)
     } else if (s.domain === "screens") {
       if (phase === "wait") {
         if (host.writing) return
@@ -409,6 +443,34 @@ PanelWindow {
       win.stepDone(false)
     }
   }
+  Process {
+    id: fullWidthSet
+    stdout: StdioCollector { id: fullWidthSetOut }
+    stderr: StdioCollector { id: fullWidthSetErr }
+    onExited: function(code) {
+      if (!win.step || win.step.domain !== "extras" || win.step.key !== "fullWidth") return
+      var out = String(fullWidthSetOut.text || "").trim()
+      if (code !== 0 || out !== String(win.step.value)) {
+        var err = String(fullWidthSetErr.text || "").trim().split("\n").pop()
+        win.failStep("Full width windows: " + (err || out || "full-width.py failed"))
+        return
+      }
+      win.fullWidthStatus = out
+      win.stepDone(false)
+    }
+  }
+  Process {
+    id: sheetSet
+    stderr: StdioCollector { id: sheetSetErr }
+    onExited: function(code) {
+      if (!win.step || win.step.domain !== "extras" || win.step.key !== "sheet") return
+      if (code !== 0) {
+        win.failStep("Shortcut sheet: " + (String(sheetSetErr.text || "").trim().split("\n").pop() || "the shell did not take it"))
+        return
+      }
+      win.setPhase("config")
+    }
+  }
 
   // ---------------------------------------------------------------- health probes
   function refreshHealth() {
@@ -421,9 +483,41 @@ PanelWindow {
       if (!generationProbe.running) generationProbe.running = true
     }
     if (live.island) probeIsland()
-    if (!working) refreshCards()
+    if (!working) { refreshCards(); refreshExtras() }
   }
   function refreshCards() { if (!cardsStatusProc.running) cardsStatusProc.running = true }
+  function refreshExtras() {
+    if (extrasScript !== "" && !fullWidthProbe.running) fullWidthProbe.running = true
+    if (!sheetProbe.running) sheetProbe.running = true
+  }
+  // Open the Shortcut Sheet: this window closes first (nothing is staged or
+  // live), so the sheet gets the keyboard.
+  readonly property bool sheetOpenable: !!live.extras && live.extras.sheet === "on" && !working && !usedLive && changeList.length === 0
+  function openSheet() {
+    if (!sheetOpenable) return
+    closeRequested()
+    sheetOpenTimer.restart()
+  }
+  Timer {
+    id: sheetOpenTimer
+    interval: 220                           // after the card's fade-out and keyboard release
+    onTriggered: Quickshell.execDetached(["omarchy-shell", "shell", "summon", CC.SHEET_ID, "{}"])
+  }
+  Process {
+    id: fullWidthProbe
+    command: ["python3", win.extrasScript, "status"]
+    stdout: StdioCollector { id: fullWidthProbeOut }
+    onExited: function(code) {
+      var out = String(fullWidthProbeOut.text || "").trim()
+      if (win.working && win.step && win.step.domain === "extras") return
+      win.fullWidthStatus = code === 0 && (out === "edge" || out === "gaps") ? out : "error"
+    }
+  }
+  Process {
+    id: sheetProbe
+    command: ["test", "-f", win.sheetManifest]
+    onExited: function(code) { win.sheetInstalled = code === 0 }
+  }
   function probeIsland() {
     if (islandProbe.running) return
     probeStartedAt = Date.now()
@@ -1002,6 +1096,52 @@ PanelWindow {
                 }
               }
 
+              // ---- Extras
+              Column {
+                visible: win.area === "extras"
+                width: parent.width
+                spacing: Style.space(2)
+                SectionHead { text: "WINDOWS" }
+                Repeater { model: ["extras.fullWidth"]; delegate: settingRow }
+                Caption {
+                  visible: text !== ""
+                  width: parent.width; wrapMode: Text.WordWrap
+                  color: win.live.extras && win.live.extras.fullWidth === "error" ? Commons.Color.urgent : Util.alpha(Commons.Color.popups.text, 0.6)
+                  text: !win.live.extras || win.live.extras.fullWidth === "unknown" ? "Checking the toggle …"
+                    : win.live.extras.fullWidth === "error" ? "bin/full-width.py status failed." : ""
+                }
+                Caption {
+                  topPadding: Style.space(6)
+                  width: parent.width; wrapMode: Text.WordWrap
+                  text: "Edge to edge: a window made full width (Super+Alt+F, Omarchy's maximize) fills the screen without outer gaps, border or rounding. It is an Omarchy Hyprland toggle (tusche-full-width.lua in ~/.local/state/omarchy/toggles/hypr); switching reloads Hyprland. Real full screen (Super+F) is not affected."
+                }
+                SectionHead { text: "SHORTCUTS" }
+                Repeater { model: ["extras.sheet"]; delegate: settingRow }
+                Flow {
+                  width: parent.width; spacing: Style.space(6)
+                  topPadding: Style.space(4)
+                  CcButton {
+                    label: "Open the sheet"
+                    enabled: win.sheetOpenable
+                    onPicked: win.openSheet()
+                  }
+                }
+                Caption {
+                  width: parent.width; wrapMode: Text.WordWrap
+                  color: win.live.extras && win.live.extras.sheet === "missing" ? Util.alpha(Commons.Color.popups.text, 0.75) : Util.alpha(Commons.Color.popups.text, 0.6)
+                  text: !win.live.extras || win.live.extras.sheet === "unknown" ? "Looking for the Shortcut Sheet …"
+                    : win.live.extras.sheet === "missing" ? "The Shortcut Sheet plugin (nerdibeard.shortcut-sheet) is not installed, so there is nothing to switch here."
+                    : win.live.extras.sheet === "off" ? "The sheet is installed but off: switch it on and Use or Save to open it."
+                    : win.changeList.length || win.usedLive ? "Save or Cancel first: opening the sheet closes this window."
+                    : "A full-screen sheet of every Hyprland shortcut, grouped and searchable; double-bound keys are marked. Opening it closes this window."
+                }
+                Caption {
+                  topPadding: Style.space(6)
+                  width: parent.width; wrapMode: Text.WordWrap
+                  text: "On and off is the plugin's entry in shell.json (omarchy plugin enable / disable). For a key, bind omarchy-shell shell toggle nerdibeard.shortcut-sheet '{}'; Omarchy's own list (Super+K) stays."
+                }
+              }
+
               // ---- Health
               Column {
                 visible: win.area === "health"
@@ -1048,7 +1188,7 @@ PanelWindow {
                 Caption {
                   topPadding: Style.space(6)
                   width: parent.width; wrapMode: Text.WordWrap
-                  text: "Every check reads live state: the engine, shell.json, the island's IPC state, the takeover marker and its watchdog, the loaded and installed code generation, Quickshell's Hyprland data, the bar's hide flag, Omarchy's menu model, usage record times and the card picker's script. Nothing here changes anything."
+                  text: "Every check reads live state: the engine, shell.json, the island's IPC state, the takeover marker and its watchdog, the loaded and installed code generation, Quickshell's Hyprland data, the bar's hide flag, Omarchy's menu model, usage record times, the card picker's script and the extras' toggle file and plugin folder. Nothing here changes anything."
                 }
               }
             }
@@ -1146,7 +1286,7 @@ PanelWindow {
   }
 
   // ---------------------------------------------------------------- delegates and parts
-  // One row per setting id (bar.*, island.*, cards.*).
+  // One row per setting id (bar.*, island.*, cards.*, extras.*).
   Component {
     id: settingRow
     SettingRow {
@@ -1157,7 +1297,7 @@ PanelWindow {
       label: spec ? spec.label : modelData
       hint: spec ? spec.hint : ""
       values: spec ? spec.values : []
-      available: !!(spec && win.live[spec.domain])
+      available: CC.available(win.live, modelData)
       current: String(CC.value(win.pending, modelData))
       liveValue: String(CC.value(win.live, modelData))
       onPicked: function(v) { win.pick(modelData, v) }

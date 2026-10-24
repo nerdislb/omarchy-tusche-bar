@@ -308,7 +308,8 @@ change needs sudo). Test: `python3 tests/boot_logo.py`.
 ## Control Center
 
 `ControlCenter.qml` (pure model in `ControlCenter.js`): Quick · Configure,
-areas on the left (Quick, Tusche Bar, Tusche Island, Card picker, Health),
+areas on the left (Quick, Tusche Bar, Screens, Motion, Tusche Island, Card
+picker, Extras, Health),
 editor on the right, Ctrl+K search over settings and their values, a Health
 chip. Edits are staged and confirmed explicitly:
 
@@ -320,9 +321,33 @@ chip. Edits are staged and confirmed explicitly:
 
 Bar options go out as one write (layout changes rebuild the bar; look options do not), island settings
 through `omarchy-shell tusche-island set …`, the card picker through its
-`menu-override.py`; one step at a time, each confirmed before the next. Health
+`menu-override.py`, the extras through `bin/full-width.py` and the shell's
+plugin IPC; one step at a time, each confirmed before the next. Health
 only reports live checks (base layout, AI usage refresh, notification takeover
-marker, card picker override, last write, saved combinations).
+marker, card picker override, last write, saved combinations, extras).
+
+### Extras
+
+Switches beyond the bar, staged and confirmed like every other setting:
+
+- **Full width windows**: *Edge to edge* makes a window that is full width
+  (Super+Alt+F, Omarchy's maximize) fill the screen without outer gaps, border
+  or rounding; *With gaps and border* is Omarchy's default. It is an Omarchy
+  Hyprland toggle: `bin/full-width.py` copies `assets/hypr/full-width-edge.lua`
+  to `~/.local/state/omarchy/toggles/hypr/tusche-full-width.lua` (or removes
+  it) and reloads Hyprland. If the reload reports new config errors, the
+  previous state comes back and the step fails. Real full screen (Super+F) is
+  not affected. The idea comes from the
+  [hyprperks dotfiles](https://github.com/hyprwm/hyprperks-dotfiles).
+- **Shortcut sheet**: on or off for the Shortcut Sheet overlay plugin
+  (`nerdibeard.shortcut-sheet`), through `omarchy-plugin-enable` /
+  `omarchy-plugin-disable`; the step waits until shell.json shows the change.
+  Without the plugin installed the row stays unavailable. **Open the sheet**
+  closes the Control Center and opens it, once nothing is staged or live.
+
+`omarchy-shell tusche-bar cc extras` opens the area. Tests:
+`node tests/extras.cjs`, `python3 tests/full_width.py` (scratch state folder
+and a fake `hyprctl`), and the Extras part of `tests/control_center_runtime.py`.
 
 ### Visual editing and optional presentation
 

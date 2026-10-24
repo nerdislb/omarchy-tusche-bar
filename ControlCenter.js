@@ -11,13 +11,16 @@
 //   { bar: <normalized Tusche Bar options>,
 //     screens: { <output name>: "compact" | "detailed" },
 //     island: { notifications, noteStyle } | null (not configured),
-//     cards: { override: "enabled" | "disabled" } | null (not known) }
+//     cards: { override: "enabled" | "disabled" } | null (not known),
+//     extras: { fullWidth: "edge" | "gaps" | "unknown" | "error",
+//               sheet: "on" | "off" | "missing" | "unknown" } | null (not read) }
 // Values are strings, as the island IPC takes them. Staged edits are an
 // overlay { "<domain>.<key>": value } on top of the live state, so a setting
 // nobody touched follows the live value.
 
 var ISLAND_ID = "nerdibeard.tusche-island"
 var CARDS_ID = "nerdibeard.card-picker"
+var SHEET_ID = "nerdibeard.shortcut-sheet"
 
 var AREAS = [
   { id: "quick", label: "Quick", note: "Most-used switches" },
@@ -26,7 +29,18 @@ var AREAS = [
   { id: "motion", label: "Motion", note: "Try the current material without changing it" },
   { id: "island", label: "Tusche Island", note: "Notifications in the bar" },
   { id: "cards", label: "Card picker", note: "Theme and wallpaper menus" },
+  { id: "extras", label: "Extras", note: "Window and desktop extras" },
   { id: "health", label: "Health", note: "Checks from live state" }
+]
+
+// Extras: switches beyond the bar. fullWidth is a Hyprland toggle file
+// (bin/full-width.py); sheet is the Shortcut Sheet plugin's enabled state in
+// shell.json, offered only when that plugin is installed.
+var EXTRAS_SETTINGS = [
+  { key: "fullWidth", label: "Full width windows", hint: "Super+Alt+F",
+    values: [{ id: "edge", label: "Edge to edge" }, { id: "gaps", label: "With gaps and border" }] },
+  { key: "sheet", label: "Shortcut sheet", hint: "Plugin nerdibeard.shortcut-sheet",
+    values: [{ id: "on", label: "On" }, { id: "off", label: "Off" }] }
 ]
 
 var ISLAND_SETTINGS = [
@@ -68,6 +82,10 @@ function settings() {
   })
   out.push({ id: "cards.override", domain: "cards", key: "override", area: "cards", label: CARDS_SETTING.label,
              values: CARDS_SETTING.values, hint: "" })
+  EXTRAS_SETTINGS.forEach(function(s) {
+    out.push({ id: "extras." + s.key, domain: "extras", key: s.key, area: "extras", label: s.label,
+               values: s.values, hint: s.hint || "" })
+  })
   return out
 }
 function setting(id) {
@@ -105,13 +123,34 @@ function listed(config, id) {
   var plugins = config && Array.isArray(config.plugins) ? config.plugins : []
   return plugins.some(function(p) { return p === id || (p && p.id === id) })
 }
-function liveState(options, config, cardsStatus) {
+// extrasFacts: { fullWidth: full-width.py status ("edge" | "gaps" | "error"
+// | "" not read yet), sheetInstalled: true | false | null (not checked yet) }.
+// The sheet's on/off is the plugin's entry in shell.json, so it follows
+// outside changes at once.
+function extrasValues(config, facts) {
+  if (!facts) return null
+  var fw = facts.fullWidth === "edge" || facts.fullWidth === "gaps" || facts.fullWidth === "error" ? facts.fullWidth : "unknown"
+  var sheet = facts.sheetInstalled === true ? (listed(config, SHEET_ID) ? "on" : "off")
+    : facts.sheetInstalled === false ? "missing" : "unknown"
+  return { fullWidth: fw, sheet: sheet }
+}
+function liveState(options, config, cardsStatus, extrasFacts) {
   var entries = config && Array.isArray(config.plugins) ? config.plugins : []
   var owner = entries.filter(function(p) { return p && p.id === "nerdibeard.tusche-bar" })[0]
   return { bar: Presets.normalizeOptions(options || {}),
            screens: Presets.normalizeScreens(owner && owner.screenProfiles),
            island: islandValues(islandEntry(config)),
-           cards: cardsStatus === "enabled" || cardsStatus === "disabled" ? { override: cardsStatus } : null }
+           cards: cardsStatus === "enabled" || cardsStatus === "disabled" ? { override: cardsStatus } : null,
+           extras: extrasValues(config, extrasFacts) }
+}
+// Can this setting be changed now? An extra only while its live value is one
+// of its choices (not while unknown, failed or not installed).
+function available(live, id) {
+  var spec = setting(id)
+  if (!spec || !live || !live[spec.domain]) return false
+  if (spec.domain !== "extras") return true
+  var v = live.extras[spec.key]
+  return spec.values.some(function(x) { return x.id === v })
 }
 
 function split(id) { var i = String(id).indexOf("."); return { domain: String(id).slice(0, i), key: String(id).slice(i + 1) } }
@@ -140,6 +179,7 @@ function stage(edits, live, id, v) {
   var out = Object.assign({}, edits)
   if (!live || !live[p.domain]) return out
   if (p.domain === "screens" && (!Presets.screenNameValid(p.key) || ["inherit", "compact", "detailed"].indexOf(v) < 0)) return out
+  if (p.domain === "extras" && (!available(live, id) || !setting(id).values.some(function(x) { return x.id === v }))) return out
   if (value(live, id) === v) delete out[id]
   else out[id] = v
   return out
@@ -183,13 +223,15 @@ function sameOptions(a, b) {
 }
 
 // Steps for Use / Save. Island first (the island writes shell.json from the
-// shell's in-memory copy), then the card picker (its own menu file), the bar
-// last as ONE apply (each bar write rebuilds the bar).
+// shell's in-memory copy), then the card picker (its own menu file), the
+// extras (a Hyprland toggle file; the sheet through the shell's plugin IPC),
+// the bar last as ONE apply (each bar write rebuilds the bar).
 function plan(edits, live) {
   var ch = changes(edits, live)
   var steps = []
   ch.forEach(function(c) { if (c.domain === "island") steps.push({ domain: "island", key: c.key, value: c.to }) })
   ch.forEach(function(c) { if (c.domain === "cards") steps.push({ domain: "cards", key: c.key, value: c.to }) })
+  ch.forEach(function(c) { if (c.domain === "extras") steps.push({ domain: "extras", key: c.key, value: c.to }) })
   var bar = {}
   ch.forEach(function(c) { if (c.domain === "bar") bar[c.key] = c.to })
   if (Object.keys(bar).length) {
@@ -228,6 +270,13 @@ function revertPlan(snapshot, live, applied) {
     })
   if (applied.cards && snapshot.cards && live.cards && live.cards.override !== snapshot.cards.override)
     steps.push({ domain: "cards", key: "override", value: snapshot.cards.override })
+  if (applied.extras && snapshot.extras && live.extras)
+    EXTRAS_SETTINGS.forEach(function(s) {
+      var before = snapshot.extras[s.key]
+      var valid = s.values.some(function(x) { return x.id === before })
+      if (valid && available(live, "extras." + s.key) && live.extras[s.key] !== before)
+        steps.push({ domain: "extras", key: s.key, value: before })
+    })
   if (applied.bar) {
     var step = { domain: "bar", keys: Object.keys(snapshot.bar), changes: copy(snapshot.bar) }
     if (!sameOptions(barOptions(step, live.bar), live.bar)) steps.push(step)
@@ -401,6 +450,14 @@ function healthChecks(f) {
 
   if (f.savedError) add("saved", "Saved combinations", "issue", f.savedError)
   else add("saved", "Saved combinations", "ok", (f.savedCount || 0) + " saved (presets.json)")
+
+  // Shown when the window passes the extras (null: not read yet).
+  var x = f.extras
+  if (x === undefined) return out
+  if (!x || x.fullWidth === "unknown") add("extras", "Extras", "unknown", "Checking …")
+  else if (x.fullWidth === "error") add("extras", "Extras", "issue", "bin/full-width.py status failed")
+  else add("extras", "Extras", "ok", "Full width windows: " + valueLabel(setting("extras.fullWidth"), x.fullWidth).toLowerCase()
+           + " · Shortcut sheet: " + (x.sheet === "missing" ? "not installed" : x.sheet === "unknown" ? "…" : x.sheet))
   return out
 }
 // Facts the health page needs from shell.json: the centre anchor and where it
