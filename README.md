@@ -218,8 +218,8 @@ anchor on the bar edge, with one short overshoot (response 0.34 s, damping
 Switching to the next popup keeps the plate standing: the new card's plate
 springs from the old card's rect to its own (0.34 s, damping 0.80) while the
 old content fades out in 90 ms and the new one fades in from 30 to 120 ms
-(`GlassMath.js` hands the rect over, within one plugin; a switch to the
-island's popup swaps at once). The drop menu's size follows its rows on the
+(`GlassMath.js` hands the rect over, within one plugin; after a switch
+from the island's popup the new card pops as if fresh). The drop menu's size follows its rows on the
 same spring and a level change pushes the rows in 32 px. Reduced Motion:
 Omarchy's fade only.
 

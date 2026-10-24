@@ -364,7 +364,14 @@ Item {
   function beginSwapIn(last) {
     if (!swapIn || swapReady) return
     var r = panel.open ? GlassMath.takeRect(panel, screenName(), Date.now()) : null
-    if (!r) { if (last || !panel.open) endSwapIn(); return }
+    if (!r) {
+      if (!last && panel.open) return
+      endSwapIn()
+      // no plate to take over (the other popup belongs to another plugin):
+      // the other card is gone at once, this one pops as if fresh
+      if (panel.open && !reduced) { pop = 0; popVelocity = 0; popTarget = 1; popRunning = true }
+      return
+    }
     fromX = r.x; fromY = r.y; fromW = r.w; fromH = r.h
     morph = 0; morphVelocity = 0; push = 0; pushVelocity = 0; swapT = 0
     swapReady = true

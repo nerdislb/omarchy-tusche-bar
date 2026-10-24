@@ -96,6 +96,7 @@ FloatingWindow {
  visible: true; implicitWidth: 640; implicitHeight: 400
  PANEL_A
  PANEL_B
+ PANEL_C
  Item {
   width: 640; height: 400
   CARD_A
@@ -184,6 +185,17 @@ FloatingWindow {
     if (ma.popRunning || ma.warming || mb.popRunning) return
     if (!identity(cardA)) return fail("A not at rest after its fresh pop")
     pa.open = false
+    // a switch from a popup without our card (another plugin): no rect, B pops
+    pc.open = true
+    pb.switchFrom = pc
+    pb.open = true
+    step = 44; ticks = 0; return
+   }
+   if (step === 44) {
+    if (ticks === 1 && (mb.swapIn || !mb.popRunning)) return fail("switch without a rect did not fall back to a pop")
+    if (mb.popRunning) return
+    if (!identity(cardB) || String(cardB.color) !== "#334455") return fail("B not at rest after the fallback pop")
+    pb.open = false; pb.switchFrom = null
     // Reduced Motion: no pop, no switch plate, the card's own size throughout
     Style.reduceMotion = true
     if (!identity(cardA)) return fail("reduced: closing card not at identity")
@@ -208,14 +220,14 @@ FloatingWindow {
     if (ma.swapIn || mb.swapOut) return fail("reduced switch used the plate")
     // A: back from swapOut, its own fill and line restored
     if (String(cardA.color) !== "#334455" || String(cardA.border.color) !== "#445566" || hA.opacity !== 1) return fail("A not restored on reopen")
-    console.log("PASS real Qt: flat pop (overshoot " + root.maxPop.toFixed(3) + "), close without bounce, switch handoff, Reduced Motion")
+    console.log("PASS real Qt: flat pop (overshoot " + root.maxPop.toFixed(3) + "), close without bounce, switch handoff, fresh pop after a switch, fallback pop without a rect, Reduced Motion")
     Qt.exit(0)
    }
    if (ticks > 60) fail("timeout in step " + step)
   }
  }
 }
-'''.replace("PANEL_A", panel("pa", 30)).replace("PANEL_B", panel("pb", 300))
+'''.replace("PANEL_A", panel("pa", 30)).replace("PANEL_B", panel("pb", 300)).replace("PANEL_C", panel("pc", 500))
    .replace("CARD_A", card("cardA", "pa", "hA", "ma", 20, 200, 150))
    .replace("CARD_B", card("cardB", "pb", "hB", "mb", 260, 260, 220)))
         result = subprocess.run(["quickshell", "-p", str(tmp / "test.qml")],
