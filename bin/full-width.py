@@ -64,7 +64,15 @@ def set_state(want):
         return before
     errors_before = config_errors()
     write(want)
-    reload()
+    try:
+        reload()
+    except (OSError, subprocess.SubprocessError) as error:
+        write(before)
+        try:
+            reload()
+        except (OSError, subprocess.SubprocessError):
+            pass
+        raise RuntimeError('Hyprland did not reload, kept ' + before + ': ' + str(error)) from error
     errors_after = config_errors()
     if errors_after and errors_after != errors_before:
         write(before)

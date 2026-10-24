@@ -15,6 +15,7 @@ SCRIPT = ROOT / 'bin' / 'full-width.py'
 
 FAKE_HYPRCTL = """#!/bin/bash
 echo "$*" >> "$FAKE_LOG"
+if [[ $1 == reload && -n ${FAKE_RELOAD_FAIL:-} && -f $XDG_STATE_HOME/omarchy/toggles/hypr/tusche-full-width.lua ]]; then exit 1; fi
 if [[ $1 == configerrors ]]; then
   if [[ -n ${FAKE_BREAK:-} && -f $XDG_STATE_HOME/omarchy/toggles/hypr/tusche-full-width.lua ]]; then echo "broken rule"; fi
   exit 0
@@ -65,6 +66,11 @@ def main():
         r = call(broken, 'set', 'edge')
         assert r.returncode == 1 and 'config errors' in r.stderr and not toggle.exists(), r
         assert call(env, 'status').stdout.strip() == 'gaps'
+        passed += 1
+
+        failing = dict(env, FAKE_RELOAD_FAIL='1')
+        r = call(failing, 'set', 'edge')
+        assert r.returncode == 1 and 'did not reload' in r.stderr and not toggle.exists(), r
         passed += 1
 
         for bad in (['set', 'sideways'], ['set'], [], ['status', 'x']):

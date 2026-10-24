@@ -75,6 +75,8 @@ PanelWindow {
   readonly property string sheetManifest: homeDir + "/.config/omarchy/plugins/" + CC.SHEET_ID + "/manifest.json"
   property string fullWidthStatus: ""      // edge · gaps · error · "" (not read yet)
   property var sheetInstalled: null        // the Shortcut Sheet plugin folder exists · null: not checked yet
+  property double fullWidthProbeAt: 0      // start of the running status probe
+  property double fullWidthSetAt: 0        // last confirmed change: older probes do not count
   property var islandNotes: null           // island IPC state.notifications · false: no answer · null: unknown
   property double islandNotesAt: 0         // start time of the probe that produced islandNotes
   property double probeStartedAt: 0
@@ -191,8 +193,11 @@ PanelWindow {
     var s = CC.copy(snapshot); s.cards = { override: cardsStatus }; snapshot = s
   }
   // Extras read after opening fill in what the snapshot did not know yet.
+  // Not once Use touched the extras: the value read then is no longer the
+  // state from opening.
   function fillExtrasSnapshot() {
-    if (!open || !snapshot || !snapshot.extras || !live.extras || working) return
+    if (!open || !snapshot || !snapshot.extras || !live.extras) return
+    if (applied.extras || doneDomains.extras || (working && step && step.domain === "extras")) return
     var s = CC.copy(snapshot), changed = false
     ;["fullWidth", "sheet"].forEach(function(k) {
       if (s.extras[k] === "unknown" && live.extras[k] !== "unknown") { s.extras[k] = live.extras[k]; changed = true }
@@ -455,6 +460,7 @@ PanelWindow {
         win.failStep("Full width windows: " + (err || out || "full-width.py failed"))
         return
       }
+      win.fullWidthSetAt = Date.now()
       win.fullWidthStatus = out
       win.stepDone(false)
     }
@@ -487,7 +493,7 @@ PanelWindow {
   }
   function refreshCards() { if (!cardsStatusProc.running) cardsStatusProc.running = true }
   function refreshExtras() {
-    if (extrasScript !== "" && !fullWidthProbe.running) fullWidthProbe.running = true
+    if (extrasScript !== "" && !fullWidthProbe.running) { fullWidthProbeAt = Date.now(); fullWidthProbe.running = true }
     if (!sheetProbe.running) sheetProbe.running = true
   }
   // Open the Shortcut Sheet: this window closes first (nothing is staged or
@@ -510,6 +516,7 @@ PanelWindow {
     onExited: function(code) {
       var out = String(fullWidthProbeOut.text || "").trim()
       if (win.working && win.step && win.step.domain === "extras") return
+      if (win.fullWidthProbeAt < win.fullWidthSetAt) { Qt.callLater(win.refreshExtras); return }   // read before the change
       win.fullWidthStatus = code === 0 && (out === "edge" || out === "gaps") ? out : "error"
     }
   }
