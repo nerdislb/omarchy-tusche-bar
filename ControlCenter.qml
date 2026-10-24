@@ -633,7 +633,7 @@ PanelWindow {
 
   function stateObject() {
     return { open: open, area: area, working: working, step: workText, used: usedLive, applied: Object.keys(applied),
-             staged: changeList.map(function(c) { return c.id + "=" + c.to }), message: message, health: health.label,
+             staged: changeList.map(function(c) { return c.id + "=" + c.to }), message: message, health: health.label, extras: live.extras,
              issues: healthList.filter(function(c) { return c.state === "issue" }).map(function(c) { return c.id + ": " + c.detail }) }
   }
 
