@@ -19,8 +19,10 @@ import "GlassMath.js" as GlassMath
 // The metal family (Chrom & Platin: material.metal) keeps the rolling card
 // and frames it with a chrome tube (MetalShape) instead of Omarchy's line; a
 // glint runs along it once when the card opens.
-// Without a material the card stays Omarchy's own, with a faint line and a
-// soft shadow (`edge`).
+// Without a material the card stays Omarchy's own, flat (a faint extra line
+// and a soft shadow only with `edge`), and moves on springs: it pops out of
+// its anchor, and a switch to another popup keeps the plate standing (see
+// "Flat motion" below).
 // Declare it inside the panel.
 // (Same component in the Tusche Island: keep both copies alike.)
 Item {
@@ -32,10 +34,11 @@ Item {
   readonly property real openingTimeScale: 1.35
   // The colour the bar ends in (opaque).
   property color color: Qt.rgba(Commons.Color.bar.background.r, Commons.Color.bar.background.g, Commons.Color.bar.background.b, 1)
-  // Edge: a faint line in the text colour and a soft shadow, so a popup in
-  // the bar's colour still stands apart from windows of the same colour
-  // behind it.
-  property bool edge: true
+  // Edge (opt-in): a faint line in the text colour and a soft shadow, so a
+  // popup in the bar's colour stands apart from windows of the same colour
+  // behind it. Off by default: without a material the card is drawn like
+  // Omarchy's own popups (flat, its one theme line, no shadow).
+  property bool edge: false
   readonly property bool lightTheme: 0.2126 * Commons.Color.popups.background.r + 0.7152 * Commons.Color.popups.background.g + 0.0722 * Commons.Color.popups.background.b > 0.55
   readonly property color rimColor: Util.alpha(Commons.Color.popups.text, lightTheme ? 0.24 : 0.22)
   // the bloom's pigment: the tide colour
@@ -200,6 +203,7 @@ Item {
   }
   function startRoll() {
     warming = false
+    if (popOn) { if (panel.open && !reduced) popRunning = true; return }
     if (!rolls || !panel || !panel.open) return
     if (springOn) springRunning = true
     else rollOut.start()
@@ -214,6 +218,219 @@ Item {
       if (GlassMath.settled(fp.roll, fp.rollVelocity, fp.rollTarget)) {
         fp.roll = fp.rollTarget; fp.rollVelocity = 0; fp.springRunning = false
       }
+    }
+  }
+
+  // ------------------------------------------------------------ flat motion
+  // Without a material (bar edge "none") and without a bloom the card keeps
+  // Omarchy's look and the panel's own 140 ms fade, and moves like the
+  // 24.10.2026 round's "04 Mix": it pops out of its anchor on a spring
+  // (85 -> 100 %, a short overshoot, a few pixels down from the bar) and
+  // shrinks back without one when it closes. A switch to another popup
+  // keeps the plate standing: the opening card's plate springs from the
+  // closing card's rect to its own while the content swaps in ~90 ms
+  // (GlassMath's handoff). Reduced Motion: the panel's fade alone.
+  property bool popEnabled: true
+  readonly property bool popOn: popEnabled && !matOn && !active && !!card && !!surface && !!panel
+  readonly property real popResponse: 0.34
+  readonly property real popDamping: 0.64
+  readonly property real popCloseResponse: 0.22
+  readonly property real popFrom: 0.85
+  property real pop: 1
+  property real popVelocity: 0
+  property real popTarget: 1
+  property bool popRunning: false
+  readonly property real popScale: popFrom + (1 - popFrom) * pop
+  readonly property string barSide: panel && panel.barPos ? String(panel.barPos) : "top"
+  // unit vector away from the bar (the card drops this way as it opens)
+  readonly property real awayX: barSide === "left" ? 1 : barSide === "right" ? -1 : 0
+  readonly property real awayY: barSide === "bottom" ? -1 : barSide === "left" || barSide === "right" ? 0 : 1
+  readonly property real popLift: (1 - Math.max(0, Math.min(1, pop))) * Style.space(6)
+  // the anchor on the card's edge at the bar, in the card's coordinates
+  readonly property point popOrigin: {
+    if (!card || !panel) return Qt.point(0, 0)
+    var w = card.width, h = card.height
+    var ax = panel.centerOnBar || !panel.anchorScreenPos ? card.x + w / 2 : panel.anchorScreenPos.x + (panel.anchorW || 0) / 2
+    var ay = panel.centerOnBar || !panel.anchorScreenPos ? card.y + h / 2 : panel.anchorScreenPos.y + (panel.anchorH || 0) / 2
+    var ix = Math.min(24, w / 2), iy = Math.min(24, h / 2)
+    var lx = Math.max(ix, Math.min(w - ix, ax - card.x)), ly = Math.max(iy, Math.min(h - iy, ay - card.y))
+    if (barSide === "bottom") return Qt.point(lx, h)
+    if (barSide === "left") return Qt.point(0, ly)
+    if (barSide === "right") return Qt.point(w, ly)
+    return Qt.point(lx, 0)
+  }
+  Scale {
+    id: popScaleT
+    origin.x: fp.popOrigin.x
+    origin.y: fp.popOrigin.y
+    xScale: fp.popScale
+    yScale: fp.popScale
+  }
+  // the lift toward the bar while it pops, and the content's settle after a switch
+  Translate {
+    id: popShiftT
+    x: -fp.awayX * (fp.popLift + fp.swapSettle)
+    y: -fp.awayY * (fp.popLift + fp.swapSettle)
+  }
+  function setPopTransform(on) {
+    if (!card) return
+    var keep = []
+    for (var i = 0; i < card.transform.length; i++)
+      if (card.transform[i] !== popScaleT && card.transform[i] !== popShiftT) keep.push(card.transform[i])
+    card.transform = on ? keep.concat([popScaleT, popShiftT]) : keep
+  }
+  function screenName() {
+    return panel && panel.screen ? String(panel.screen.name || "") : ""
+  }
+  // where the card is seen now (popping, or as the plate of a switch)
+  function seenRect() {
+    if (swapIn && swapReady) return { x: plateX, y: plateY, w: plateW, h: plateH }
+    var o = popOrigin, k = popScale
+    return { x: card.x + o.x * (1 - k) - awayX * popLift, y: card.y + o.y * (1 - k) - awayY * popLift,
+             w: card.width * k, h: card.height * k }
+  }
+
+  // The switch, incoming: the card's own fill and line give way to a plate
+  // that springs from the outgoing card's rect; the card's opacity carries the
+  // content, which fades in from 30 to 120 ms and settles 3 px.
+  property bool swapIn: false
+  property bool swapReady: false
+  property real swapT: 0
+  property real morph: 1
+  property real morphVelocity: 0
+  property real push: 1
+  property real pushVelocity: 0
+  property real fromX: 0
+  property real fromY: 0
+  property real fromW: 0
+  property real fromH: 0
+  property color plateColor: "transparent"
+  property var plateSpec: null
+  readonly property real swapInK: Math.max(0, Math.min(1, (swapT - 0.03) / 0.09))
+  readonly property real swapSettle: swapIn ? (1 - push) * Style.space(3) : 0
+  readonly property real plateX: card ? fromX + (card.x - fromX) * morph : 0
+  readonly property real plateY: card ? fromY + (card.y - fromY) * morph : 0
+  readonly property real plateW: card ? Math.max(1, fromW + (card.width - fromW) * morph) : 0
+  readonly property real plateH: card ? Math.max(1, fromH + (card.height - fromH) * morph) : 0
+  // The switch, outgoing: the plate is the incoming card's now; the content
+  // fades out in place in 90 ms. Held until the panel opens again.
+  property bool swapOut: false
+  property real swapOutT: 0
+  readonly property real swapOutK: 1 - Math.max(0, Math.min(1, swapOutT / 0.09))
+  readonly property bool swapTicking: (swapIn && swapReady) || (swapOut && swapOutT < 0.09)
+  Binding { target: fp.card; property: "color"; value: "transparent"; when: fp.popOn && (fp.swapIn || fp.swapOut) }
+  // (the line's colour only: its spec keeps the content's insets, and a
+  // Binding on a var property does not restore the panel's binding)
+  Binding { target: fp.card; property: "border.color"; value: "transparent"; when: fp.popOn && (fp.swapIn || fp.swapOut) }
+  Binding { target: fp.card; property: "opacity"; value: fp.swapInK; when: fp.popOn && fp.swapIn }
+  Binding { target: fp.card; property: "opacity"; value: fp.swapOutK > 0.001 ? 1 : 0; when: fp.popOn && fp.swapOut }
+  Binding { target: fp.parent; property: "opacity"; value: fp.swapOutK; when: fp.popOn && fp.swapOut }
+  // a fresh pop waits (unseen) for the first steady frame, like the roll
+  Binding { target: fp.card; property: "opacity"; value: 0; when: fp.popOn && fp.warming }
+
+  FrameAnimation {
+    running: fp.popOn && (fp.popRunning || fp.swapTicking) && !fp.reduced
+    onTriggered: fp.popStep(Math.min(frameTime, 1 / 30))
+  }
+  function popStep(dt) {
+    if (popRunning) {
+      var opening = popTarget > 0.5
+      var s = GlassMath.step(pop, popVelocity, popTarget, dt, GlassMath.omega(opening ? popResponse : popCloseResponse),
+                             opening ? popDamping : 0.99)
+      pop = s.x; popVelocity = s.v
+      if (GlassMath.settled(pop, popVelocity, popTarget)) { pop = popTarget; popVelocity = 0; popRunning = false }
+    }
+    if (swapIn && swapReady) {
+      swapT += dt
+      var m = GlassMath.step(morph, morphVelocity, 1, dt, GlassMath.omega(0.34), 0.80)
+      morph = m.x; morphVelocity = m.v
+      var p = GlassMath.step(push, pushVelocity, 1, dt, GlassMath.omega(0.30), 0.95)
+      push = p.x; pushVelocity = p.v
+      if (swapT >= 0.12 && GlassMath.settled(morph, morphVelocity, 1) && GlassMath.settled(push, pushVelocity, 1)) endSwapIn()
+    }
+    if (swapOut && swapOutT < 0.09) swapOutT = Math.min(0.09, swapOutT + dt)
+  }
+  function endSwapIn() {
+    swapIn = false; swapReady = false
+    morph = 1; morphVelocity = 0; push = 1; pushVelocity = 0
+  }
+  function beginSwapIn() {
+    if (!swapIn || swapReady) return
+    var r = GlassMath.takeRect(panel, screenName(), Date.now())
+    if (!r || !panel.open) { endSwapIn(); return }
+    fromX = r.x; fromY = r.y; fromW = r.w; fromH = r.h
+    morph = 0; morphVelocity = 0; push = 0; pushVelocity = 0; swapT = 0
+    swapReady = true
+  }
+  function stopPop() {
+    popRunning = false; popVelocity = 0
+    endSwapIn(); swapOut = false; swapOutT = 0
+  }
+  function followPop() {
+    if (!popOn) return
+    var now = Date.now(), name = screenName()
+    if (panel.open) {
+      swapOut = false; swapOutT = 0
+      endSwapIn()
+      popTarget = 1
+      if (reduced) { warming = false; popRunning = false; pop = 1; popVelocity = 0; return }
+      if (panel.popoutSwitching && !Border.needsOverlay(card.borderSpec)) {
+        // a switch: no pop; the plate stands and springs (taken once the
+        // closing card has left its rect, in this same turn)
+        warming = false; popRunning = false; pop = 1; popVelocity = 0
+        plateColor = card.color; plateSpec = card.borderSpec
+        swapIn = true; swapReady = false
+        beginSwapIn()
+        if (swapIn && !swapReady) Qt.callLater(fp.beginSwapIn)
+        return
+      }
+      if (pop <= 0.001 && !popRunning) { popVelocity = 0; warmTicks = 0; warming = true }   // fresh: wait for steady frames
+      else popRunning = true
+      return
+    }
+    warming = false
+    var switching = panel.popoutSwitchClosing === true || GlassMath.switchExpected(panel, name, now)
+    if (switching && !reduced && !Border.needsOverlay(card.borderSpec)) {
+      GlassMath.leaveRect(panel, name, now, seenRect())
+      endSwapIn()
+      plateSpec = card.borderSpec
+      popRunning = false; popVelocity = 0; popTarget = 0
+      swapOut = true; swapOutT = 0
+      return
+    }
+    endSwapIn()
+    popTarget = 0
+    if (reduced) { popRunning = false; pop = 0; popVelocity = 0 }
+    else popRunning = true
+  }
+  onPopOnChanged: {
+    stopPop(); warming = false
+    pop = popTarget = panel && panel.open ? 1 : 0
+    setPopTransform(popOn)
+  }
+  Connections {
+    target: fp.panel
+    ignoreUnknownSignals: true
+    // KeyboardPanel raises popoutSwitching before it asks the bar to close
+    // the other popup: tell that card it is closing for a switch
+    function onPopoutSwitchingChanged() {
+      if (fp.popOn && fp.panel.open && fp.panel.popoutSwitching) GlassMath.expectSwitch(fp.panel, fp.screenName(), Date.now())
+    }
+  }
+  // the plate of a switch, under the card
+  property Item swapPlate: null
+  Component {
+    id: swapPlateComponent
+    Rectangle {
+      visible: fp.popOn && fp.swapIn && fp.swapReady
+      x: fp.plateX
+      y: fp.plateY
+      width: fp.plateW
+      height: fp.plateH
+      radius: fp.card ? fp.card.radius : 0
+      color: fp.plateColor
+      border.width: Border.uniformWidth(fp.plateSpec)
+      border.color: fp.plateSpec ? Border.color(fp.plateSpec) : "transparent"
     }
   }
 
@@ -293,10 +510,15 @@ Item {
     if (rolls && (rollOut.running || rollIn.running || springRunning)) followRoll()
     if (active && (opening.running || closing.running)) { opening.stop(); closing.stop(); follow() }
     if (wetting.running) settle()
+    if (popOn && (popRunning || warming || swapIn || swapOut)) {
+      stopPop(); warming = false
+      pop = popTarget = panel.open ? 1 : 0
+    }
   }
 
   function follow() {
     followRoll()
+    followPop()
     // Bloom off: only stop. Writing grow/ink here would still go through the
     // card's opacity Binding (not yet released) and start the panel's
     // opacity Behavior, which then outlives the restored binding — closed
@@ -504,7 +726,10 @@ Item {
              open: !!panel && panel.open, backing: glassSpec ? glassSpec.backing : null,
              captureBlocked: glassBody ? glassBody.captureBlocked : true,
              captures: glassBody ? glassBody.capturedWindows : 0,
-             lightRunning: glassBody ? glassBody.glintRunning : false }
+             lightRunning: glassBody ? glassBody.glintRunning : false,
+             pop: popOn ? { value: pop, target: popTarget, running: popRunning, warming: warming, scale: popScale,
+                            origin: [popOrigin.x, popOrigin.y], swapIn: swapIn, swapReady: swapReady, morph: morph,
+                            swapOut: swapOut } : null }
   }
   Component {
     id: glassBodyComponent
@@ -532,9 +757,11 @@ Item {
       rollSnap = rollSnapComponent.createObject(surface, { z: card.z + 1 })
       metalRim = metalRimComponent.createObject(surface, { z: card.z + 2 })
       glassBody = glassBodyComponent.createObject(surface, { z: card.z - 0.5 })
+      swapPlate = swapPlateComponent.createObject(surface, { z: card.z - 0.4 })
     }
     keepSnap()
     if (card) cardLine = cardLineComponent.createObject(card)
+    if (popOn) { pop = popTarget = panel.open ? 1 : 0; setPopTransform(true) }
     follow()
   }
   Component.onDestruction: {
@@ -545,5 +772,7 @@ Item {
     if (rollSnap) rollSnap.destroy()
     if (metalRim) metalRim.destroy()
     if (glassBody) glassBody.destroy()
+    if (swapPlate) swapPlate.destroy()
+    if (card) setPopTransform(false)
   }
 }

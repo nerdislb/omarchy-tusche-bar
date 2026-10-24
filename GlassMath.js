@@ -17,6 +17,36 @@ function settled(x, velocity, target) {
   return Math.abs(x - target) < 0.0003 && Math.abs(velocity) < 0.003
 }
 
+// Apple's spring parameters (response in seconds, damping fraction) as the
+// natural frequency step() takes.
+function omega(response) {
+  return 2 * Math.PI / Math.max(0.05, Number(response) || 0.34)
+}
+
+// Popup switch handoff (flat motion, see MaterialCard): the card that opens
+// for a switch announces it, the card that closes for it leaves its rect, the
+// opening card takes that rect and springs its plate from there. One store
+// per plugin (a library script is shared by every importer of this file).
+var switchExpect = null
+var switchRect = null
+function expectSwitch(key, screen, now) {
+  switchExpect = { key: key, screen: screen, t: now }
+}
+function switchExpected(key, screen, now) {
+  var e = switchExpect
+  return !!e && e.key !== key && e.screen === screen && now - e.t < 250
+}
+function leaveRect(key, screen, now, rect) {
+  switchRect = { key: key, screen: screen, t: now, x: rect.x, y: rect.y, w: rect.w, h: rect.h }
+}
+function takeRect(key, screen, now) {
+  var r = switchRect
+  if (!r || r.key === key || r.screen !== screen || now - r.t > 250) return null
+  switchRect = null
+  switchExpect = null
+  return r
+}
+
 // Hyprland's client positions are global logical coordinates. Reject parked,
 // hidden and other-workspace clients before constructing any capture source.
 function clientRect(client, monitor, region) {

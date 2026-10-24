@@ -5,6 +5,7 @@ import qs.Commons
 import qs.Commons as Commons
 import qs.Ui
 import "bridge" as Bridge
+import "GlassMath.js" as GlassMath
 
 // Drop-down logo menu of the Tusche Bar: one tall menu that folds out of
 // the logo — with the theme material it rolls (or blooms) out of the bar
@@ -38,8 +39,14 @@ KeyboardPanel {
   // and apps lead the results. Set by the owner before opening, cleared on close.
   property bool searchMode: false
   property int current: -1
+  // A level change pushes the new rows in sideways on a firm spring (32 px,
+  // response 0.30 s, no bounce) while they fade in from 30 to 120 ms; the
+  // card's size follows the rows on a spring (0.34 s, damping 0.80). The
+  // 24.10.2026 motion round's "04 Mix"; Reduced Motion: no push, no spring.
   property real slideX: 0
+  property real slideVelocity: 0
   property int slideDir: 1
+  property real listIn: 1
 
   readonly property var level: stack.length ? stack[stack.length - 1] : null
   // A level of its own rows (a list or a question): typing filters it
@@ -83,7 +90,7 @@ KeyboardPanel {
 
   padding: Style.space(8)
   focusTarget: keys
-  contentWidth: levelRequest && levelRequest.width > 0
+  readonly property int wantW: levelRequest && levelRequest.width > 0
     ? menu.fittedContentWidth(Style.space(levelRequest.width))
     : Math.round(Math.max(Style.space(300), Math.min(Style.space(460), widest * labelPx * 0.62 + Style.space(120))))
   readonly property real headerH: Style.space(32) + 1 + Style.space(6)
@@ -102,10 +109,48 @@ KeyboardPanel {
     return Math.max(rowH, cap)
   }
   // (the uninstall question needs room even over a one-row search)
-  contentHeight: menu.fittedContentHeight(Math.max(deleteConfirmOpen ? Style.space(170) : 0,
+  readonly property int wantH: menu.fittedContentHeight(Math.max(deleteConfirmOpen ? Style.space(170) : 0,
     headerH + (listCap > 0 ? Math.min(listHeight, listCap) : listHeight)))
-  Behavior on contentWidth { NumberAnimation { duration: Style.duration(160); easing.type: Easing.OutCubic } }
-  Behavior on contentHeight { NumberAnimation { duration: Style.duration(160); easing.type: Easing.OutCubic } }
+  // the card's size: the wanted size on a spring while the menu is up,
+  // taken at once while it is down or opening
+  property real sizeW: wantW
+  property real sizeH: wantH
+  property real sizeWVelocity: 0
+  property real sizeHVelocity: 0
+  property bool sizeRunning: false
+  contentWidth: Math.round(sizeW)
+  contentHeight: Math.round(sizeH)
+  onWantWChanged: followSize()
+  onWantHChanged: followSize()
+  function snapSize() {
+    sizeRunning = false
+    sizeW = wantW; sizeH = wantH; sizeWVelocity = 0; sizeHVelocity = 0
+  }
+  function followSize() {
+    if (!menu.open || Style.reduceMotion) snapSize()
+    else sizeRunning = true
+  }
+  // (Inside an Item: the panel's default content only takes Items.)
+  Item {
+    visible: false
+    FrameAnimation {
+      running: menu.sizeRunning || menu.slideX !== 0
+      onTriggered: {
+        var dt = Math.min(frameTime, 1 / 30)
+        if (menu.sizeRunning) {
+          var w = GlassMath.step(menu.sizeW, menu.sizeWVelocity, menu.wantW, dt, GlassMath.omega(0.34), 0.80)
+          var h = GlassMath.step(menu.sizeH, menu.sizeHVelocity, menu.wantH, dt, GlassMath.omega(0.34), 0.80)
+          menu.sizeW = w.x; menu.sizeWVelocity = w.v; menu.sizeH = h.x; menu.sizeHVelocity = h.v
+          if (Math.abs(w.x - menu.wantW) < 0.3 && Math.abs(w.v) < 2 && Math.abs(h.x - menu.wantH) < 0.3 && Math.abs(h.v) < 2) menu.snapSize()
+        }
+        if (menu.slideX !== 0) {
+          var x = GlassMath.step(menu.slideX, menu.slideVelocity, 0, dt, GlassMath.omega(0.30), 0.95)
+          menu.slideX = Math.abs(x.x) < 0.2 && Math.abs(x.v) < 2 ? 0 : x.x
+          menu.slideVelocity = menu.slideX === 0 ? 0 : x.v
+        }
+      }
+    }
+  }
 
   OmarchyMenuSource { id: source; live: menu.visible; appLibrary: menu.appLibrary }
   BarMaterialCard { id: materialCard; panel: menu; material: Bridge.ModuleBus.material }
@@ -210,7 +255,9 @@ KeyboardPanel {
   function slide(dir) {
     slideDir = dir
     list.positionViewAtBeginning()
-    slideIn.restart()
+    if (Style.reduceMotion) { slideX = 0; slideVelocity = 0; listIn = 1; return }
+    slideX = dir * Style.space(32); slideVelocity = 0
+    listFade.restart()
   }
   function push(next) {
     stack = stack.concat([next]); query = ""
@@ -510,7 +557,8 @@ KeyboardPanel {
         iconRefresh.stop()
         menu.stack = []; menu.query = ""; menu.current = -1; menu.deleteTarget = null
         keys.keyboard = false; keys.pointerKnown = false
-        menu.slideX = 0
+        menu.slideX = 0; menu.slideVelocity = 0; listFade.stop(); menu.listIn = 1
+        menu.snapSize(); Qt.callLater(menu.snapSize)
         // The guards (a login shell and a dozen probes) and their answer moved
         // the rows while the card rolled out: asked again once it is out, the
         // last answers stand in meanwhile (only the very first open waits).
@@ -520,11 +568,11 @@ KeyboardPanel {
       }
     }
 
-    NumberAnimation {
-      id: slideIn
-      target: menu; property: "slideX"
-      from: menu.slideDir * Style.space(28); to: 0
-      duration: Style.duration(200); easing.type: Easing.OutCubic
+    SequentialAnimation {
+      id: listFade
+      PropertyAction { target: menu; property: "listIn"; value: 0 }
+      PauseAnimation { duration: 30 }
+      NumberAnimation { target: menu; property: "listIn"; to: 1; duration: 90 }
     }
 
     Item {
@@ -662,7 +710,7 @@ KeyboardPanel {
         model: menu.rows.length
         clip: true
         boundsBehavior: Flickable.StopAtBounds
-        opacity: 1 - Math.abs(menu.slideX) / Style.space(40)
+        opacity: menu.listIn
 
         delegate: Item {
           id: row
