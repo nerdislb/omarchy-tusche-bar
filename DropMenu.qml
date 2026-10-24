@@ -133,6 +133,14 @@ KeyboardPanel {
   // (Inside an Item: the panel's default content only takes Items.)
   Item {
     visible: false
+    // Reduced Motion switched on midway: the final size and rows at once
+    Connections {
+      target: Style
+      function onReduceMotionChanged() {
+        if (!Style.reduceMotion) return
+        menu.snapSize(); menu.slideX = 0; menu.slideVelocity = 0; listFade.stop(); menu.listIn = 1
+      }
+    }
     FrameAnimation {
       running: menu.sizeRunning || menu.slideX !== 0
       onTriggered: {

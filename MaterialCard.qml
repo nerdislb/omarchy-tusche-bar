@@ -240,12 +240,13 @@ Item {
   property real popVelocity: 0
   property real popTarget: 1
   property bool popRunning: false
-  readonly property real popScale: popFrom + (1 - popFrom) * pop
+  // (Reduced Motion: always the card's own size and place)
+  readonly property real popScale: reduced ? 1 : popFrom + (1 - popFrom) * pop
   readonly property string barSide: panel && panel.barPos ? String(panel.barPos) : "top"
   // unit vector away from the bar (the card drops this way as it opens)
   readonly property real awayX: barSide === "left" ? 1 : barSide === "right" ? -1 : 0
   readonly property real awayY: barSide === "bottom" ? -1 : barSide === "left" || barSide === "right" ? 0 : 1
-  readonly property real popLift: (1 - Math.max(0, Math.min(1, pop))) * Style.space(6)
+  readonly property real popLift: reduced ? 0 : (1 - Math.max(0, Math.min(1, pop))) * Style.space(6)
   // the anchor on the card's edge at the bar, in the card's coordinates
   readonly property point popOrigin: {
     if (!card || !panel) return Qt.point(0, 0)
@@ -348,16 +349,22 @@ Item {
       push = p.x; pushVelocity = p.v
       if (swapT >= 0.12 && GlassMath.settled(morph, morphVelocity, 1) && GlassMath.settled(push, pushVelocity, 1)) endSwapIn()
     }
-    if (swapOut && swapOutT < 0.09) swapOutT = Math.min(0.09, swapOutT + dt)
+    if (swapOut && swapOutT < 0.09) {
+      swapOutT = Math.min(0.09, swapOutT + dt)
+      // gone: the next open starts fresh (it pops again)
+      if (swapOutT >= 0.09) { pop = 0; popVelocity = 0; popTarget = 0 }
+    }
   }
   function endSwapIn() {
     swapIn = false; swapReady = false
     morph = 1; morphVelocity = 0; push = 1; pushVelocity = 0
   }
-  function beginSwapIn() {
+  // `last`: no further try (the first runs in the opening handler, one more
+  // once the turn is over, in case the closing card left its rect later)
+  function beginSwapIn(last) {
     if (!swapIn || swapReady) return
-    var r = GlassMath.takeRect(panel, screenName(), Date.now())
-    if (!r || !panel.open) { endSwapIn(); return }
+    var r = panel.open ? GlassMath.takeRect(panel, screenName(), Date.now()) : null
+    if (!r) { if (last || !panel.open) endSwapIn(); return }
     fromX = r.x; fromY = r.y; fromW = r.w; fromH = r.h
     morph = 0; morphVelocity = 0; push = 0; pushVelocity = 0; swapT = 0
     swapReady = true
@@ -380,8 +387,8 @@ Item {
         warming = false; popRunning = false; pop = 1; popVelocity = 0
         plateColor = card.color; plateSpec = card.borderSpec
         swapIn = true; swapReady = false
-        beginSwapIn()
-        if (swapIn && !swapReady) Qt.callLater(fp.beginSwapIn)
+        beginSwapIn(false)
+        if (swapIn && !swapReady) Qt.callLater(function() { fp.beginSwapIn(true) })
         return
       }
       if (pop <= 0.001 && !popRunning) { popVelocity = 0; warmTicks = 0; warming = true }   // fresh: wait for steady frames
@@ -389,8 +396,10 @@ Item {
       return
     }
     warming = false
-    var switching = panel.popoutSwitchClosing === true || GlassMath.switchExpected(panel, name, now)
-    if (switching && !reduced && !Border.needsOverlay(card.borderSpec)) {
+    // A switch announced by a card of this plugin takes the plate over; a
+    // switch to a popup elsewhere (KeyboardPanel hides this card at once)
+    // just leaves it at the pop's start.
+    if (GlassMath.switchExpected(panel, name, now) && !reduced && !Border.needsOverlay(card.borderSpec)) {
       GlassMath.leaveRect(panel, name, now, seenRect())
       endSwapIn()
       plateSpec = card.borderSpec
@@ -399,6 +408,7 @@ Item {
       return
     }
     endSwapIn()
+    if (panel.popoutSwitchClosing === true) { popRunning = false; pop = 0; popVelocity = 0; popTarget = 0; return }
     popTarget = 0
     if (reduced) { popRunning = false; pop = 0; popVelocity = 0 }
     else popRunning = true
@@ -505,15 +515,16 @@ Item {
   onGlassOnChanged: if (!glassOn && glassBody) glassBody.stop()
   // Reduced Motion switched on mid-roll or mid-bloom: jump to where it is going
   onReducedChanged: {
+    // flat motion, either way: where it is going, at rest
+    if (popOn) {
+      stopPop(); warming = false
+      pop = popTarget = panel.open ? 1 : 0
+    }
     if (!reduced) return
     if (warming) followRoll()
     if (rolls && (rollOut.running || rollIn.running || springRunning)) followRoll()
     if (active && (opening.running || closing.running)) { opening.stop(); closing.stop(); follow() }
     if (wetting.running) settle()
-    if (popOn && (popRunning || warming || swapIn || swapOut)) {
-      stopPop(); warming = false
-      pop = popTarget = panel.open ? 1 : 0
-    }
   }
 
   function follow() {

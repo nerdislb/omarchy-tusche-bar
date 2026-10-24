@@ -208,6 +208,21 @@ theme sets it) and logo and the active workspace's number stay strong. The
 Tusche Island takes the same material for its notes. Reduced Motion: the
 roll and the bloom jump, the content fades.
 
+**Without a material** (`edge: none`, and on themes without
+`bar-material.json`) every popup – ours and Omarchy's own – keeps Omarchy's
+flat card (its one theme line, no extra shadow or rim; `MaterialCard`'s
+`edge: true` brings the old soft shadow back) and moves on springs (motion
+round 24.10.2026, "04 Mix"): it pops out of its icon, 85 → 100 % around the
+anchor on the bar edge, with one short overshoot (response 0.34 s, damping
+0.64) while dropping 6 px from the bar, and shrinks back without one.
+Switching to the next popup keeps the plate standing: the new card's plate
+springs from the old card's rect to its own (0.34 s, damping 0.80) while the
+old content fades out in 90 ms and the new one fades in from 30 to 120 ms
+(`GlassMath.js` hands the rect over, within one plugin; a switch to the
+island's popup swaps at once). The drop menu's size follows its rows on the
+same spring and a level change pushes the rows in 32 px. Reduced Motion:
+Omarchy's fade only.
+
 **Metal: Chrom & Platin** (design round 07.10.2026). Chrom is Tusche's black
 with a cool steel tint, Platin a cool platinum grey; red stays the one signal
 colour. Their `bar-material.json` carries a `metal` object, and everything

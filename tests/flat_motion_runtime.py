@@ -172,9 +172,28 @@ FloatingWindow {
     if (String(cardB.color) !== "#334455" || mb.swapPlate.visible || cardB.opacity !== 1) return fail("B not restored after the switch")
     if (String(cardB.border.color) !== "#445566") return fail("B line not restored")
     if (!identity(cardB)) return fail("B not at identity after the switch")
-    // Reduced Motion: no pop, no switch plate
-    Style.reduceMotion = true
+    if (ma.pop !== 0) return fail("A (switched away) not back at the pop's start: " + ma.pop)
+    // B closes, A opens fresh: it pops again
+    pb.switchFrom = null; pa.switchFrom = null
     pb.open = false
+    pa.open = true
+    if (!(ma.warming || ma.popRunning) || ma.swapIn) return fail("A did not pop on a fresh open after a switch")
+    step = 45; ticks = 0; return
+   }
+   if (step === 45) {
+    if (ma.popRunning || ma.warming || mb.popRunning) return
+    if (!identity(cardA)) return fail("A not at rest after its fresh pop")
+    pa.open = false
+    // Reduced Motion: no pop, no switch plate, the card's own size throughout
+    Style.reduceMotion = true
+    if (!identity(cardA)) return fail("reduced: closing card not at identity")
+    step = 46; ticks = 0; return
+   }
+   if (step === 46) {
+    if (ma.popRunning) return fail("reduced close runs a spring")
+    pb.open = true
+    pb.open = false
+    if (!identity(cardB)) return fail("reduced: B not at identity")
     step = 5; ticks = 0; return
    }
    if (step === 5) {
