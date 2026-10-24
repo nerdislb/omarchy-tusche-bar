@@ -283,12 +283,14 @@ Item {
   function screenName() {
     return panel && panel.screen ? String(panel.screen.name || "") : ""
   }
-  // where the card is seen now (popping, or as the plate of a switch)
+  // where the card was seen last (popping, or as the plate of a switch); on
+  // closing from the snapshot, as some panels drop content (and height) at once
   function seenRect() {
     if (swapIn && swapReady) return { x: plateX, y: plateY, w: plateW, h: plateH }
     var o = popOrigin, k = popScale
-    return { x: card.x + o.x * (1 - k) - awayX * popLift, y: card.y + o.y * (1 - k) - awayY * popLift,
-             w: card.width * k, h: card.height * k }
+    var x = snapW > 1 ? snapX : card.x, y = snapW > 1 ? snapY : card.y
+    var w = snapW > 1 ? snapW : card.width, h = snapW > 1 ? snapH : card.height
+    return { x: x + o.x * (1 - k) - awayX * popLift, y: y + o.y * (1 - k) - awayY * popLift, w: w * k, h: h * k }
   }
 
   // The switch, incoming: the card's own fill and line give way to a plate
@@ -747,6 +749,7 @@ Item {
              lightRunning: glassBody ? glassBody.glintRunning : false,
              pop: popOn ? { value: pop, target: popTarget, running: popRunning, warming: warming, scale: popScale,
                             origin: [popOrigin.x, popOrigin.y], swapIn: swapIn, swapReady: swapReady, morph: morph,
+                            from: [fromX, fromY, fromW, fromH],
                             swapOut: swapOut } : null }
   }
   Component {
