@@ -519,6 +519,8 @@ Item {
     stdout: StdioCollector { onStreamFinished: root.installedPlugins = String(text).split("\n").filter(function(l) { return l.length > 0 }) }
   }
   function hasPlugin(id) { return String(id).indexOf("omarchy.") === 0 || installedPlugins.indexOf(String(id)) !== -1 }
+  // (the Control Center reads the list again when it opens: its display editor link)
+  function scanPlugins() { if (!pluginScan.running) pluginScan.running = true }
   function present(items) { return items.filter(function(e) { return !e.requires || root.hasPlugin(e.requires) }) }
   // (the plugin list is read again once the drop-down has rolled out, not during it)
   onDropMenuOpenChanged: if (dropMenuOpen) { isOpen = false; pluginScanLater.restart() }

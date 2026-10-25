@@ -18,7 +18,9 @@
 //           the current value (Position Bar: `omarchy-bar position top`), and
 //           the lists the native menu fills from bash (fonts …); both are read
 //           by the Control Center's own batch (readerScript).
-// A value runs exactly its menu entry's action, the way the menu would.
+// A value runs exactly its menu entry's action, the way the menu would. A few
+// entries without a value (terminal flows, editors, pickers: LINKS) become
+// link rows that open them once the window has closed.
 // Nothing may ask behind the Control Center's exclusive keyboard: actions
 // that open a terminal or a window (omarchy-launch-…), shell constructs and
 // scripts that use sudo or pkexec are shown read-only; for the rest,
@@ -62,10 +64,52 @@ var PLACE = {
   "setup.default.dictation":                             { area: "apps", section: "DEFAULT APPS" },
   "trigger.toggle.crash-capture-on":                     { area: "system", section: "SYSTEM" },
   "setup.language":                                      { area: "system", section: "SYSTEM" },
-  "setup.network.dns":                                   { area: "system", section: "SYSTEM" },
+  "setup.network.dns":                                   { area: "devices", section: "NETWORK" },
   "update.channel":                                      { area: "system", section: "SYSTEM", label: "Update channel" }
 }
 var OTHER = { area: "system", section: "MORE FROM OMARCHY" }
+
+// Menu entries the Control Center offers as links: a terminal flow, an
+// editor, a picker or one of Omarchy's panels. They have no value to stage;
+// Open closes the window, then runs the entry exactly as the menu would. An
+// entry the menu does not offer on this machine (its `when` guard, an
+// ancestor's, or `disabled`) has no link. Notes follow the scripts' own
+// omarchy:summary lines.
+var LINKS = {
+  "setup.typing.keyboard":      { area: "input", section: "SETUP", label: "Keyboard layouts", note: "The layouts to switch between" },
+  "setup.typing.input":         { area: "input", section: "SETUP", label: "Input methods", note: "Japanese, Korean or Chinese typing" },
+  "setup.input":                { area: "input", section: "SETUP", label: "Edit input.lua", note: "Your Hyprland input file, in your editor" },
+  "setup.keybindings":          { area: "input", section: "SETUP", label: "Edit bindings.lua", note: "Your Hyprland key bindings, in your editor" },
+  "setup.monitors":             { area: "screens", section: "ARRANGEMENT", label: "Edit monitors.lua", note: "Resolution, scale and position by hand, in your editor" },
+  "setup.network.qr":           { area: "devices", section: "NETWORK", label: "Wi-Fi QR code", note: "Share the connected network with a phone" },
+  "setup.security.fingerprint": { area: "system", section: "SECURITY", label: "Fingerprint", note: "For sudo, polkit and the lock screen" },
+  "setup.security.fido2":       { area: "system", section: "SECURITY", label: "FIDO2 key", note: "A security key for sudo and polkit" },
+  "setup.security.ssh-agent":   { area: "system", section: "SECURITY", label: "SSH agent", note: "Asks for key passphrases in a dialog" },
+  "setup.security.sshd":        { area: "system", section: "SECURITY", label: "SSH server", note: "OpenSSH, the firewall and an authorized key" },
+  "setup.config.git":           { area: "system", section: "SETUP", label: "Git identity", note: "Name and email for commits, GitHub sign-in" },
+  "update.timezone":            { area: "system", section: "SETUP", label: "Time zone", note: "Pick the system time zone" },
+  "update.time":                { area: "system", section: "SETUP", label: "Sync the clock", note: "Restarts time synchronisation" }
+}
+// What a link's action opens, for its row.
+function opensWith(action) {
+  var a = String(action || "")
+  if (/(^|\s)omarchy-launch-(floating-)?terminal/.test(a)) return "terminal"
+  if (/(^|\s)omarchy-launch-config-editor(\s|$)/.test(a)) return "editor"
+  if (/(^|\s)omarchy-shell\s+shell\s+(summon|toggle)\s/.test(a)) return "panel"
+  return "window"
+}
+// The command a link shows: the wrapped script of a terminal launcher, the
+// file of the config editor, else the action's first word.
+function linkHint(action) {
+  var a = String(action || "").trim()
+  var t = /omarchy-launch-floating-terminal-with-presentation\s+(['"]?)([A-Za-z0-9_.\/-]+)/.exec(a)
+  if (t) return t[2]
+  var f = /omarchy-launch-config-editor\s+"?([^"\s]+)"?/.exec(a)
+  if (f) return f[1].replace(/^\$HOME\//, "~/")
+  var s = /omarchy-shell\s+shell\s+(?:summon|toggle)\s+([A-Za-z0-9_.-]+)/.exec(a)
+  if (s) return s[1]
+  return firstWord(a)
+}
 
 // Toggle rows: the row label and each state's name, in the order shown.
 // Unlisted pairs take the words both entries share as the label and the rest
@@ -160,6 +204,16 @@ var WHY = {
   restart: "Changing it restarts the shell this window runs in"
 }
 function shown(m, e) { return !e.when || (m.when && m.when[e.id] === true) }
+// Offered by the menu here: shown, not disabled, and every menu above it shown.
+function offered(m, items, e) {
+  if (!shown(m, e) || (m.disabled && m.disabled[e.id] === true)) return false
+  var p = items[e.parent], guard = 0
+  while (p && p.id !== "root" && guard++ < 32) {
+    if (!shown(m, p)) return false
+    p = items[p.parent]
+  }
+  return true
+}
 
 // Two guards that are each other's negation: the same text up to one more
 // negation on one side ("! x" / "x", "!= on" / "== on"), or the same test of
@@ -224,14 +278,14 @@ function place(key, menuLabel) {
 }
 
 // ---------------------------------------------------------------- the rows
-// m: { items, itemOrder, evaluated, when, checked, asking, readers } where
-// readers is the reader batch's answer ({ key: { current, items: [{ value,
-// label }] } }, null before it answered). Returns { specs, values } or null
-// while the guards have not answered.
+// m: { items, itemOrder, evaluated, when, checked, disabled, asking, readers }
+// where readers is the reader batch's answer ({ key: { current, items: [{
+// value, label }] } }, null before it answered). Returns { specs, values,
+// links } or null while the guards have not answered.
 function derive(m) {
   if (!m || !m.items || !m.itemOrder || !m.evaluated) return null
   var items = m.items, order = m.itemOrder, asking = m.asking || {}
-  var specs = [], values = {}, used = {}, readers = m.readers || null
+  var specs = [], values = {}, used = {}, readers = m.readers || null, links = []
 
   function add(spec, live) {
     spec.id = "omarchy." + spec.key
@@ -328,7 +382,19 @@ function derive(m) {
           }) }, r.current)
   })
 
-  return { specs: specs, values: values }
+  // links: the entries of LINKS the menu offers here
+  Object.keys(LINKS).forEach(function(id) {
+    var e = items[id], l = LINKS[id]
+    if (!e || !e.action || e.kind === "menu" || e.provider || !offered(m, items, e)) return
+    var where = pathOf(items, id)
+    links.push({ id: "link." + id, domain: "link", kind: "link", source: "omarchy", fromMenu: true, key: id,
+                 area: l.area, section: l.section, label: l.label || String(e.label || id), note: l.note || "",
+                 hint: linkHint(e.action), opens: opensWith(e.action), action: String(e.action),
+                 path: (where ? where + " › " : "") + String(e.label || id), values: [],
+                 terms: [where, String(e.label || ""), linkHint(e.action), firstWord(e.action)] })
+  })
+
+  return { specs: specs, values: values, links: links }
 }
 
 // The Control Center's reader batch: one bash run printing

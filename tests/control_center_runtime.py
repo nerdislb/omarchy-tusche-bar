@@ -65,6 +65,16 @@ QtObject {
         # Omarchy's menu source reads a fixture menu and answers its guards from
         # the fixture state (FixtureIo), never the real menu or commands.
         (tmp / 'OmarchyMenuSource.qml').write_text((ROOT / 'OmarchyMenuSource.qml').read_text().replace('import Quickshell.Io','import "FixtureIo"'))
+        # The device lines come from fixed facts, not the machine's audio,
+        # network and Bluetooth services.
+        (tmp / 'DeviceFacts.qml').write_text('''import QtQuick
+Item {
+ readonly property string soundLine: "Output: Fixture Speakers · Input: Fixture Mic"
+ readonly property string networkLine: "Wi-Fi: FixtureNet"
+ readonly property string networkName: "FixtureNet"
+ readonly property string bluetoothLine: "On · connected: Fixture Buds"
+}
+''')
         shutil.copytree(ROOT / 'bridge',tmp / 'bridge')
         ui = tmp / 'Ui'
         ui.mkdir()
@@ -81,6 +91,16 @@ var corners = "theme"
 var gaps = true
 var hypr = {}
 var actions = []
+// links started detached, and the idle times in the fixture shell.json
+var launched = []
+var idle = {screensaver: 150, lock: 300}
+var idleVersion = 0
+function idleApply(json) {
+ var c = JSON.parse(json), next = {}
+ for (var k in idle) next[k] = idle[k]
+ for (var j in c) { if (c[j] === null) delete next[j]; else next[j] = c[j] }
+ idle = next; idleVersion++
+}
 var menu = JSON.stringify({
  "appearance": {"label": "Appearance"},
  "appearance.windows": {"label": "Windows"},
@@ -94,7 +114,11 @@ var menu = JSON.stringify({
  "setup.network": {"label": "Network"},
  "setup.network.dns": {"label": "DNS"},
  "setup.network.dns.dhcp": {"label": "DHCP", "checked": "[[ \"$(omarchy-dns)\" == \"DHCP\" ]]", "action": "omarchy-dns DHCP"},
- "setup.network.dns.cloudflare": {"label": "Cloudflare", "checked": "[[ \"$(omarchy-dns)\" == \"Cloudflare\" ]]", "action": "omarchy-dns Cloudflare"}
+ "setup.network.dns.cloudflare": {"label": "Cloudflare", "checked": "[[ \"$(omarchy-dns)\" == \"Cloudflare\" ]]", "action": "omarchy-dns Cloudflare"},
+ "setup.typing": {"label": "Typing"},
+ "setup.typing.keyboard": {"label": "Keyboard Layouts", "action": "omarchy-setup-keyboard"},
+ "setup.security": {"label": "Security"},
+ "setup.security.fido2": {"label": "Fido2", "action": "omarchy-launch-floating-terminal-with-presentation omarchy-setup-security-fido2"}
 })
 function guards() {
  return ["theme", "sharp", "rounded"].map(function(c) { return "appearance.windows.corners." + c + ":c:" + (c === corners ? 1 : 0) })
@@ -154,8 +178,10 @@ QtObject {
   if (c[0] === "bash" && joined.indexOf("omarchy-restart-shell") >= 0) return "password omarchy-dns"
   if (c[0] === "bash" && joined.indexOf("words_of") >= 0) return "omarchy-dns"
   if (c[0] === "bash" && joined.indexOf("omarchy-font-current") >= 0) return ""
+  if (c[0] === "sh" && String(c[2]).indexOf('setsid -f bash -lc') >= 0) { S.launched.push(c[4]); return "" }
   if (c[0] === "sh" && String(c[2]).indexOf('bash -lc "$1"') >= 0) { root.forced = S.act(c[4]); return "" }
   if (c[0] === "python3" && joined.indexOf("hypr-overrides.py") >= 0) { if (c[2] === "apply") S.hyprApply(c[3]); return S.hyprStatus() }
+  if (c[0] === "python3" && joined.indexOf("idle-times.py") >= 0) { if (c[2] === "set") S.idleApply(c[3]); return JSON.stringify(S.idle) }
   if (c[0] === "python3" && joined.indexOf("focus-mode.py") >= 0) return '{"hidden": false, "owned": false, "changed": false}'
   if (c[0] === "python3" && joined.indexOf("full-width.py") >= 0) { if (c[2] === "set") S.fullWidth = c[3]; return S.fullWidth }
   if (c[0] === "python3") return "disabled"
@@ -218,7 +244,16 @@ ShellRoot {
   id: fakeHost
   property var options: Presets.normalizeOptions({workspaces:"minimap",ai:"rings",right:"groups",logo:"nerdibeard",edge:"theme",frames:"glint"})
   property var screenProfiles: ({})
-  property var config: ({plugins:[{id:"nerdibeard.tusche-bar",screenProfiles:screenProfiles}],bar:{layout:{left:[],center:[],right:[]}}})
+  property var idleNow: ({screensaver:150,lock:300})
+  property int idleSeen: 0
+  property var config: ({plugins:[{id:"nerdibeard.tusche-bar",screenProfiles:screenProfiles}],bar:{layout:{left:[],center:[],right:[{id:"omarchy.audio"}]}},idle:idleNow})
+  // the fixture shell.json changes: the host reads it again, as its FileView would
+  property Timer idleTimer: Timer { interval: 40; repeat: true; running: true; onTriggered: if (S.idleVersion !== fakeHost.idleSeen) { fakeHost.idleSeen = S.idleVersion; fakeHost.idleNow = JSON.parse(JSON.stringify(S.idle)) } }
+  property var installedPlugins: ["nerdibeard.display-layout","nerdibeard.monitor","nerdibeard.tusche-bar"]
+  property var opened: []
+  property int scans: 0
+  function openWidget(id) { opened = opened.concat([id]) }
+  function scanPlugins() { scans++ }
   property var material: root.themes.smoke.material
   property bool writing: false
   property string lastResult: "ok"
@@ -477,14 +512,94 @@ ShellRoot {
    check(!!dns&&dns.readOnly&&!CC.available(cc.live,"omarchy.setup.network.dns"),"a sudo script's row is read-only")
    cc.pick("omarchy.setup.network.dns","setup.network.dns.cloudflare")
    check(cc.changeList.length===0,"a read-only row does not stage")
-   fullyInViewport(row("omarchy.setup.network.dns"),"DNS row shown read-only")
+   check(!row("omarchy.setup.network.dns"),"DNS moved from System to Sound & network")
    var hits=CC.search(CC.searchIndex(cc.live,{}),"gaps_out",4)
    check(hits.length>0&&hits[0].id==="hypr.general:gaps_out","search finds an override by its Hyprland option")
    var hits2=CC.search(CC.searchIndex(cc.live,{}),"omarchy-hyprland-corners",4)
    check(hits2.length>0&&hits2[0].id==="omarchy.appearance.windows.corners","search finds an Omarchy row by its command")
+   check(!!row("link.setup.security.fido2")&&cc.areaHasLinks,"the FIDO2 terminal flow is a link in System")
    shot("cc-system",function(){
     cc.cancel()
-    schedule(300,function(){check(!cc.open&&S.actions.length===0,"read-only view closes without running anything");fakeHost.pluginDir="";testPreviewKeyboard()})
+    schedule(300,function(){check(!cc.open&&S.actions.length===0,"read-only view closes without running anything");testDevices()})
+   })
+  })
+ }
+ function linkButton(id) {var r=row(id);return r?findItem(r,function(item){return item.label==="Open"&&item.height>0}):null}
+ function click(item) {check(!!item&&keyDriver.mouseClick(item,item.width/2,item.height/2,Qt.LeftButton,Qt.NoModifier,-1),"native click delivered")}
+ function testDevices() {
+  S.actions=[];S.launched=[];fakeHost.opened=[]
+  var scansBefore=fakeHost.scans
+  cc.requestedArea="wifi";cc.open=true
+  schedule(700,function(){
+   check(cc.area==="devices","cc wifi opens Sound & network")
+   check(fakeHost.scans>scansBefore,"opening reads the plugin list again")
+   ;["link.sound","link.network","link.tailscale","omarchy.setup.network.dns","link.bluetooth"].forEach(function(id){check(!!row(id),"row "+id)})
+   fullyInViewport(row("omarchy.setup.network.dns"),"DNS row shown read-only")
+   check(cc.linkStatus(CC.setting("link.network",cc.live))==="Wi-Fi: FixtureNet","the network line comes from the device facts")
+   check(!!findItem(row("link.bluetooth"),function(item){return item.text==="On · connected: Fixture Buds"}),"the Bluetooth row shows what is connected")
+   check(cc.areaMeta("devices")==="FixtureNet","the sidebar names the network")
+   fullyInViewport(findItem(cc.contentItem,function(item){return item.current===true&&item.modelData!==undefined&&item.modelData.id==="devices"}),"the current area in the scrolled sidebar")
+   fullyInViewport(linkButton("link.sound"),"Sound Open button")
+   check(linkButton("link.sound").enabled,"Open is ready with nothing staged")
+   shot("cc-devices",function(){
+    click(linkButton("link.sound"))
+    schedule(450,function(){
+     check(!cc.open&&!cc.working,"Open closes the window first")
+     check(fakeHost.opened.length===1&&fakeHost.opened[0]==="omarchy.audio","then the sound panel opens where it sits")
+     check(S.actions.length===0&&S.launched.length===0,"a panel link runs no command")
+     testMenuLink()
+    })
+   })
+  })
+ }
+ function testMenuLink() {
+  cc.requestedArea="input";cc.open=true
+  schedule(700,function(){
+   var b=linkButton("link.setup.typing.keyboard")
+   check(!!b&&b.enabled,"Keyboard layouts link in Input & keys")
+   cc.scrollToRow("link.setup.typing.keyboard")
+   schedule(80,function(){
+    fullyInViewport(b,"Keyboard layouts Open button")
+    click(b)
+    schedule(450,function(){
+     check(!cc.open&&S.launched.length===1&&S.launched[0]==="omarchy-setup-keyboard","the menu entry runs detached once the window has closed")
+     check(S.actions.length===0,"not through the shims")
+     testIdle()
+    })
+   })
+  })
+ }
+ function testIdle() {
+  cc.requestedArea="power";cc.open=true
+  schedule(500,function(){
+   check(!!cc.live.idle&&cc.live.idle.lock==="300"&&cc.live.idle.screensaver==="150","idle times read from shell.json")
+   fullyInViewport(row("idle.lock"),"Lock after row")
+   fullyInViewport(findItem(cc.contentItem,function(item){return item.current===true&&item.modelData!==undefined&&item.modelData.id==="power"}),"Power & sleep in the scrolled sidebar")
+   cc.pick("idle.lock","600");cc.pick("idle.screensaver","0")
+   check(S.idleVersion===0&&cc.changeList.length===2,"idle times stage without a write")
+   shot("cc-power",function(){
+    cc.showArea("devices")
+    schedule(120,function(){
+     check(!!linkButton("link.sound")&&!linkButton("link.sound").enabled,"Open waits while something is staged")
+     click(linkButton("link.sound"))
+     schedule(150,function(){
+      check(cc.open&&fakeHost.opened.length===1,"a disabled Open does nothing")
+      cc.use()
+      schedule(1500,function(){
+       check(!cc.working&&cc.usedLive&&cc.message.indexOf("Applied")===0,"Use finished: "+cc.message)
+       check(S.idle.lock===600&&S.idle.screensaver===0&&S.idleVersion===1,"one write sets both")
+       check(cc.live.idle.lock==="600"&&!!cc.applied.idle&&cc.applied.idle.lock===true,"Use records the touched idle times")
+       check(!linkButton("link.sound").enabled,"Open waits while Use is live")
+       cc.cancel()
+       schedule(1500,function(){
+        check(!cc.open&&!cc.working,"Cancel closes")
+        check(S.idle.lock===300&&S.idle.screensaver===150&&S.idleVersion===2,"Cancel writes the values from opening back in one step")
+        check(fakeHost.opened.length===1&&S.launched.length===1,"no link ran on the way")
+        fakeHost.pluginDir="";testPreviewKeyboard()
+       })
+      })
+     })
+    })
    })
   })
  }
@@ -527,7 +642,7 @@ ShellRoot {
         env={**os.environ,'QT_QPA_PLATFORM':'xcb','QSG_RHI_BACKEND':'opengl','LIBGL_ALWAYS_SOFTWARE':'1','QT_LOGGING_RULES':'quickshell.dbus*:false'}
         with (out / 'runtime.log').open('w') as log:
             proc=subprocess.Popen(['xvfb-run','-a','-s','-screen 0 1100x1650x24','quickshell','-n','-p',str(tmp)],env=env,stdout=log,stderr=subprocess.STDOUT,text=True,start_new_session=True)
-            try: proc.wait(timeout=70)
+            try: proc.wait(timeout=120)
             except subprocess.TimeoutExpired:
                 os.killpg(proc.pid,signal.SIGTERM);proc.wait(timeout=5)
         log=(out / 'runtime.log').read_text()

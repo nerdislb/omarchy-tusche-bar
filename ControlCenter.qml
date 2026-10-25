@@ -26,8 +26,11 @@ import "bridge" as Bridge
 // Writes go through the engine's apply (bar), the island's IPC (island), the
 // card picker's menu-override.py (cards), bin/full-width.py and the shell's
 // plugin IPC (extras), Omarchy's own menu actions (omarchy, read from its
-// menu through OmarchyMenuSource and OmarchySettings.js) and
-// bin/hypr-overrides.py (hypr) — see ControlCenter.js.
+// menu through OmarchyMenuSource and OmarchySettings.js),
+// bin/hypr-overrides.py (hypr) and bin/idle-times.py (idle) — see
+// ControlCenter.js. Links stage nothing: Open closes the window (only while
+// nothing is staged or live), then opens Omarchy's panel, the display editor,
+// a terminal flow or an editor.
 PanelWindow {
   id: win
 
@@ -55,7 +58,8 @@ PanelWindow {
 
   readonly property var live: CC.liveState(host ? host.options : ({}), host ? host.config : ({}), cardsStatus,
                                            { fullWidth: fullWidthStatus, sheetInstalled: sheetInstalled },
-                                           omarchyDerived, hyprFresh ? hyprStatus : null)
+                                           omarchyDerived, hyprFresh ? hyprStatus : null,
+                                           host && host.installedPlugins ? host.installedPlugins : null)
   readonly property var pending: CC.pendingState(live, edits)
   readonly property var changeList: CC.changes(edits, live)
   readonly property bool islandAvailable: live.island !== null
@@ -121,7 +125,7 @@ PanelWindow {
   readonly property bool omarchyFresh: omarchyMenu.resultsAt >= openedAt && readersAt >= openedAt && askingAt >= openedAt && openedAt > 0
   readonly property var omarchyDerived: omarchyFresh ? OmarchySettings.derive({
     items: omarchyMenu.items, itemOrder: omarchyMenu.itemOrder, evaluated: omarchyMenu.evaluated,
-    when: omarchyMenu.whenResults, checked: omarchyMenu.checkedResults,
+    when: omarchyMenu.whenResults, checked: omarchyMenu.checkedResults, disabled: omarchyMenu.disabledResults,
     asking: omarchyAsking, readers: omarchyReaders, guardReaders: MenuModel.GUARD_READERS }) : null
   readonly property string omarchyState: omarchyMenu.builtinCount === 0 ? "empty"
     : omarchyDerived ? "ok"
@@ -273,6 +277,7 @@ PanelWindow {
       return set ? set + (set === 1 ? " override" : " overrides") : ""
     }
     if (id === "dock") return omarchyLabel("appearance.dock.position")
+    if (id === "devices") return deviceFacts.item ? deviceFacts.item.networkName : ""
     if (id === "power") return omarchyLabel("power-profile")
     if (id === "apps") return omarchyLabel("setup.default.browser")
     if (id === "health") return health.label
@@ -284,9 +289,10 @@ PanelWindow {
     return !!spec && !!live[spec.domain] && !spec.readOnly
   })
   readonly property var genericRows: CC.areaRows(area, live, { advanced: showAdvanced })
+  readonly property bool areaHasLinks: genericRows.some(function(r) { return r.kind === "row" && String(r.id).indexOf("link.") === 0 })
   readonly property var changedRowList: changedOnly ? CC.changedRows(live, edits, { advanced: showAdvanced }) : []
   // Areas with Omarchy rows say so while Omarchy's menu is still being read.
-  readonly property bool omarchyPending: !live.omarchy && ["cards", "windows", "bar", "island", "dock", "input", "screens", "power", "apps", "system"].indexOf(area) !== -1
+  readonly property bool omarchyPending: !live.omarchy && ["cards", "windows", "bar", "island", "dock", "input", "screens", "devices", "power", "apps", "system"].indexOf(area) !== -1
   // The live value's label of an Omarchy row, "" while unknown.
   function omarchyLabel(key) {
     var spec = CC.setting("omarchy." + key, live)
@@ -322,6 +328,7 @@ PanelWindow {
     searchField.text = ""; comboName.text = ""
     editor.contentY = 0
     refreshHealth()
+    if (host && typeof host.scanPlugins === "function") host.scanPlugins()   // the display editor's link
     keys.forceActiveFocus()
   }
   function end() {
@@ -359,6 +366,14 @@ PanelWindow {
     else if (a === "cards" && !working) refreshCards()
     else if ((a === "windows" || a === "input" || a === "quick") && !working) refreshExtras()
     return true
+  }
+  // Scroll the sidebar so an area's row (and the group head above it) shows.
+  function revealAreaRow(item) {
+    if (!item || areaScroll.height <= 0) return
+    var top = item.y, bottom = item.y + item.height
+    var max = Math.max(0, areaScroll.contentHeight - areaScroll.height)
+    if (top < areaScroll.contentY + Style.space(4)) areaScroll.contentY = Math.max(0, top - Style.space(24))
+    else if (bottom > areaScroll.contentY + areaScroll.height) areaScroll.contentY = Math.min(max, bottom - areaScroll.height + Style.space(8))
   }
   function toggleChanged() {
     changedOnly = !changedOnly
@@ -437,6 +452,10 @@ PanelWindow {
     if (s.domain === "screens") return "Screen presentation · " + s.keys.join(", ")
     if (s.domain === "omarchy") { var o = CC.setting("omarchy." + s.key, live); return "Omarchy · " + (o ? o.label + ": " + CC.valueLabel(o, s.value) : s.key) }
     if (s.domain === "hypr") return "Hyprland overrides · " + s.keys.length + (s.keys.length === 1 ? " value" : " values") + " (Hyprland reloads)"
+    if (s.domain === "idle") return "Idle times · " + s.keys.map(function(k) {
+      var spec = CC.setting("idle." + k, live)
+      return (spec ? spec.label : k) + " " + (s.changes[k] === null ? "Omarchy's default" : CC.idleLabel(s.changes[k]))
+    }).join(", ")
     if (s.domain === "island") { var spec = CC.setting("island." + s.key); return "Tusche Island · " + spec.label + ": " + CC.valueLabel(spec, s.value) }
     if (s.domain === "cards") return "Card picker · " + CC.valueLabel(CC.setting("cards.override"), s.value)
     if (s.domain === "extras") { var x = CC.setting("extras." + s.key); return "Extras · " + x.label + ": " + CC.valueLabel(x, s.value) }
@@ -473,6 +492,12 @@ PanelWindow {
       setPhase("set")
       sheetSet.command = [step.value === "on" ? "omarchy-plugin-enable" : "omarchy-plugin-disable", CC.SHEET_ID]
       sheetSet.running = true
+    } else if (step.domain === "idle") {
+      // shell.json like the bar's writes: tick() starts the helper once no
+      // bar write is running, then waits until the host's copy holds the values.
+      if (idleScript === "") { failStep("Idle times: the plugin's code directory is not known"); return }
+      markTouched(step)
+      setPhase("start")
     } else setPhase("wait")
     stepTimer.restart()
   }
@@ -502,8 +527,8 @@ PanelWindow {
   }
   function stepDone(settle) {
     var d = Object.assign({}, doneDomains)
-    if (step.domain === "screens" || step.domain === "omarchy" || step.domain === "hypr") {
-      // which rows, for Cancel: screen names, Omarchy row keys, Hyprland options
+    if (step.domain === "screens" || step.domain === "omarchy" || step.domain === "hypr" || step.domain === "idle") {
+      // which rows, for Cancel: screen names, Omarchy row keys, Hyprland options, idle keys
       var touched = Object.assign({}, d[step.domain] || {})
       ;(step.keys || [step.key]).forEach(function(name) { touched[name] = true })
       d[step.domain] = touched
@@ -517,6 +542,7 @@ PanelWindow {
     // a setter still running (a timeout) stops here; its exit no longer counts
     if (omarchySet.running) omarchySet.running = false
     if (hyprSet.running) hyprSet.running = false
+    if (idleSet.running) idleSet.running = false
     finishQueue(msg)
   }
 
@@ -541,6 +567,14 @@ PanelWindow {
         return
       }
       if (fresh && !readerProc.running && !omarchyMenu.pending && now - lastConfirmAsk > 500) { lastConfirmAsk = now; askAfterAction() }
+    } else if (s.domain === "idle") {
+      if (phase === "start") {
+        if (host.writing || idleSet.running) return
+        idleSet.token = stepSerial
+        idleSet.command = ["python3", idleScript, "set", JSON.stringify(s.changes)]
+        setPhase("set")
+        idleSet.running = true
+      } else if (phase === "config" && CC.idleHolds(host.config, s.changes)) stepDone(true)
     } else if (s.domain === "island") {
       var v = String(s.value)
       if (phase === "config") {
@@ -597,7 +631,7 @@ PanelWindow {
     edits = CC.prune(edits, live)
     if (mode === "use" || mode === "save") {
       var a = Object.assign({}, applied)
-      for (var d in done) a[d] = d === "screens" || d === "omarchy" || d === "hypr" ? Object.assign({}, a[d] || {}, done[d]) : true
+      for (var d in done) a[d] = d === "screens" || d === "omarchy" || d === "hypr" || d === "idle" ? Object.assign({}, a[d] || {}, done[d]) : true
       applied = a
       if (Object.keys(done).length) usedLive = true
     }
@@ -726,6 +760,71 @@ PanelWindow {
       if (wrong.length) { win.failStep("Hyprland overrides: the file does not show " + wrong.join(", ")); return }
       win.stepDone(false)
     }
+  }
+
+  // Omarchy's idle times: the helper writes shell.json; tick() waits until
+  // the host's copy holds the values.
+  readonly property string idleScript: codeDir !== "" ? codeDir + "/bin/idle-times.py" : ""
+  Process {
+    id: idleSet
+    property int token: 0
+    stderr: StdioCollector { id: idleSetErr }
+    onExited: function(code) {
+      if (idleSet.token !== win.stepSerial || !win.step || win.step.domain !== "idle") return
+      if (code !== 0) {
+        win.failStep("Idle times: " + (String(idleSetErr.text || "").trim().split("\n").pop() || "idle-times.py exited with " + code))
+        return
+      }
+      win.setPhase("config")
+    }
+  }
+
+  // ---------------------------------------------------------------- links
+  // A link opens a panel, the display editor, a terminal flow or an editor:
+  // this window closes first (it holds the keyboard and covers the screen),
+  // so only while nothing is staged or applied, as Cancel would otherwise run.
+  readonly property bool linksOpenable: open && !working && !usedLive && changeList.length === 0
+  property var pendingLink: null
+  function openLink(spec) {
+    if (!spec || spec.domain !== "link" || spec.available === false || !linksOpenable) return
+    pendingLink = spec
+    closeRequested()
+    linkTimer.restart()
+  }
+  Timer {
+    id: linkTimer
+    interval: 220                           // after the card's fade-out and keyboard release
+    onTriggered: {
+      var l = win.pendingLink
+      win.pendingLink = null
+      if (!l) return
+      if (l.widget) { if (win.host && typeof win.host.openWidget === "function") win.host.openWidget(l.widget) }
+      else if (l.action) {
+        // as Omarchy's menu runs its actions (a login shell), in a session of
+        // its own so it outlives this window and the shell
+        linkLauncher.command = ["sh", "-c",
+          'if command -v setsid >/dev/null 2>&1; then exec setsid -f bash -lc "$1" </dev/null >/dev/null 2>&1; fi; '
+          + 'bash -lc "$1" </dev/null >/dev/null 2>&1 &',
+          "sh", l.action]
+        linkLauncher.running = true
+      }
+    }
+  }
+  Process { id: linkLauncher }
+  // What a link's row shows as live: the device panels' state, from the
+  // shell's own services (DeviceFacts, read-only while the area is shown).
+  function linkStatus(spec) {
+    var f = deviceFacts.item
+    if (!spec || !f) return ""
+    if (spec.key === "sound") return f.soundLine
+    if (spec.key === "network") return f.networkLine
+    if (spec.key === "bluetooth") return f.bluetoothLine
+    return ""
+  }
+  Loader {
+    id: deviceFacts
+    active: win.open
+    sourceComponent: DeviceFacts {}
   }
 
   // ---------------------------------------------------------------- health probes
@@ -893,7 +992,8 @@ PanelWindow {
   function stateObject() {
     return { open: open, area: area, working: working, step: workText, used: usedLive, applied: Object.keys(applied),
              staged: changeList.map(function(c) { return c.id + "=" + c.to }), message: message, health: health.label, extras: live.extras,
-             omarchy: live.omarchy, hypr: live.hypr, changedOnly: changedOnly, advanced: showAdvanced,
+             omarchy: live.omarchy, hypr: live.hypr, idle: live.idle, changedOnly: changedOnly, advanced: showAdvanced,
+             links: live.linkSpecs.map(function(l) { return l.id + (l.available === false ? " (not placed)" : "") }),
              issues: healthList.filter(function(c) { return c.state === "issue" }).map(function(c) { return c.id + ": " + c.detail }) }
   }
 
@@ -1146,6 +1246,9 @@ PanelWindow {
                   color: areaRow.modelData.id === "health" && win.health.issues ? Commons.Color.urgent : Util.alpha(Commons.Color.popups.text, 0.6)
                 }
                 MouseArea { id: areaMouse; anchors.fill: parent; enabled: !areaRow.isGroup; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: win.showArea(areaRow.modelData.id) }
+                // the current area stays in view (cc <area>, ↑↓, search jumps)
+                onCurrentChanged: if (current) Qt.callLater(win.revealAreaRow, areaRow)
+                Component.onCompleted: if (current) Qt.callLater(win.revealAreaRow, areaRow)
               }
             }
             }
@@ -1468,6 +1571,57 @@ PanelWindow {
                 }
               }
 
+              // ---- Links: why Open waits
+              Caption {
+                visible: win.areaHasLinks && !win.changedOnly && !win.linksOpenable && win.open
+                topPadding: Style.space(6)
+                width: parent.width; wrapMode: Text.WordWrap
+                color: Commons.Color.accent
+                text: win.working ? "Open waits until the changes are applied." : "Save or Cancel first: Open closes this window."
+              }
+
+              // ---- Sound & network: what the links open
+              Caption {
+                visible: win.area === "devices" && !win.changedOnly
+                topPadding: Style.space(6)
+                width: parent.width; wrapMode: Text.WordWrap
+                text: "Volume, Wi-Fi and Bluetooth live in Omarchy's own panels, where they sit in the bar or in a Tusche status group. Open closes this window and opens the panel; the panels apply what you change at once, so nothing here goes through Use or Cancel. The lines above are read from the shell's own audio, network and Bluetooth services."
+              }
+
+              // ---- Screens: the arrangement links
+              Caption {
+                visible: win.area === "screens" && !win.changedOnly && win.areaHasLinks
+                topPadding: Style.space(6)
+                width: parent.width; wrapMode: Text.WordWrap
+                text: "Arrange displays opens the display editor: drag the screens into place and apply; keep the new layout before its timer runs out, or it goes back by itself. Brightness opens the display panel. Edit monitors.lua opens Omarchy's monitor file in your editor, for resolution and scale."
+              }
+
+              // ---- Power & sleep: how the idle times work
+              Column {
+                visible: win.area === "power" && !win.changedOnly && !!win.live.idle
+                width: parent.width
+                spacing: Style.space(2)
+                Caption {
+                  visible: text !== ""
+                  topPadding: Style.space(6)
+                  width: parent.width; wrapMode: Text.WordWrap
+                  color: Commons.Color.accent
+                  text: {
+                    var p = win.pending.idle
+                    if (!p) return ""
+                    var s = Number(p.screensaver), l = Number(p.lock)
+                    if (s === 0 && l === 0) return "Both are off: the computer neither shows the screensaver nor locks while idle."
+                    if (s > 0 && l > 0 && l <= s) return "The lock comes first (" + CC.idleLabel(l) + "), so the screensaver never shows."
+                    return ""
+                  }
+                }
+                Caption {
+                  topPadding: Style.space(6)
+                  width: parent.width; wrapMode: Text.WordWrap
+                  text: "Both times count from the moment keyboard and pointer go quiet; Omarchy's idle service reads them live from shell.json (idle.screensaver, idle.lock). Off turns that step off. Stay awake pauses both; Screensaver Off keeps the screen as it is until the lock time. Dismissing the screensaver before the lock time counts as activity: it does not lock then."
+                }
+              }
+
               // ---- Dock
               Caption {
                 visible: win.area === "dock" && !win.changedOnly && !!win.live.omarchy
@@ -1657,8 +1811,8 @@ PanelWindow {
     }
   }
   // Rows from the registry ({ kind: "head" | "row", text, id }): a section
-  // head, a row of choices, or a number row (Hyprland overrides). Tagged with
-  // where the setting comes from where an area mixes them.
+  // head, a row of choices, a number row (Hyprland overrides) or a link.
+  // Tagged with where the setting comes from where an area mixes them.
   Component {
     id: genericRow
     Column {
@@ -1666,11 +1820,17 @@ PanelWindow {
       required property var modelData
       readonly property var spec: modelData.kind === "row" ? CC.setting(modelData.id, win.live) : null
       readonly property bool mixed: win.changedOnly || win.area === "quick" || win.area === "windows" || win.area === "input"
-      readonly property string tag: !spec ? "" : spec.domain === "omarchy" || spec.domain === "hypr" || gen.mixed ? CC.sourceOf(spec) : ""
+      readonly property string tag: !spec ? "" : ["omarchy", "hypr", "idle", "link"].indexOf(spec.domain) !== -1 || gen.mixed ? CC.sourceOf(spec) : ""
       width: editorColumn.width
       SectionHead { visible: gen.modelData.kind === "head"; text: gen.modelData.text || "" }
+      LinkRow {
+        visible: !!gen.spec && gen.spec.kind === "link"
+        width: parent.width
+        spec: gen.spec && gen.spec.kind === "link" ? gen.spec : null
+        tag: gen.tag
+      }
       SettingRow {
-        visible: !!gen.spec && gen.spec.kind !== "number"
+        visible: !!gen.spec && gen.spec.kind !== "number" && gen.spec.kind !== "link"
         width: parent.width
         settingId: gen.spec ? gen.spec.id : ""
         label: gen.spec ? gen.spec.label : ""
@@ -1978,6 +2138,56 @@ PanelWindow {
         visible: !!nrow.spec
         text: nrow.spec ? nrow.spec.min + "–" + nrow.spec.max : ""
       }
+    }
+  }
+
+  // A link: what it opens, what is live there now (device panels), Open.
+  // Nothing to stage; Open closes the window first (win.openLink).
+  component LinkRow: Item {
+    id: lrow
+    property var spec: null
+    property string tag: ""
+    readonly property string settingId: spec ? spec.id : ""
+    readonly property bool available: !!spec && spec.available !== false
+    readonly property string status: spec ? win.linkStatus(spec) : ""
+    readonly property string opens: !spec ? "" : spec.opens === "terminal" ? "Opens a terminal"
+      : spec.opens === "editor" ? "Opens your editor" : spec.opens === "panel" ? "Opens the panel" : "Opens Omarchy's picker"
+    readonly property int labelWidth: Math.min(Style.space(200), Math.round(width * 0.32))
+    height: Math.max(llabel.implicitHeight, ltext.implicitHeight, openButton.height) + Style.space(10)
+    FlashBg { forId: lrow.settingId }
+    Column {
+      id: llabel
+      x: Style.space(6); y: Style.space(5)
+      width: lrow.labelWidth
+      spacing: Style.space(1)
+      opacity: lrow.available ? 1 : 0.6
+      Body { width: parent.width; wrapMode: Text.WordWrap; text: lrow.spec ? lrow.spec.label : "" }
+      Row {
+        width: parent.width
+        spacing: Style.space(5)
+        Tag { id: ltag; visible: lrow.tag !== ""; text: lrow.tag; anchors.verticalCenter: parent.verticalCenter }
+        Caption { width: parent.width - (ltag.visible ? ltag.width + parent.spacing : 0); elide: Text.ElideRight; text: lrow.spec ? lrow.spec.hint : ""; anchors.verticalCenter: parent.verticalCenter }
+      }
+    }
+    Column {
+      id: ltext
+      x: llabel.x + llabel.width + Style.space(12); y: Style.space(5)
+      width: Math.max(0, openButton.x - x - Style.space(10))
+      spacing: Style.space(1)
+      Body { visible: lrow.status !== ""; width: parent.width; wrapMode: Text.WordWrap; text: lrow.status }
+      Caption {
+        width: parent.width; wrapMode: Text.WordWrap
+        color: !lrow.available ? Util.alpha(Commons.Color.popups.text, 0.75) : Util.alpha(Commons.Color.popups.text, 0.6)
+        text: !lrow.spec ? "" : !lrow.available ? lrow.spec.why : lrow.spec.note + (lrow.spec.note ? " · " : "") + lrow.opens.toLowerCase()
+      }
+    }
+    CcButton {
+      id: openButton
+      x: lrow.width - width - Style.space(6); y: Style.space(4)
+      label: "Open"
+      minWidth: Style.space(72)
+      enabled: lrow.available && win.linksOpenable
+      onPicked: win.openLink(lrow.spec)
     }
   }
 

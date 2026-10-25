@@ -7,7 +7,7 @@
 // ControlCenter.qml runs the plans (bar options through the engine's apply,
 // island settings through its IPC, the card picker through its script,
 // Omarchy's settings through their menu actions, Hyprland overrides through
-// bin/hypr-overrides.py).
+// bin/hypr-overrides.py, Omarchy's idle times through bin/idle-times.py).
 //
 // State shape (live, snapshot, pending):
 //   { bar: <normalized Tusche Bar options>,
@@ -19,7 +19,10 @@
 //     omarchy: { <row key>: <value id> | "unknown" } | null (not read),
 //     omarchySpecs: [<rows from OmarchySettings.derive>],
 //     hypr: { <Hyprland option>: <override> | "" (none) } | null (not read),
-//     hyprEffective: { <Hyprland option>: <value Hyprland runs with> } }
+//     hyprEffective: { <Hyprland option>: <value Hyprland runs with> },
+//     idle: { screensaver, lock: <seconds Omarchy runs with> } | null (shell.json not read),
+//     idleRaw: { <key>: <the value in shell.json, absent when unset> },
+//     link: {} (links have no value), linkSpecs: [<link rows>] }
 // Values are strings, as the island IPC takes them. Staged edits are an
 // overlay { "<domain>.<key>": value } on top of the live state, so a setting
 // nobody touched follows the live value.
@@ -29,13 +32,15 @@ var CARDS_ID = "nerdibeard.card-picker"
 var SHEET_ID = "nerdibeard.shortcut-sheet"
 
 // The sidebar: areas in groups. Every row says where it comes from: Tusche
-// (our plugins), Omarchy (runs Omarchy's own command) or Override (a Hyprland
-// value in the Control Center's own toggle file).
+// (our plugins), Omarchy (runs Omarchy's own command), Override (a Hyprland
+// value in the Control Center's own toggle file) or Link (opens a panel, a
+// terminal flow or an editor; nothing to stage).
 var GROUPS = [
   { id: "overview", label: "OVERVIEW" },
   { id: "appearance", label: "APPEARANCE" },
   { id: "bar", label: "BAR" },
   { id: "work", label: "WORK" },
+  { id: "devices", label: "DEVICES" },
   { id: "system", label: "SYSTEM" }
 ]
 var AREAS = [
@@ -47,21 +52,146 @@ var AREAS = [
   { id: "bar", group: "bar", label: "Tusche Bar", note: "Presets, combinations, every bar option, Omarchy's bar" },
   { id: "island", group: "bar", label: "Tusche Island", note: "Notifications in the bar, Omarchy's do not disturb" },
   { id: "dock", group: "bar", label: "Dock", note: "Omarchy's dock" },
-  { id: "input", group: "work", label: "Input & keys", note: "Touchpad, keyboard, pointer and the shortcut sheet" },
-  { id: "screens", group: "work", label: "Screens", note: "Bar presentation per screen, display switches" },
-  { id: "power", group: "system", label: "Power & sleep", note: "Power profile, staying awake, the screensaver" },
+  { id: "input", group: "work", label: "Input & keys", note: "Touchpad, keyboard, pointer, layouts and the shortcut sheet" },
+  { id: "screens", group: "work", label: "Screens", note: "Bar presentation per screen, display switches, arrangement" },
+  { id: "devices", group: "devices", label: "Sound & network", note: "Omarchy's panels for sound, Wi-Fi and Bluetooth, DNS" },
+  { id: "power", group: "devices", label: "Power & sleep", note: "Power profile, staying awake, the screensaver, idle times" },
   { id: "apps", group: "system", label: "Default apps", note: "What Omarchy opens for browsing, terminals, editing, agents" },
-  { id: "system", group: "system", label: "System", note: "Omarchy's other settings" }
+  { id: "system", group: "system", label: "System", note: "Security, Git, time and Omarchy's other settings" }
 ]
 // Older names still open their area (IPC: cc <area>).
-var AREA_ALIASES = { extras: "windows" }
-// Generic rows (Omarchy, overrides, full width) per area, in this section
-// order; sections not listed follow in the order they come.
+var AREA_ALIASES = { extras: "windows", sound: "devices", network: "devices", bluetooth: "devices", wifi: "devices" }
+// Generic rows (Omarchy, overrides, full width, idle times, links) per area,
+// in this section order; sections not listed follow in the order they come.
 var SECTIONS = {
   windows: ["WINDOWS", "FINE VALUES", "LAYOUT"],
-  input: ["DEVICES", "KEYBOARD", "POINTER", "TOUCHPAD"],
-  power: ["POWER", "SLEEP"],
-  system: ["SYSTEM", "HARDWARE", "MORE FROM OMARCHY"]
+  input: ["DEVICES", "KEYBOARD", "POINTER", "TOUCHPAD", "SETUP"],
+  screens: ["DISPLAYS", "ARRANGEMENT"],
+  devices: ["SOUND", "NETWORK", "BLUETOOTH"],
+  power: ["POWER", "SLEEP", "IDLE TIMES"],
+  system: ["SYSTEM", "SECURITY", "SETUP", "HARDWARE", "MORE FROM OMARCHY"]
+}
+
+// Panels a link opens (the window closes first). Omarchy's device panels are
+// bar widgets: they open where they sit, in the bar or folded into a Tusche
+// status group (host.openWidget finds them); one that is neither has nothing
+// to open from. The display editor answers its own IPC.
+var DEVICE_LINKS = [
+  { key: "sound", area: "devices", section: "SOUND", label: "Sound", widget: "omarchy.audio",
+    note: "Volume, the output and input device, the mixer per app" },
+  { key: "network", area: "devices", section: "NETWORK", label: "Wi-Fi and network", widget: "omarchy.network",
+    note: "Networks, connect and forget, signal, speed test" },
+  { key: "tailscale", area: "devices", section: "NETWORK", label: "Tailscale", widget: "omarchy.tailscale",
+    note: "The tailnet connection and its machines" },
+  { key: "bluetooth", area: "devices", section: "BLUETOOTH", label: "Bluetooth", widget: "omarchy.bluetooth",
+    note: "Devices, connect and disconnect, batteries, the radio" },
+  { key: "arrange", area: "screens", section: "ARRANGEMENT", label: "Arrange displays", source: "tusche",
+    command: "omarchy-shell display-layout open", requires: "nerdibeard.display-layout", host: ["nerdibeard.monitor", "nerdibeard.display-layout"],
+    note: "Drag the displays into place, then Keep or let it revert" },
+  { key: "brightness", area: "screens", section: "ARRANGEMENT", label: "Brightness", source: "tusche",
+    widget: "nerdibeard.monitor", requires: "nerdibeard.monitor", note: "Brightness and the laptop display" },
+  { key: "brightness-omarchy", area: "screens", section: "ARRANGEMENT", label: "Brightness",
+    widget: "omarchy.monitor", unless: "nerdibeard.monitor", note: "Brightness and the laptop display" }
+]
+// Is this bar widget somewhere it can open from: in the bar's layout, or in
+// the group a Tusche variant folds it into?
+function widgetPlaced(config, options, id) {
+  var layout = config && config.bar && config.bar.layout ? config.bar.layout : {}
+  var sections = Presets.layoutSections(layout)
+  for (var s = 0; s < sections.length; s++) {
+    var list = Array.isArray(layout[sections[s]]) ? layout[sections[s]] : []
+    for (var i = 0; i < list.length; i++) if (Presets.entryId(list[i]) === id) return true
+  }
+  return Presets.foldedIds(options).indexOf(id) !== -1
+}
+// The device links this machine has: plugins: the installed plugin folders
+// (null while not read; Omarchy's own widgets always count). A link whose
+// panel is not placed stays, unavailable, with the reason.
+function deviceLinks(config, options, plugins) {
+  var has = function(id) { return String(id).indexOf("omarchy.") === 0 || (Array.isArray(plugins) && plugins.indexOf(id) !== -1) }
+  var out = []
+  DEVICE_LINKS.forEach(function(l) {
+    if (l.requires && !has(l.requires)) return
+    if (l.unless && has(l.unless)) return
+    var hosts = l.host || (l.widget ? [l.widget] : [])
+    var placed = hosts.some(function(id) { return widgetPlaced(config, options, id) })
+    out.push({ id: "link." + l.key, domain: "link", kind: "link", source: l.source || "omarchy", key: l.key,
+               area: l.area, section: l.section, label: l.label, note: l.note, opens: "panel",
+               widget: l.widget || "", action: l.command || "", hint: l.widget || l.command || "",
+               available: placed, why: placed ? "" : "Not in the bar: add " + hosts[0] + " to the bar (or its Tusche group) to open it here",
+               values: [], terms: [l.widget || "", l.command || "", l.note] })
+  })
+  return out
+}
+
+// Omarchy's idle times: shell.json idle.screensaver and idle.lock, seconds
+// from the moment the computer goes idle, 0 turns that step off. Omarchy's
+// idle service reads them live (shell/plugins/services/idle); without a
+// value it uses its defaults. Written by bin/idle-times.py.
+var IDLE_SETTINGS = [
+  { key: "screensaver", label: "Screensaver after", fallback: 150 },
+  { key: "lock", label: "Lock after", fallback: 300 }
+]
+var IDLE_CHOICES = [0, 60, 120, 150, 300, 600, 900, 1800, 3600]
+function idleSetting(key) {
+  for (var i = 0; i < IDLE_SETTINGS.length; i++) if (IDLE_SETTINGS[i].key === key) return IDLE_SETTINGS[i]
+  return null
+}
+function idleLabel(seconds) {
+  var n = Number(seconds)
+  if (!isFinite(n) || n < 0) return String(seconds)
+  if (n === 0) return "Off"
+  if (n < 60) return n + " s"
+  if (n % 3600 === 0) return (n / 3600) + " h"
+  if (n > 3600) return Math.floor(n / 3600) + " h " + idleLabel(n % 3600)
+  if (n % 60 === 0) return (n / 60) + " min"
+  if (n % 30 === 0) return (n / 60) + " min"
+  return Math.floor(n / 60) + " min " + (n % 60) + " s"
+}
+// What Omarchy's idle service makes of a shell.json value (IdleModel.secondsFromConfig).
+function idleSeconds(v, fallback) {
+  var n = Number(v)
+  return v === null || v === undefined || v === "" || typeof v === "boolean" || !isFinite(n) || n < 0 ? fallback : Math.floor(n)
+}
+// shell.json → { values: { key: "<seconds>" }, raw: { key: <stored value> } }
+// or null before shell.json has been read.
+function idleFacts(config) {
+  if (!config || typeof config !== "object" || !Object.keys(config).length) return null
+  var idle = config.idle && typeof config.idle === "object" && !Array.isArray(config.idle) ? config.idle : {}
+  var values = {}, raw = {}
+  IDLE_SETTINGS.forEach(function(s) {
+    values[s.key] = String(idleSeconds(idle[s.key], s.fallback))
+    if (Object.prototype.hasOwnProperty.call(idle, s.key)) raw[s.key] = idle[s.key]
+  })
+  return { values: values, raw: raw }
+}
+// A value from shell.json as Cancel writes it back: numbers and short strings
+// as they were; anything else is dropped (Omarchy reads it as no value anyway).
+function idleRestoreValue(v) {
+  if (typeof v === "number" && isFinite(v)) return v
+  if (typeof v === "string" && v.length <= 32) return v
+  return null
+}
+// Does shell.json (the host's copy) hold these idle values? null: no value.
+function idleHolds(config, changes) {
+  var idle = config && config.idle && typeof config.idle === "object" && !Array.isArray(config.idle) ? config.idle : {}
+  return Object.keys(changes || {}).every(function(key) {
+    var want = changes[key]
+    if (want === null) return !Object.prototype.hasOwnProperty.call(idle, key)
+    return Object.prototype.hasOwnProperty.call(idle, key) && JSON.stringify(idle[key]) === JSON.stringify(want)
+  })
+}
+function idleSpec(s, live) {
+  var now = live && live.idle ? live.idle[s.key] : undefined
+  var ids = IDLE_CHOICES.map(String)
+  if (now !== undefined && ids.indexOf(now) === -1) {
+    ids.push(now)
+    ids.sort(function(a, b) { return Number(a) - Number(b) })
+  }
+  return { id: "idle." + s.key, domain: "idle", key: s.key, area: "power", section: "IDLE TIMES", label: s.label,
+           hint: "default " + idleLabel(s.fallback), kind: "choice", source: "omarchy",
+           values: ids.map(function(id) { return { id: id, label: idleLabel(id) } }),
+           terms: ["idle", "shell.json", "idle." + s.key, s.key === "lock" ? "lock screen" : "screensaver"] }
 }
 
 // Extras: switches beyond the bar. fullWidth is a Hyprland toggle file
@@ -141,7 +271,8 @@ function sidebar() {
 // Where a row comes from, for its tag.
 function sourceOf(spec) {
   if (!spec) return ""
-  return spec.domain === "omarchy" ? "Omarchy" : spec.domain === "hypr" ? "Override" : "Tusche"
+  return spec.domain === "omarchy" || spec.domain === "idle" ? "Omarchy" : spec.domain === "hypr" ? "Override"
+    : spec.domain === "link" ? "Link" : "Tusche"
 }
 
 function hyprSpec(s) {
@@ -173,8 +304,12 @@ function settings(live) {
                values: s.values, hint: s.hint || "" })
   })
   HYPR_SETTINGS.forEach(function(s) { out.push(hyprSpec(s)) })
+  IDLE_SETTINGS.forEach(function(s) { out.push(idleSpec(s, live)) })
+  // a section opens with its panel, then Omarchy's rows, then menu links
+  var links = live && Array.isArray(live.linkSpecs) ? live.linkSpecs : []
+  out = out.concat(links.filter(function(l) { return !l.fromMenu }))
   if (live && Array.isArray(live.omarchySpecs)) out = out.concat(live.omarchySpecs)
-  return out
+  return out.concat(links.filter(function(l) { return l.fromMenu }))
 }
 function setting(id, live) {
   var all = settings(live)
@@ -277,12 +412,15 @@ function extrasValues(config, facts) {
     : facts.sheetInstalled === false ? "missing" : "unknown"
   return { fullWidth: fw, sheet: sheet }
 }
-// omarchy: OmarchySettings.derive's answer ({ specs, values }) or null while
-// it has not read Omarchy's menu; hypr: hyprFacts or null (not read yet).
-function liveState(options, config, cardsStatus, extrasFacts, omarchy, hypr) {
+// omarchy: OmarchySettings.derive's answer ({ specs, values, links }) or null
+// while it has not read Omarchy's menu; hypr: hyprFacts or null (not read
+// yet); plugins: the installed plugin folders (host.installedPlugins) or null.
+function liveState(options, config, cardsStatus, extrasFacts, omarchy, hypr, plugins) {
   var entries = config && Array.isArray(config.plugins) ? config.plugins : []
   var owner = entries.filter(function(p) { return p && p.id === "nerdibeard.tusche-bar" })[0]
-  return { bar: Presets.normalizeOptions(options || {}),
+  var bar = Presets.normalizeOptions(options || {})
+  var idle = idleFacts(config)
+  return { bar: bar,
            screens: Presets.normalizeScreens(owner && owner.screenProfiles),
            island: islandValues(islandEntry(config)),
            cards: cardsStatus === "enabled" || cardsStatus === "disabled" ? { override: cardsStatus } : null,
@@ -290,11 +428,16 @@ function liveState(options, config, cardsStatus, extrasFacts, omarchy, hypr) {
            omarchy: omarchy ? omarchy.values : null,
            omarchySpecs: omarchy ? omarchy.specs : [],
            hypr: hypr && !hypr.error ? hypr.values : null,
-           hyprEffective: hypr ? hypr.effective : {} }
+           hyprEffective: hypr ? hypr.effective : {},
+           idle: idle ? idle.values : null,
+           idleRaw: idle ? idle.raw : {},
+           link: {},
+           linkSpecs: deviceLinks(config, bar, plugins).concat(omarchy && Array.isArray(omarchy.links) ? omarchy.links : []) }
 }
 // Can this setting be changed now? An extra only while its live value is one
 // of its choices (not while unknown, failed or not installed); an Omarchy row
-// only while it is not read-only and its live value is one it can go back to.
+// only while it is not read-only and its live value is one it can go back to;
+// a link (nothing to stage) while its panel is there to open.
 function available(live, id) {
   var spec = setting(id, live)
   if (!spec || !live || !live[spec.domain]) return false
@@ -303,17 +446,18 @@ function available(live, id) {
     var now = live.omarchy[spec.key]
     return spec.values.some(function(x) { return x.id === now && x.pick })
   }
+  if (spec.domain === "link") return spec.available !== false
   if (spec.domain !== "extras") return true
   var v = live.extras[spec.key]
   return spec.values.some(function(x) { return x.id === v })
 }
-// A value this setting may be staged with.
+// A value this setting may be staged with (never one for a link).
 function acceptable(live, id, v) {
   var spec = setting(id, live)
-  if (!spec) return false
+  if (!spec || spec.domain === "link") return false
   if (spec.domain === "hypr") return hyprValue(spec.key, v) === v
-  if (spec.domain === "omarchy") return spec.values.some(function(x) { return x.id === v && x.pick })
-  if (spec.domain === "extras") return spec.values.some(function(x) { return x.id === v })
+  if (spec.domain === "omarchy" || spec.domain === "idle" || spec.domain === "extras")
+    return spec.values.some(function(x) { return x.id === v && x.pick !== false })
   return true
 }
 
@@ -341,9 +485,9 @@ function pendingState(live, edits) {
 function stage(edits, live, id, v) {
   var p = split(id)
   var out = Object.assign({}, edits)
-  if (!live || !live[p.domain]) return out
+  if (!live || !live[p.domain] || p.domain === "link") return out
   if (p.domain === "screens" && (!Presets.screenNameValid(p.key) || ["inherit", "compact", "detailed"].indexOf(v) < 0)) return out
-  if ((p.domain === "extras" || p.domain === "omarchy" || p.domain === "hypr") &&
+  if ((p.domain === "extras" || p.domain === "omarchy" || p.domain === "hypr" || p.domain === "idle") &&
       (!available(live, id) || !acceptable(live, id, v))) return out
   if (value(live, id) === v) delete out[id]
   else out[id] = v
@@ -395,10 +539,11 @@ function omarchyAction(live, key, v) {
 }
 // Steps for Use / Save. Omarchy's settings first, one action each (some write
 // shell.json, so each waits until Omarchy reports the new value), then the
-// Hyprland overrides as ONE write and reload, the island (it writes
-// shell.json from the shell's in-memory copy), the card picker (its own menu
-// file), the extras (a Hyprland toggle file; the sheet through the shell's
-// plugin IPC), the bar last as ONE apply (each bar write rebuilds the bar).
+// Hyprland overrides as ONE write and reload, the idle times as ONE
+// shell.json write, the island (it writes shell.json from the shell's
+// in-memory copy), the card picker (its own menu file), the extras (a
+// Hyprland toggle file; the sheet through the shell's plugin IPC), the bar
+// last as ONE apply (each bar write rebuilds the bar).
 function plan(edits, live) {
   var ch = changes(edits, live)
   var steps = []
@@ -410,6 +555,9 @@ function plan(edits, live) {
   var hypr = {}
   ch.forEach(function(c) { if (c.domain === "hypr") hypr[c.key] = c.to })
   if (Object.keys(hypr).length) steps.push({ domain: "hypr", keys: Object.keys(hypr), changes: hypr })
+  var idle = {}
+  ch.forEach(function(c) { if (c.domain === "idle") idle[c.key] = Number(c.to) })
+  if (Object.keys(idle).length) steps.push({ domain: "idle", keys: Object.keys(idle), changes: idle })
   ch.forEach(function(c) { if (c.domain === "island") steps.push({ domain: "island", key: c.key, value: c.to }) })
   ch.forEach(function(c) { if (c.domain === "cards") steps.push({ domain: "cards", key: c.key, value: c.to }) })
   ch.forEach(function(c) { if (c.domain === "extras") steps.push({ domain: "extras", key: c.key, value: c.to }) })
@@ -468,6 +616,18 @@ function revertPlan(snapshot, live, applied) {
       if (live.hypr[option] !== before) back[option] = before
     })
     if (Object.keys(back).length) steps.push({ domain: "hypr", keys: Object.keys(back), changes: back })
+  }
+  // Idle times Use touched, back to what shell.json held at opening: the same
+  // value, or no value at all (null drops it again).
+  if (applied.idle && snapshot.idle && live.idle) {
+    var was = {}, before = snapshot.idleRaw || {}, now = live.idleRaw || {}
+    Object.keys(applied.idle).forEach(function(key) {
+      if (!idleSetting(key)) return
+      var had = Object.prototype.hasOwnProperty.call(before, key), has = Object.prototype.hasOwnProperty.call(now, key)
+      if (had === has && (!had || JSON.stringify(before[key]) === JSON.stringify(now[key]))) return
+      was[key] = had ? idleRestoreValue(before[key]) : null
+    })
+    if (Object.keys(was).length) steps.push({ domain: "idle", keys: Object.keys(was), changes: was })
   }
   if (applied.island && snapshot.island && live.island)
     ISLAND_SETTINGS.forEach(function(s) {
@@ -546,7 +706,7 @@ function searchIndex(live, edits, extra) {
     var now = pending[s.domain][s.key]
     out.push({ id: s.id, area: s.area, label: s.label,
                values: s.values.map(function(v) { return v.label }),
-               current: s.domain === "hypr" ? hyprShown(live, s.key, now) : valueLabel(s, now),
+               current: s.domain === "hypr" ? hyprShown(live, s.key, now) : s.domain === "link" ? "open …" : valueLabel(s, now),
                terms: (s.terms || []).concat(s.hint ? [s.hint] : []).filter(function(t) { return t }) })
   })
   return out.concat(extra || [])
@@ -599,10 +759,10 @@ function search(index, query, limit) {
 
 // ---------------------------------------------------------------- generic rows
 // The rows of an area the window lays out from the registry (Omarchy rows,
-// overrides, full width), as heads and setting ids in section order. The
-// hand-made parts of an area (presets, screens, the sheet button …) stay in
-// ControlCenter.qml. opts: { advanced: show advanced rows }.
-var GENERIC = { omarchy: true, hypr: true }
+// overrides, idle times, links, full width), as heads and setting ids in
+// section order. The hand-made parts of an area (presets, screens, the sheet
+// button …) stay in ControlCenter.qml. opts: { advanced: show advanced rows }.
+var GENERIC = { omarchy: true, hypr: true, idle: true, link: true }
 function genericRow(s) { return GENERIC[s.domain] === true || s.id === "extras.fullWidth" }
 function areaRows(area, live, opts) {
   opts = opts || {}
@@ -627,8 +787,9 @@ function areaRows(area, live, opts) {
   return out
 }
 // "Changed only": staged rows, Hyprland overrides that are set, Tusche
-// options away from their defaults. Omarchy's own settings have no default
-// to compare with, so they show only when staged. Grouped by area.
+// options and idle times away from their defaults. Omarchy's menu settings
+// have no default to compare with, so they show only when staged; links
+// never. Grouped by area.
 function changedRows(live, edits, opts) {
   var pending = pendingState(live, edits || {})
   var defaults = Presets.normalizeOptions({})
@@ -640,6 +801,7 @@ function changedRows(live, edits, opts) {
     var away = s.domain === "hypr" ? now !== ""
       : s.domain === "bar" ? now !== defaults[s.key]
       : s.domain === "island" ? now !== (ISLAND_SETTINGS.filter(function(x) { return x.key === s.key })[0] || {}).fallback
+      : s.domain === "idle" ? now !== String(idleSetting(s.key).fallback)
       : false
     if (staged || away) (byArea[s.area] = byArea[s.area] || []).push(s.id)
   })
