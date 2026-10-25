@@ -207,7 +207,7 @@ PanelWindow {
   }
   // (on live itself: a handler on omarchyDerived or hyprStatus may run before
   // the live binding has taken the new answer)
-  onLiveChanged: if (open && snapshot) { fillLateSnapshot("omarchy"); fillLateSnapshot("hypr") }
+  onLiveChanged: if (open && snapshot) { fillLateSnapshot("omarchy"); fillLateSnapshot("hypr"); fillLateSnapshot("idle") }
 
   readonly property var healthList: CC.healthChecks({
     watchdog: host && host.watchdogModel !== undefined ? { state: host.watchdogModel, enabled: host.watchdogEnabled === true, now: Date.now() } : null,
@@ -311,6 +311,7 @@ PanelWindow {
   function begin() {
     if (working) { beginAfterWork = true; return }
     cancelAfterWork = false
+    linkTimer.stop(); pendingLink = null        // opened again before a link ran: it does not run
     area = CC.isArea(requestedArea) ? CC.resolveArea(requestedArea) : "quick"
     if (area !== "quick") configureArea = area
     requestedArea = ""
@@ -452,10 +453,10 @@ PanelWindow {
     if (s.domain === "screens") return "Screen presentation · " + s.keys.join(", ")
     if (s.domain === "omarchy") { var o = CC.setting("omarchy." + s.key, live); return "Omarchy · " + (o ? o.label + ": " + CC.valueLabel(o, s.value) : s.key) }
     if (s.domain === "hypr") return "Hyprland overrides · " + s.keys.length + (s.keys.length === 1 ? " value" : " values") + " (Hyprland reloads)"
-    if (s.domain === "idle") return "Idle times · " + s.keys.map(function(k) {
+    if (s.domain === "idle") return "Idle times · " + (s.restore ? "back to the values from opening" : s.keys.map(function(k) {
       var spec = CC.setting("idle." + k, live)
-      return (spec ? spec.label : k) + " " + (s.changes[k] === null ? "Omarchy's default" : CC.idleLabel(s.changes[k]))
-    }).join(", ")
+      return (spec ? spec.label : k) + " " + CC.idleLabel(s.changes[k])
+    }).join(", "))
     if (s.domain === "island") { var spec = CC.setting("island." + s.key); return "Tusche Island · " + spec.label + ": " + CC.valueLabel(spec, s.value) }
     if (s.domain === "cards") return "Card picker · " + CC.valueLabel(CC.setting("cards.override"), s.value)
     if (s.domain === "extras") { var x = CC.setting("extras." + s.key); return "Extras · " + x.label + ": " + CC.valueLabel(x, s.value) }
@@ -571,10 +572,10 @@ PanelWindow {
       if (phase === "start") {
         if (host.writing || idleSet.running) return
         idleSet.token = stepSerial
-        idleSet.command = ["python3", idleScript, "set", JSON.stringify(s.changes)]
+        idleSet.command = ["python3", idleScript, s.restore ? "restore" : "set", JSON.stringify(s.changes)]
         setPhase("set")
         idleSet.running = true
-      } else if (phase === "config" && CC.idleHolds(host.config, s.changes)) stepDone(true)
+      } else if (phase === "config" && CC.idleHolds(host.config, s.changes, s.restore === true)) stepDone(true)
     } else if (s.domain === "island") {
       var v = String(s.value)
       if (phase === "config") {
@@ -797,7 +798,7 @@ PanelWindow {
     onTriggered: {
       var l = win.pendingLink
       win.pendingLink = null
-      if (!l) return
+      if (!l || win.open) return              // opened again meanwhile: the link does not run
       if (l.widget) { if (win.host && typeof win.host.openWidget === "function") win.host.openWidget(l.widget) }
       else if (l.action) {
         // as Omarchy's menu runs its actions (a login shell), in a session of

@@ -84,30 +84,37 @@ test('no link where the menu does not offer the entry: its guard, disabled, a hi
 // ---------------------------------------------------------------- device links
 const options = presets.normalizeOptions({right: 'groups'});
 const config = {plugins: [{id: 'nerdibeard.tusche-bar', options}],
-                bar: {layout: {left: [], center: [], right: [{id: 'omarchy.audio'}, {id: 'tusche.status'}]}},
+                bar: {layout: {left: [], center: [], right: [{id: 'omarchy.audio'},
+                  {id: 'tusche.status', embeds: {'omarchy.network': {}, 'omarchy.tailscale': {}, 'omarchy.bluetooth': {}, 'nerdibeard.monitor': {}}}]}},
                 idle: {screensaver: 150}};
 const plugins = ['nerdibeard.display-layout', 'nerdibeard.monitor', 'nerdibeard.tusche-bar'];
 
-test('device panels open where they sit: in the bar or folded into a status group', () => {
-  assert.equal(cc.widgetPlaced(config, options, 'omarchy.audio'), true, 'in the layout');
-  assert.equal(cc.widgetPlaced(config, options, 'omarchy.network'), true, 'folded by the groups variant');
-  const today = presets.normalizeOptions({right: 'today'});
-  assert.equal(cc.widgetPlaced({bar: {layout: {right: []}}}, today, 'omarchy.network'), false);
+test('device panels open where they sit: in the bar or embedded in a status group', () => {
+  assert.equal(cc.widgetPlaced(config, 'omarchy.audio'), true, 'in the layout');
+  assert.equal(cc.widgetPlaced(config, 'omarchy.network'), true, 'embedded in the status group');
+  assert.equal(cc.widgetPlaced({bar: {layout: {right: [{id: 'tusche.status', embeds: {}}]}}}, 'omarchy.network'), false,
+               'a group that could fold it but has nothing embedded mounts nothing');
+  assert.equal(cc.widgetPlaced({bar: {layout: {right: []}}}, 'omarchy.network'), false);
 });
 
 test('device links: Omarchy panels, the display editor and brightness when installed', () => {
-  const links = plain(cc.deviceLinks(config, options, plugins));
+  const links = plain(cc.deviceLinks(config, plugins));
   const byKey = k => links.find(l => l.key === k);
   assert.deepEqual(links.map(l => l.key), ['sound', 'network', 'tailscale', 'bluetooth', 'arrange', 'brightness']);
   assert.equal(byKey('sound').widget, 'omarchy.audio');
   assert.equal(byKey('sound').available, true);
   assert.equal(byKey('arrange').action, 'omarchy-shell display-layout open');
   assert.equal(byKey('arrange').available, true, 'its host (nerdibeard.monitor) is folded in');
-  assert.equal(byKey('brightness').widget, 'nerdibeard.monitor');
-  const bare = plain(cc.deviceLinks({bar: {layout: {right: []}}}, presets.normalizeOptions({right: 'today'}), []));
-  assert.deepEqual(bare.map(l => l.key), ['sound', 'network', 'tailscale', 'bluetooth', 'brightness-omarchy']);
+  assert.equal(byKey('brightness').widget, 'nerdibeard.monitor', 'your own display panel first');
+  const bare = plain(cc.deviceLinks({bar: {layout: {right: []}}}, []));
+  assert.deepEqual(bare.map(l => l.key), ['sound', 'network', 'tailscale', 'bluetooth', 'brightness']);
   assert.ok(bare.every(l => l.available === false && /Not in the bar: add omarchy\./.test(l.why)), 'not placed: shown with the reason');
-  assert.equal(plain(cc.deviceLinks(config, options, null)).some(l => l.key === 'arrange'), false, 'plugins not read yet');
+  assert.equal(plain(cc.deviceLinks(config, null)).some(l => l.key === 'arrange'), false, 'plugins not read yet');
+  const nativeOnly = plain(cc.deviceLinks({bar: {layout: {right: [{id: 'omarchy.monitor'}]}}}, ['nerdibeard.monitor']));
+  const b = nativeOnly.find(l => l.key === 'brightness');
+  assert.ok(b.available && b.widget === 'omarchy.monitor', 'an installed panel that is not placed does not hide Omarchy\'s placed one');
+  const neither = plain(cc.deviceLinks({bar: {layout: {right: []}}}, ['nerdibeard.monitor'])).find(l => l.key === 'brightness');
+  assert.ok(!neither.available && neither.widget === 'nerdibeard.monitor' && /add nerdibeard\.monitor/.test(neither.why));
 });
 
 const live = cc.liveState(options, config, 'disabled', null, derived, null, plugins);
@@ -119,6 +126,7 @@ test('links join the live state; they stage nothing and open only while placed',
   assert.deepEqual(plain(cc.stage({}, live, 'link.sound', 'x')), {});
   assert.equal(cc.acceptable(live, 'link.sound', ''), false);
   const bare = cc.liveState(presets.normalizeOptions({right: 'today'}), {bar: {layout: {right: []}}}, 'disabled', null, null, null, []);
+  assert.equal(cc.available(bare, 'link.sound'), false);
   assert.equal(cc.available(bare, 'link.network'), false);
   assert.equal(cc.sourceOf(cc.setting('link.sound', live)), 'Link');
   assert.equal(cc.changedRows(live, {}).some(r => String(r.id).indexOf('link.') === 0), false, 'links never count as changed');
@@ -157,7 +165,9 @@ test('idle times: what Omarchy runs with, what shell.json holds', () => {
   assert.deepEqual(plain(live.idleRaw), {screensaver: 150});
   assert.equal(cc.liveState(options, {}, 'disabled', null, null, null, null).idle, null, 'shell.json not read yet');
   assert.deepEqual(plain(cc.idleFacts({idle: {screensaver: -5, lock: '600'}}).values), {screensaver: '150', lock: '600'});
-  assert.deepEqual(plain(cc.idleFacts({idle: {screensaver: 90.7, lock: true}}).values), {screensaver: '90', lock: '300'});
+  assert.deepEqual(plain(cc.idleFacts({idle: {screensaver: 90.7, lock: true}}).values), {screensaver: '90', lock: '1'}, 'as Omarchy: Number(true) is 1');
+  assert.deepEqual(plain(cc.idleFacts({idle: {screensaver: null, lock: ''}}).values), {screensaver: '0', lock: '0'}, 'as Omarchy: null and "" are off');
+  assert.deepEqual(plain(cc.idleFacts({idle: {screensaver: 'abc', lock: {}}}).values), {screensaver: '150', lock: '300'}, 'not a number: the default');
   assert.deepEqual(plain(cc.idleFacts({idle: 'nonsense'}).values), {screensaver: '150', lock: '300'});
 });
 
@@ -189,22 +199,33 @@ test('idle staging: only offered values; Use writes both as one step', () => {
   assert.ok(cc.changedRows(away, {}).some(r => r.id === 'idle.lock'), 'away from the default');
 });
 
-test('Cancel puts back what shell.json held at opening: the value, or no value', () => {
+test('Cancel puts back exactly what shell.json held at opening: the value, or no value', () => {
   const after = cc.liveState(options, {idle: {screensaver: 0, lock: 600}}, 'disabled', null, null, null, null);
   const steps = plain(cc.revertPlan(live, after, {idle: {screensaver: true, lock: true}}));
-  assert.deepEqual(steps, [{domain: 'idle', keys: ['screensaver', 'lock'], changes: {screensaver: 150, lock: null}}]);
+  assert.deepEqual(steps, [{domain: 'idle', restore: true, keys: ['screensaver', 'lock'], changes: {screensaver: {value: 150}, lock: {absent: true}}}]);
   assert.deepEqual(plain(cc.revertPlan(live, live, {idle: {lock: true}})), [], 'nothing differs: nothing runs');
   const outside = cc.liveState(options, {idle: {screensaver: 150, lock: 900}}, 'disabled', null, null, null, null);
   assert.deepEqual(plain(cc.revertPlan(live, outside, {idle: {screensaver: true}})), [], 'only keys Use touched');
-  assert.equal(cc.idleRestoreValue({a: 1}), null);
-  assert.equal(cc.idleRestoreValue('300'), '300');
+  const odd = cc.liveState(options, {idle: {lock: null, screensaver: 150.5}}, 'disabled', null, null, null, null);
+  assert.deepEqual(plain(cc.revertPlan(odd, after, {idle: {screensaver: true, lock: true}})[0].changes),
+                   {screensaver: {value: 150.5}, lock: {value: null}}, 'odd values go back as they were, a null stays a null');
+});
+
+test('a snapshot taken before shell.json was read gets its idle times when they arrive', () => {
+  const opened = cc.liveState(options, {}, 'disabled', null, null, null, null);
+  const filled = plain(cc.fillSnapshot(opened, live, 'idle', {}));
+  assert.deepEqual(filled.idle, {screensaver: '150', lock: '300'});
+  assert.deepEqual(filled.idleRaw, {screensaver: 150});
+  assert.equal(cc.fillSnapshot(live, live, 'idle', {}), null, 'nothing to fill');
 });
 
 test('the Use step is confirmed from the host\'s copy of shell.json', () => {
   assert.equal(cc.idleHolds({idle: {screensaver: 0, lock: 600}}, {screensaver: 0, lock: 600}), true);
-  assert.equal(cc.idleHolds({idle: {screensaver: 0}}, {screensaver: 0, lock: null}), true, 'null: the key is gone');
   assert.equal(cc.idleHolds({idle: {screensaver: 150}}, {screensaver: 0}), false);
-  assert.equal(cc.idleHolds({}, {lock: null}), true);
+  assert.equal(cc.idleHolds({idle: {lock: null}}, {lock: {value: null}}, true), true, 'restore: a literal null');
+  assert.equal(cc.idleHolds({idle: {}}, {lock: {value: null}}, true), false);
+  assert.equal(cc.idleHolds({idle: {screensaver: 0}}, {lock: {absent: true}}, true), true, 'restore: absent');
+  assert.equal(cc.idleHolds({idle: {lock: 5}}, {lock: {absent: true}}, true), false);
 });
 
 // Omarchy's real menu: every entry LINKS names is still there and has an action.

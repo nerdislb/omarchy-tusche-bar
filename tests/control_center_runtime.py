@@ -95,10 +95,14 @@ var actions = []
 var launched = []
 var idle = {screensaver: 150, lock: 300}
 var idleVersion = 0
-function idleApply(json) {
+// set: { key: seconds } · restore: { key: { value } | { absent: true } }
+function idleApply(mode, json) {
  var c = JSON.parse(json), next = {}
  for (var k in idle) next[k] = idle[k]
- for (var j in c) { if (c[j] === null) delete next[j]; else next[j] = c[j] }
+ for (var j in c) {
+  if (mode === "restore" && c[j].absent === true) delete next[j]
+  else next[j] = mode === "restore" ? c[j].value : c[j]
+ }
  idle = next; idleVersion++
 }
 var menu = JSON.stringify({
@@ -181,7 +185,7 @@ QtObject {
   if (c[0] === "sh" && String(c[2]).indexOf('setsid -f bash -lc') >= 0) { S.launched.push(c[4]); return "" }
   if (c[0] === "sh" && String(c[2]).indexOf('bash -lc "$1"') >= 0) { root.forced = S.act(c[4]); return "" }
   if (c[0] === "python3" && joined.indexOf("hypr-overrides.py") >= 0) { if (c[2] === "apply") S.hyprApply(c[3]); return S.hyprStatus() }
-  if (c[0] === "python3" && joined.indexOf("idle-times.py") >= 0) { if (c[2] === "set") S.idleApply(c[3]); return JSON.stringify(S.idle) }
+  if (c[0] === "python3" && joined.indexOf("idle-times.py") >= 0) { if (c[2] === "set" || c[2] === "restore") S.idleApply(c[2], c[3]); return JSON.stringify(S.idle) }
   if (c[0] === "python3" && joined.indexOf("focus-mode.py") >= 0) return '{"hidden": false, "owned": false, "changed": false}'
   if (c[0] === "python3" && joined.indexOf("full-width.py") >= 0) { if (c[2] === "set") S.fullWidth = c[3]; return S.fullWidth }
   if (c[0] === "python3") return "disabled"
@@ -246,7 +250,7 @@ ShellRoot {
   property var screenProfiles: ({})
   property var idleNow: ({screensaver:150,lock:300})
   property int idleSeen: 0
-  property var config: ({plugins:[{id:"nerdibeard.tusche-bar",screenProfiles:screenProfiles}],bar:{layout:{left:[],center:[],right:[{id:"omarchy.audio"}]}},idle:idleNow})
+  property var config: ({plugins:[{id:"nerdibeard.tusche-bar",screenProfiles:screenProfiles}],bar:{layout:{left:[],center:[],right:[{id:"omarchy.audio"},{id:"tusche.status",embeds:{"omarchy.network":{},"omarchy.tailscale":{},"omarchy.bluetooth":{},"nerdibeard.monitor":{}}}]}},idle:idleNow})
   // the fixture shell.json changes: the host reads it again, as its FileView would
   property Timer idleTimer: Timer { interval: 40; repeat: true; running: true; onTriggered: if (S.idleVersion !== fakeHost.idleSeen) { fakeHost.idleSeen = S.idleVersion; fakeHost.idleNow = JSON.parse(JSON.stringify(S.idle)) } }
   property var installedPlugins: ["nerdibeard.display-layout","nerdibeard.monitor","nerdibeard.tusche-bar"]
@@ -547,8 +551,24 @@ ShellRoot {
      check(!cc.open&&!cc.working,"Open closes the window first")
      check(fakeHost.opened.length===1&&fakeHost.opened[0]==="omarchy.audio","then the sound panel opens where it sits")
      check(S.actions.length===0&&S.launched.length===0,"a panel link runs no command")
-     testMenuLink()
+     testLinkReopen()
     })
+   })
+  })
+ }
+ function testLinkReopen() {
+  cc.requestedArea="input";cc.open=true
+  schedule(700,function(){
+   cc.scrollToRow("link.setup.typing.keyboard")
+   schedule(80,function(){
+   click(linkButton("link.setup.typing.keyboard"))
+   check(!cc.open,"Open closed the window")
+   cc.requestedArea="input";cc.open=true
+   schedule(450,function(){
+    check(cc.open&&S.launched.length===0&&fakeHost.opened.length===1,"opened again before the link ran: it does not run")
+    cc.cancel()
+    schedule(300,function(){check(!cc.open&&S.launched.length===0,"and never runs later");testMenuLink()})
+   })
    })
   })
  }

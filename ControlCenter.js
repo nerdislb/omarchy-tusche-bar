@@ -73,53 +73,58 @@ var SECTIONS = {
 }
 
 // Panels a link opens (the window closes first). Omarchy's device panels are
-// bar widgets: they open where they sit, in the bar or folded into a Tusche
+// bar widgets: they open where they sit, in the bar or embedded in a Tusche
 // status group (host.openWidget finds them); one that is neither has nothing
-// to open from. The display editor answers its own IPC.
+// to open from. `widgets`: candidates, the first one placed opens (your own
+// display panel before Omarchy's). The display editor answers its own IPC
+// from the panel that hosts it (`hosts`).
 var DEVICE_LINKS = [
-  { key: "sound", area: "devices", section: "SOUND", label: "Sound", widget: "omarchy.audio",
+  { key: "sound", area: "devices", section: "SOUND", label: "Sound", widgets: ["omarchy.audio"],
     note: "Volume, the output and input device, the mixer per app" },
-  { key: "network", area: "devices", section: "NETWORK", label: "Wi-Fi and network", widget: "omarchy.network",
+  { key: "network", area: "devices", section: "NETWORK", label: "Wi-Fi and network", widgets: ["omarchy.network"],
     note: "Networks, connect and forget, signal, speed test" },
-  { key: "tailscale", area: "devices", section: "NETWORK", label: "Tailscale", widget: "omarchy.tailscale",
+  { key: "tailscale", area: "devices", section: "NETWORK", label: "Tailscale", widgets: ["omarchy.tailscale"],
     note: "The tailnet connection and its machines" },
-  { key: "bluetooth", area: "devices", section: "BLUETOOTH", label: "Bluetooth", widget: "omarchy.bluetooth",
+  { key: "bluetooth", area: "devices", section: "BLUETOOTH", label: "Bluetooth", widgets: ["omarchy.bluetooth"],
     note: "Devices, connect and disconnect, batteries, the radio" },
-  { key: "arrange", area: "screens", section: "ARRANGEMENT", label: "Arrange displays", source: "tusche",
-    command: "omarchy-shell display-layout open", requires: "nerdibeard.display-layout", host: ["nerdibeard.monitor", "nerdibeard.display-layout"],
+  { key: "arrange", area: "screens", section: "ARRANGEMENT", label: "Arrange displays",
+    command: "omarchy-shell display-layout open", requires: "nerdibeard.display-layout", hosts: ["nerdibeard.monitor", "nerdibeard.display-layout"],
     note: "Drag the displays into place, then Keep or let it revert" },
-  { key: "brightness", area: "screens", section: "ARRANGEMENT", label: "Brightness", source: "tusche",
-    widget: "nerdibeard.monitor", requires: "nerdibeard.monitor", note: "Brightness and the laptop display" },
-  { key: "brightness-omarchy", area: "screens", section: "ARRANGEMENT", label: "Brightness",
-    widget: "omarchy.monitor", unless: "nerdibeard.monitor", note: "Brightness and the laptop display" }
+  { key: "brightness", area: "screens", section: "ARRANGEMENT", label: "Brightness", widgets: ["nerdibeard.monitor", "omarchy.monitor"],
+    note: "Brightness and the laptop display" }
 ]
-// Is this bar widget somewhere it can open from: in the bar's layout, or in
-// the group a Tusche variant folds it into?
-function widgetPlaced(config, options, id) {
+// Is this bar widget somewhere it can open from: an entry of the bar's layout,
+// or embedded in one (a Tusche status group's `embeds`, the ones it mounts)?
+function widgetPlaced(config, id) {
   var layout = config && config.bar && config.bar.layout ? config.bar.layout : {}
   var sections = Presets.layoutSections(layout)
   for (var s = 0; s < sections.length; s++) {
     var list = Array.isArray(layout[sections[s]]) ? layout[sections[s]] : []
-    for (var i = 0; i < list.length; i++) if (Presets.entryId(list[i]) === id) return true
+    for (var i = 0; i < list.length; i++) {
+      var e = list[i]
+      if (Presets.entryId(e) === id) return true
+      if (e && typeof e === "object" && e.embeds && typeof e.embeds === "object" && Object.prototype.hasOwnProperty.call(e.embeds, id)) return true
+    }
   }
-  return Presets.foldedIds(options).indexOf(id) !== -1
+  return false
 }
 // The device links this machine has: plugins: the installed plugin folders
 // (null while not read; Omarchy's own widgets always count). A link whose
 // panel is not placed stays, unavailable, with the reason.
-function deviceLinks(config, options, plugins) {
+function deviceLinks(config, plugins) {
   var has = function(id) { return String(id).indexOf("omarchy.") === 0 || (Array.isArray(plugins) && plugins.indexOf(id) !== -1) }
   var out = []
   DEVICE_LINKS.forEach(function(l) {
     if (l.requires && !has(l.requires)) return
-    if (l.unless && has(l.unless)) return
-    var hosts = l.host || (l.widget ? [l.widget] : [])
-    var placed = hosts.some(function(id) { return widgetPlaced(config, options, id) })
-    out.push({ id: "link." + l.key, domain: "link", kind: "link", source: l.source || "omarchy", key: l.key,
+    var hosts = (l.widgets || l.hosts || []).filter(has)
+    if (!hosts.length) return
+    var placed = hosts.filter(function(id) { return widgetPlaced(config, id) })[0] || ""
+    var widget = l.widgets ? placed || hosts[0] : ""
+    out.push({ id: "link." + l.key, domain: "link", kind: "link", source: "omarchy", key: l.key,
                area: l.area, section: l.section, label: l.label, note: l.note, opens: "panel",
-               widget: l.widget || "", action: l.command || "", hint: l.widget || l.command || "",
-               available: placed, why: placed ? "" : "Not in the bar: add " + hosts[0] + " to the bar (or its Tusche group) to open it here",
-               values: [], terms: [l.widget || "", l.command || "", l.note] })
+               widget: widget, action: l.command || "", hint: widget || l.command || "",
+               available: placed !== "", why: placed ? "" : "Not in the bar: add " + hosts[0] + " to the bar (or its Tusche group) to open it here",
+               values: [], terms: hosts.concat([l.command || "", l.note]) })
   })
   return out
 }
@@ -148,10 +153,13 @@ function idleLabel(seconds) {
   if (n % 30 === 0) return (n / 60) + " min"
   return Math.floor(n / 60) + " min " + (n % 60) + " s"
 }
-// What Omarchy's idle service makes of a shell.json value (IdleModel.secondsFromConfig).
+// What Omarchy's idle service makes of a shell.json value: exactly
+// IdleModel.secondsFromConfig (a missing value is the default; null, false
+// and "" are 0, off).
 function idleSeconds(v, fallback) {
   var n = Number(v)
-  return v === null || v === undefined || v === "" || typeof v === "boolean" || !isFinite(n) || n < 0 ? fallback : Math.floor(n)
+  if (!isFinite(n) || n < 0) return fallback
+  return Math.floor(n)
 }
 // shell.json → { values: { key: "<seconds>" }, raw: { key: <stored value> } }
 // or null before shell.json has been read.
@@ -165,20 +173,16 @@ function idleFacts(config) {
   })
   return { values: values, raw: raw }
 }
-// A value from shell.json as Cancel writes it back: numbers and short strings
-// as they were; anything else is dropped (Omarchy reads it as no value anyway).
-function idleRestoreValue(v) {
-  if (typeof v === "number" && isFinite(v)) return v
-  if (typeof v === "string" && v.length <= 32) return v
-  return null
-}
-// Does shell.json (the host's copy) hold these idle values? null: no value.
-function idleHolds(config, changes) {
+// Does shell.json (the host's copy) hold what an idle step wrote? Use:
+// { key: <seconds> }; Cancel (restore): { key: { value: <JSON as it was> } |
+// { absent: true } }.
+function idleHolds(config, changes, restore) {
   var idle = config && config.idle && typeof config.idle === "object" && !Array.isArray(config.idle) ? config.idle : {}
   return Object.keys(changes || {}).every(function(key) {
-    var want = changes[key]
-    if (want === null) return !Object.prototype.hasOwnProperty.call(idle, key)
-    return Object.prototype.hasOwnProperty.call(idle, key) && JSON.stringify(idle[key]) === JSON.stringify(want)
+    var want = changes[key], has = Object.prototype.hasOwnProperty.call(idle, key)
+    if (restore && want && want.absent === true) return !has
+    var v = restore ? (want ? want.value : undefined) : want
+    return has && JSON.stringify(idle[key]) === JSON.stringify(v)
   })
 }
 function idleSpec(s, live) {
@@ -432,7 +436,7 @@ function liveState(options, config, cardsStatus, extrasFacts, omarchy, hypr, plu
            idle: idle ? idle.values : null,
            idleRaw: idle ? idle.raw : {},
            link: {},
-           linkSpecs: deviceLinks(config, bar, plugins).concat(omarchy && Array.isArray(omarchy.links) ? omarchy.links : []) }
+           linkSpecs: deviceLinks(config, plugins).concat(omarchy && Array.isArray(omarchy.links) ? omarchy.links : []) }
 }
 // Can this setting be changed now? An extra only while its live value is one
 // of its choices (not while unknown, failed or not installed); an Omarchy row
@@ -617,17 +621,17 @@ function revertPlan(snapshot, live, applied) {
     })
     if (Object.keys(back).length) steps.push({ domain: "hypr", keys: Object.keys(back), changes: back })
   }
-  // Idle times Use touched, back to what shell.json held at opening: the same
-  // value, or no value at all (null drops it again).
+  // Idle times Use touched, back to exactly what shell.json held at opening:
+  // the same JSON value (whatever it was), or no value at all.
   if (applied.idle && snapshot.idle && live.idle) {
     var was = {}, before = snapshot.idleRaw || {}, now = live.idleRaw || {}
     Object.keys(applied.idle).forEach(function(key) {
       if (!idleSetting(key)) return
       var had = Object.prototype.hasOwnProperty.call(before, key), has = Object.prototype.hasOwnProperty.call(now, key)
       if (had === has && (!had || JSON.stringify(before[key]) === JSON.stringify(now[key]))) return
-      was[key] = had ? idleRestoreValue(before[key]) : null
+      was[key] = had ? { value: copy(before[key]) } : { absent: true }
     })
-    if (Object.keys(was).length) steps.push({ domain: "idle", keys: Object.keys(was), changes: was })
+    if (Object.keys(was).length) steps.push({ domain: "idle", restore: true, keys: Object.keys(was), changes: was })
   }
   if (applied.island && snapshot.island && live.island)
     ISLAND_SETTINGS.forEach(function(s) {
@@ -667,6 +671,8 @@ function fillSnapshot(snapshot, live, domain, touched) {
     s[domain] = copy(live[domain])
     // the rows as they were at opening: Cancel's actions when a row is hidden later
     if (domain === "omarchy") s.omarchySpecs = copy(live.omarchySpecs)
+    // what shell.json held: Cancel puts back exactly that
+    if (domain === "idle") s.idleRaw = copy(live.idleRaw || {})
     return s
   }
   var missing = Object.keys(live[domain]).filter(function(k) {

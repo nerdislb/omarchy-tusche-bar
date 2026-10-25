@@ -323,16 +323,17 @@ change needs sudo). Test: `python3 tests/boot_logo.py`.
 ## Control Center
 
 `ControlCenter.qml` (pure model in `ControlCenter.js`): Quick · Configure,
-areas on the left in five groups (Overview: Quick, Health · Appearance: Theme
+areas on the left in six groups (Overview: Quick, Health · Appearance: Theme
 & font, Windows, Material & motion · Bar: Tusche Bar, Tusche Island, Dock ·
-Work: Input & keys, Screens · System: Power & sleep, Default apps, System),
-editor on the right, Ctrl+K search over settings, their values and the
-commands, Hyprland options and Omarchy menu paths behind them, the filters
-**Changed only** (staged rows, overrides that are set, Tusche options away
-from their defaults, across all areas) and **Advanced**, and a Health chip.
-Every row that is not plainly ours carries a tag: **Omarchy** (runs
-Omarchy's own command) or **Override** (a Hyprland value in the Control
-Center's own toggle file); **Tusche** marks ours where an area mixes them.
+Work: Input & keys, Screens · Devices: Sound & network, Power & sleep ·
+System: Default apps, System), editor on the right, Ctrl+K search over
+settings, their values and the commands, Hyprland options and Omarchy menu
+paths behind them, the filters **Changed only** (staged rows, overrides that
+are set, Tusche options and idle times away from their defaults, across all
+areas) and **Advanced**, and a Health chip. Every row that is not plainly ours
+carries a tag: **Omarchy** (Omarchy's own setting), **Override** (a Hyprland
+value in the Control Center's own toggle file) or **Link** (opens a panel, a
+terminal flow or an editor); **Tusche** marks ours where an area mixes them.
 Edits are staged and confirmed explicitly:
 
 - **Use** applies the staged changes live; the window stays open.
@@ -343,7 +344,7 @@ Edits are staged and confirmed explicitly:
 
 Omarchy's settings run their menu action, one at a time, and wait until
 Omarchy reports the new value; the overrides go out as one write and one
-Hyprland reload; bar options go out as one write (layout changes rebuild the bar; look options do not), island settings
+Hyprland reload; the idle times as one shell.json write; bar options go out as one write (layout changes rebuild the bar; look options do not), island settings
 through `omarchy-shell tusche-island set …`, the card picker through its
 `menu-override.py`, the extras through `bin/full-width.py` and the shell's
 plugin IPC; one step at a time, each confirmed before the next. Health
@@ -427,6 +428,45 @@ Windows), staged and confirmed like every other setting:
 Tests:
 `node tests/extras.cjs`, `python3 tests/full_width.py` (scratch state folder
 and a fake `hyprctl`), and the Extras part of `tests/control_center_runtime.py`.
+
+### Links and idle times
+
+Some things have no value the Control Center could stage: volume, Wi-Fi and
+Bluetooth live in Omarchy's own panels (Noctalia and Dux Shell keep them out of
+their settings too), the display layout has its own editor with a timed Keep /
+Revert, and setups such as a fingerprint run in a terminal. They are **Link**
+rows with **Open**, which closes the window first (it holds the keyboard and
+covers the screen) and therefore only works while nothing is staged or live:
+
+- **Sound & network**: Omarchy's sound, network, Tailscale and Bluetooth panels.
+  They are bar widgets and open where they sit, in the bar or folded into a
+  Tusche status group (`Engine.openWidget`); one that is in neither says so.
+  The line beside each is read from the shell's own audio, network and
+  Bluetooth services (`DeviceFacts.qml`, read-only). DNS sits here too.
+- **Screens › Arrangement**: *Arrange displays* (`omarchy-shell display-layout
+  open`, with the `nerdibeard.display-layout` editor installed), *Brightness*
+  (the display panel) and *Edit monitors.lua*.
+- **Menu links**: entries of Omarchy's menu listed in `OmarchySettings.LINKS`
+  (Keyboard layouts, Input methods, Edit input.lua / bindings.lua, Wi-Fi QR
+  code, Fingerprint, FIDO2 key, SSH agent, SSH server, Git identity, Time zone,
+  Sync the clock), only where the menu offers them (their `when:` guard, those
+  of the menus above, `disabled:`). Open runs the entry exactly as the menu
+  does, in a login shell of its own session (`setsid -f`).
+
+**Power & sleep › Idle times** are Omarchy's `idle.screensaver` and
+`idle.lock` in shell.json (seconds from the moment the computer goes idle, 0
+turns that step off; Omarchy uses 150 and 300 without a value). Its idle
+service reads them live. They are staged like any setting; Use writes both
+through `bin/idle-times.py` (atomic, keeps the file mode, touches nothing
+else) and waits until shell.json holds them; Cancel puts back what shell.json
+held at opening, the value or no value at all.
+
+Tests: `node tests/devices.cjs` (the model, against a small menu and
+Omarchy's real one: every linked entry must still be there),
+`python3 tests/idle_times.py` (a scratch shell.json) and the links and idle
+part of `tests/control_center_runtime.py` (Open by a real click closes the
+window, then opens the panel or runs the entry; Open waits while something is
+staged or live; idle Use and Cancel).
 
 ### Visual editing and optional presentation
 
@@ -592,7 +632,7 @@ group may differ) and `state` reports it in `lastResult`.
 
 ## IPC
 
-- `omarchy-shell tusche-bar options` (Control Center, toggle) · `cc quick|health|cards|windows|motion|bar|island|dock|input|screens|power|apps|system` · `preset today|tidy|focus` · `set <element> <variant>` · `save|load <name>` · `menu` (drop-down) · `search` (drop-down as a launcher) · `apps` (drop-down on the Apps list) · `recaptureBase` · `state`.
+- `omarchy-shell tusche-bar options` (Control Center, toggle) · `cc quick|health|cards|windows|motion|bar|island|dock|input|screens|devices|power|apps|system` (`sound`, `network`, `wifi`, `bluetooth` open Sound & network) · `preset today|tidy|focus` · `set <element> <variant>` · `save|load <name>` · `menu` (drop-down) · `search` (drop-down as a launcher) · `apps` (drop-down on the Apps list) · `recaptureBase` · `state`.
 - `omarchy-shell tusche-bar screenProfile <output> inherit|compact|detailed` applies a presentation profile directly; `focus start|show|release|toggle` controls the optional focus seal.
 - Module IPC (tests, keybinds): `tusche-quota toggle|select <agent>|state`, `tusche-status group net|phone|system|all`, `tusche-status member <widget-id>`, `tusche-centre state`.
 - `tusche-bar ask <payload>` is the menu shims' entry (an `omarchy-menu-select`/`-input` payload; answers `ok` when a drop-down took it).

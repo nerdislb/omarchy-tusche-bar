@@ -7,6 +7,7 @@ preserved. Old code generations are retained for reversible local recovery.
 """
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -21,6 +22,15 @@ def payload_files(source):
                   and not any(part in SKIP_DIRS for part in p.relative_to(source).parts)
                   and not any(part.startswith('.') for part in p.relative_to(source).parts)
                   and p.name not in {'dev-install.sh', 'installed-generation.json'})
+
+
+def shell_json_locked(config):
+    # the plugin's shell.json lock (shell_json_lock.py), loaded by path so this
+    # file also works as an imported module
+    spec = importlib.util.spec_from_file_location('shell_json_lock', Path(__file__).resolve().parent / 'shell_json_lock.py')
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.locked(config)
 
 
 def atomic(path, data):
@@ -72,29 +82,35 @@ def install(source, target, config):
         assert not value.startswith('generations/') and '..' not in value
         published['entryPoints'][key] = 'generations/' + generation + '/' + value
     if config.exists() and manifest['id'] == 'nerdibeard.tusche-bar':
-        current = json.loads(config.read_text())
-        next_config = json.loads(json.dumps(current))
-        layout = next_config.get('bar', {}).get('layout', {})
-        for entries in layout.values():
-            if not isinstance(entries, list):
-                continue
-            for entry in entries:
-                if not isinstance(entry, dict) or not str(entry.get('id', '')).startswith('tusche.'):
-                    continue
-                old = entry.get('source')
-                if not isinstance(old, str) or not old.startswith(str(target) + '/'):
-                    continue
-                rel = old[len(str(target)) + 1:]
-                if rel.startswith('generations/'):
-                    parts = rel.split('/', 2)
-                    rel = parts[2] if len(parts) == 3 else ''
-                if rel.startswith('modules/') and (folder / rel).is_file():
-                    entry['source'] = str(folder / rel)
-        if next_config != current:
-            atomic(config, json.dumps(next_config, indent=2) + '\n')
+        with shell_json_locked(config):
+            update_sources(config, target, folder)
     atomic(target / 'manifest.json', json.dumps(published, indent=2) + '\n')
     atomic(target / 'installed-generation.json', json.dumps({'generation': generation, 'source': str(source), 'files': len(files)}, indent=2) + '\n')
     return generation
+
+
+# The bar's tusche.* layout entries point at module files of the new generation.
+def update_sources(config, target, folder):
+    current = json.loads(config.read_text())
+    next_config = json.loads(json.dumps(current))
+    layout = next_config.get('bar', {}).get('layout', {})
+    for entries in layout.values():
+        if not isinstance(entries, list):
+            continue
+        for entry in entries:
+            if not isinstance(entry, dict) or not str(entry.get('id', '')).startswith('tusche.'):
+                continue
+            old = entry.get('source')
+            if not isinstance(old, str) or not old.startswith(str(target) + '/'):
+                continue
+            rel = old[len(str(target)) + 1:]
+            if rel.startswith('generations/'):
+                parts = rel.split('/', 2)
+                rel = parts[2] if len(parts) == 3 else ''
+            if rel.startswith('modules/') and (folder / rel).is_file():
+                entry['source'] = str(folder / rel)
+    if next_config != current:
+        atomic(config, json.dumps(next_config, indent=2) + '\n')
 
 
 if __name__ == '__main__':
