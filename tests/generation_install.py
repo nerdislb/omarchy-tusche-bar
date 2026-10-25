@@ -2,6 +2,7 @@
 """Black-box checks for immutable code installation and scoped config merge."""
 import importlib.util
 import json
+import os
 from pathlib import Path
 import tempfile
 
@@ -9,6 +10,7 @@ spec=importlib.util.spec_from_file_location('generation', Path(__file__).resolve
 mod=importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
 with tempfile.TemporaryDirectory(prefix='generation-test-') as tmp:
+    os.environ['XDG_RUNTIME_DIR'] = str(tmp)   # the shell.json lock stays in the scratch folder
     root=Path(tmp)
     source=root/'source'; source.mkdir()
     target=root/'plugins/nerdibeard.tusche-bar'

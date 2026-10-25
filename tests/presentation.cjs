@@ -67,7 +67,7 @@ test('atomic profile writer preserves layout, options, unrelated config and priv
     const original={bar:{position:'bottom',layout:{left:['omamail'],right:['audio']}},
       plugins:[{id:'nerdibeard.tusche-bar',options:{edge:'theme',logo:'nerdibeard'},other:'keep'},{id:'another',value:7}],custom:{keep:true}};
     fs.writeFileSync(file,JSON.stringify(original),{mode:0o600});
-    const run=request=>cp.spawnSync('python3',[path.join(root,'bin/apply-layout.py')],{env:{...process.env,OMARCHY_SHELL_JSON:file},input:JSON.stringify({pluginId:'nerdibeard.tusche-bar',profilesOnly:true,...request}),encoding:'utf8'});
+    const run=request=>cp.spawnSync('python3',[path.join(root,'bin/apply-layout.py')],{env:{...process.env,OMARCHY_SHELL_JSON:file,XDG_RUNTIME_DIR:dir},input:JSON.stringify({pluginId:'nerdibeard.tusche-bar',profilesOnly:true,...request}),encoding:'utf8'});
     assert.equal(run({screenProfiles:{'eDP-1':'detailed'}}).status,0);
     const result=JSON.parse(fs.readFileSync(file));
     assert.deepEqual(result.plugins[0].screenProfiles,{'eDP-1':'detailed'});
