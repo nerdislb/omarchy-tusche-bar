@@ -93,36 +93,41 @@ var DEVICE_LINKS = [
   { key: "brightness", area: "screens", section: "ARRANGEMENT", label: "Brightness", widgets: ["nerdibeard.monitor", "omarchy.monitor"],
     note: "Brightness and the laptop display" }
 ]
-// Is this bar widget somewhere it can open from: an entry of the bar's layout,
-// or embedded in one (a Tusche status group's `embeds`, the ones it mounts)?
-function widgetPlaced(config, id) {
+// Where this bar widget can open from: "bar" (an entry of the bar's layout;
+// the shell summons it), "group" (embedded in a Tusche status group, which
+// mounts it: tusche-status member) or "" (nowhere).
+function widgetPlace(config, id) {
   var layout = config && config.bar && config.bar.layout ? config.bar.layout : {}
-  var sections = Presets.layoutSections(layout)
+  var sections = Presets.layoutSections(layout), grouped = false
   for (var s = 0; s < sections.length; s++) {
     var list = Array.isArray(layout[sections[s]]) ? layout[sections[s]] : []
     for (var i = 0; i < list.length; i++) {
       var e = list[i]
-      if (Presets.entryId(e) === id) return true
-      if (e && typeof e === "object" && e.embeds && typeof e.embeds === "object" && Object.prototype.hasOwnProperty.call(e.embeds, id)) return true
+      if (Presets.entryId(e) === id) return "bar"
+      if (Presets.entryId(e) === "tusche.status" && e.embeds && typeof e.embeds === "object" && Object.prototype.hasOwnProperty.call(e.embeds, id)) grouped = true
     }
   }
-  return false
+  return grouped ? "group" : ""
 }
+function widgetPlaced(config, id) { return widgetPlace(config, id) !== "" }
 // The device links this machine has: plugins: the installed plugin folders
 // (null while not read; Omarchy's own widgets always count). A link whose
 // panel is not placed stays, unavailable, with the reason.
 function deviceLinks(config, plugins) {
   var has = function(id) { return String(id).indexOf("omarchy.") === 0 || (Array.isArray(plugins) && plugins.indexOf(id) !== -1) }
   var out = []
+  if (!config || typeof config !== "object" || !Object.keys(config).length) return out   // shell.json not read yet
   DEVICE_LINKS.forEach(function(l) {
     if (l.requires && !has(l.requires)) return
     var hosts = (l.widgets || l.hosts || []).filter(has)
     if (!hosts.length) return
     var placed = hosts.filter(function(id) { return widgetPlaced(config, id) })[0] || ""
     var widget = l.widgets ? placed || hosts[0] : ""
+    // the way the panel opens follows where it actually sits
+    var route = widget && placed ? (widgetPlace(config, widget) === "group" ? "member" : "summon") : ""
     out.push({ id: "link." + l.key, domain: "link", kind: "link", source: "omarchy", key: l.key,
                area: l.area, section: l.section, label: l.label, note: l.note, opens: "panel",
-               widget: widget, action: l.command || "", hint: widget || l.command || "",
+               widget: widget, route: route, action: l.command || "", hint: widget || l.command || "",
                available: placed !== "", why: placed ? "" : "Not in the bar: add " + hosts[0] + " to the bar (or its Tusche group) to open it here",
                values: [], terms: hosts.concat([l.command || "", l.note]) })
   })

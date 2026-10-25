@@ -66,9 +66,9 @@ with tempfile.TemporaryDirectory(prefix='idle-times-') as scratch:
     check(r.returncode == 0 and json.loads(path.read_text())['idle'] == {'lock': 1800, 'screensaver': 0}, '0 turns a step off; a whole float is written as an integer')
 
     # Cancel puts back exactly what was there, whatever Omarchy makes of it
-    for value in [150.5, 90000, '300', None, False, {'odd': [1]}]:
+    for value in [150.5, 90000, '300', None, False, {'odd': [1]}, ' ' * 4000 + '300']:
         r = run(path, 'restore', json.dumps({'lock': {'value': value}}))
-        check(r.returncode == 0 and json.loads(path.read_text())['idle']['lock'] == value, 'restore puts back ' + json.dumps(value))
+        check(r.returncode == 0 and json.loads(path.read_text())['idle']['lock'] == value, 'restore puts back ' + json.dumps(value)[:40])
     r = run(path, 'restore', json.dumps({'lock': {'absent': True}}))
     check(r.returncode == 0 and json.loads(path.read_text())['idle'] == {'screensaver': 0}, 'restore absent removes the key')
     r = run(path, 'restore', json.dumps({'screensaver': {'absent': True}}))
@@ -80,7 +80,7 @@ with tempfile.TemporaryDirectory(prefix='idle-times-') as scratch:
                 {'dim': 10}, {}, [], 'lock']:
         r = run(path, 'set', json.dumps(bad))
         check(r.returncode == 2 and path.read_text() == before, 'set refuses without a write: ' + json.dumps(bad))
-    for bad in [{'lock': 300}, {'lock': {'value': 1, 'x': 2}}, {'lock': {'absent': False}}, {'lock': {'value': 'x' * 2000}}, {'dim': {'absent': True}}]:
+    for bad in [{'lock': 300}, {'lock': {'value': 1, 'x': 2}}, {'lock': {'absent': False}}, {'lock': {}}, {'dim': {'absent': True}}]:
         r = run(path, 'restore', json.dumps(bad))
         check(r.returncode == 2 and path.read_text() == before, 'restore refuses without a write: ' + json.dumps(bad)[:60])
     r = run(path, 'set', 'not json')

@@ -25,7 +25,6 @@ from shell_json_lock import locked
 
 KEYS = ('screensaver', 'lock')
 MAX_SECONDS = 86400
-MAX_RESTORE = 1024           # characters of JSON a restored value may have
 
 
 def config_path():
@@ -60,7 +59,7 @@ def restorable(value):
         return False
     if value == {'absent': True}:
         return True
-    return list(value.keys()) == ['value'] and len(json.dumps(value['value'])) <= MAX_RESTORE
+    return list(value.keys()) == ['value']
 
 
 def changes_from(mode, text):

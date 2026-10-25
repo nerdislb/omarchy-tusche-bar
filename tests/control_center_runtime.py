@@ -256,7 +256,8 @@ ShellRoot {
   property var installedPlugins: ["nerdibeard.display-layout","nerdibeard.monitor","nerdibeard.tusche-bar"]
   property var opened: []
   property int scans: 0
-  function openWidget(id) { opened = opened.concat([id]) }
+  property var routes: []
+  function openWidget(id, route) { opened = opened.concat([id]); routes = routes.concat([route]) }
   function scanPlugins() { scans++ }
   property var material: root.themes.smoke.material
   property bool writing: false
@@ -549,7 +550,7 @@ ShellRoot {
     click(linkButton("link.sound"))
     schedule(450,function(){
      check(!cc.open&&!cc.working,"Open closes the window first")
-     check(fakeHost.opened.length===1&&fakeHost.opened[0]==="omarchy.audio","then the sound panel opens where it sits")
+     check(fakeHost.opened.length===1&&fakeHost.opened[0]==="omarchy.audio"&&fakeHost.routes[0]==="summon","then the sound panel opens where it sits (in the bar: summoned)")
      check(S.actions.length===0&&S.launched.length===0,"a panel link runs no command")
      testLinkReopen()
     })

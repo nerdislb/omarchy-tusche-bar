@@ -488,8 +488,11 @@ Item {
 
   // Open a widget's own popup, wherever it lives now: folded into the
   // status module (embedded) or still in the bar.
-  function openWidget(id) {
-    var folded = options.right !== "today" && Presets.foldedIds(options).indexOf(id) !== -1
+  // route: "member" (a status group mounts it) or "summon" (it sits in the
+  // bar) when the caller knows where it actually is (the Control Center reads
+  // the layout); else the variant decides.
+  function openWidget(id, route) {
+    var folded = route === "member" || (route !== "summon" && options.right !== "today" && Presets.foldedIds(options).indexOf(id) !== -1)
     run(folded ? "omarchy-shell tusche-status member " + id : "omarchy-shell shell summon " + id)
   }
   function focusAgent(a) {

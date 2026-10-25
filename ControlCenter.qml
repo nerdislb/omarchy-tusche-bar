@@ -799,7 +799,7 @@ PanelWindow {
       var l = win.pendingLink
       win.pendingLink = null
       if (!l || win.open) return              // opened again meanwhile: the link does not run
-      if (l.widget) { if (win.host && typeof win.host.openWidget === "function") win.host.openWidget(l.widget) }
+      if (l.widget) { if (win.host && typeof win.host.openWidget === "function") win.host.openWidget(l.widget, l.route) }
       else if (l.action) {
         // as Omarchy's menu runs its actions (a login shell), in a session of
         // its own so it outlives this window and the shell

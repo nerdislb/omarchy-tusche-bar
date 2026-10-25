@@ -382,7 +382,8 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
   // Registry follows Presets.ELEMENTS (new rows appear automatically).
   assert.deepEqual(plain(cc.barIds()), Object.keys(ctx.ELEMENTS).map(k => 'bar.' + k));
   assert.deepEqual(plain(cc.settings().map(s => s.id)), Object.keys(ctx.ELEMENTS).map(k => 'bar.' + k)
-    .concat(['island.notifications', 'island.noteStyle', 'cards.override', 'extras.fullWidth', 'extras.sheet']));
+    .concat(['island.notifications', 'island.noteStyle', 'cards.override', 'extras.fullWidth', 'extras.sheet'])
+    .concat(cc.HYPR_SETTINGS.map(s => 'hypr.' + s.option), cc.IDLE_SETTINGS.map(s => 'idle.' + s.key)));
   assert.deepEqual(plain(cc.QUICK), ['bar.edge', 'bar.logo', 'bar.keys', 'island.notifications', 'island.noteStyle']);
   for (const id of cc.QUICK) assert(cc.setting(id), id);
   // Staging is an overlay; staging the live value removes the edit.
@@ -494,7 +495,9 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
   assert(qml.includes('["omarchy-shell", "tusche-island", "set", step.key, String(step.value)]'));
   assert(qml.includes('["omarchy-shell", "tusche-island", "state"]'));
   assert(qml.includes('/.local/state/omarchy/tusche-island/notifications-takeover"'));
-  assert(!/"sh",\s*"-c"/.test(qml), 'no shell strings in the Control Center');
+  // shell strings only where Omarchy's own menu actions run, as its menu runs
+  // them: the Omarchy setter and the link launcher
+  assert.equal((qml.match(/"sh",\s*"-c"/g) || []).length, 2, 'no other shell strings in the Control Center');
   // reveal shows the card: a plain fade
   assert(/property real reveal: 0\n\s*opacity: reveal/.test(qml));
   // All text goes through the Body/Caption/Strong components (native

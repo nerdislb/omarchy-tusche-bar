@@ -95,6 +95,10 @@ test('device panels open where they sit: in the bar or embedded in a status grou
   assert.equal(cc.widgetPlaced({bar: {layout: {right: [{id: 'tusche.status', embeds: {}}]}}}, 'omarchy.network'), false,
                'a group that could fold it but has nothing embedded mounts nothing');
   assert.equal(cc.widgetPlaced({bar: {layout: {right: []}}}, 'omarchy.network'), false);
+  assert.equal(cc.widgetPlace({bar: {layout: {right: [{id: 'tusche.status', embeds: {}}, {id: 'omarchy.network'}]}}}, 'omarchy.network'), 'bar',
+               'placed directly next to an empty group: summoned, whatever the variant');
+  assert.equal(cc.widgetPlace({bar: {layout: {right: [{id: 'tusche.quota', embeds: {'omarchy.network': {}}}]}}}, 'omarchy.network'), '',
+               'only a status group mounts its embeds as members');
 });
 
 test('device links: Omarchy panels, the display editor and brightness when installed', () => {
@@ -102,6 +106,8 @@ test('device links: Omarchy panels, the display editor and brightness when insta
   const byKey = k => links.find(l => l.key === k);
   assert.deepEqual(links.map(l => l.key), ['sound', 'network', 'tailscale', 'bluetooth', 'arrange', 'brightness']);
   assert.equal(byKey('sound').widget, 'omarchy.audio');
+  assert.equal(byKey('sound').route, 'summon', 'in the bar: the shell summons it');
+  assert.equal(byKey('network').route, 'member', 'embedded: the status group opens its member');
   assert.equal(byKey('sound').available, true);
   assert.equal(byKey('arrange').action, 'omarchy-shell display-layout open');
   assert.equal(byKey('arrange').available, true, 'its host (nerdibeard.monitor) is folded in');
