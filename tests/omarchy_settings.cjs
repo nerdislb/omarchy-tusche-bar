@@ -110,6 +110,17 @@ test('an unknown toggle pair is found by its guards and named from its labels', 
   assert.equal(s.section, 'MORE FROM OMARCHY');
 });
 
+test('only real negations pair: complementary literals yes, other literal pairs and swapped negations no', () => {
+  assert.equal(om.negatedGuards('! omarchy-toggle-enabled bar-off', 'omarchy-toggle-enabled bar-off'), true);
+  assert.equal(om.negatedGuards('omarchy-hw-laptop && [[ $(x) != true ]]', 'omarchy-hw-laptop && [[ $(x) == true ]]'), true);
+  assert.equal(om.negatedGuards('[[ ! -f ~/a ]]', '[[ -f ~/a ]]'), true);
+  assert.equal(om.negatedGuards('[[ $(omarchy-dock autohide) == "off" ]]', '[[ $(omarchy-dock autohide) == "on" ]]'), true);
+  assert.equal(om.negatedGuards('[[ $(theme) == light ]]', '[[ $(theme) == dark ]]'), false);
+  assert.equal(om.negatedGuards('a && ! b', '! a && b'), false);
+  assert.equal(om.negatedGuards('x', 'x'), false);
+  assert.equal(om.negatedGuards('! grep -q \'"mode": "Hybrid"\' /etc/x', 'grep -q \'"mode": "Hybrid"\' /etc/x'), true);
+});
+
 test('a reader menu reads its value through the reader batch', () => {
   const s = spec('appearance.top-bar.position');
   assert.equal(s.kind, 'choice');
@@ -141,6 +152,16 @@ test('scripts behind sudo are read-only and show only the live value; terminals 
   assert.equal(om.runnable("omarchy-bar set omarchy.clock verticalFormat $'HH\\n—\\nmm'", {}), true);
   assert.equal(om.runnable('a; b', {}), false);
   assert.equal(om.runnable('omarchy-dns Google', {'omarchy-dns': true}), false);
+});
+
+test('a script that restarts the shell (the window with it) is read-only with that reason', () => {
+  const withFont = MenuModel.mergeMenuSources(MenuModel.parseMenuJsonc(MENU.replace('"appearance": {"label": "Appearance"},', '"appearance": {"label": "Appearance"}, "appearance.font": {"label": "Font", "provider": "fonts"},')), []);
+  const d = om.derive(facts({items: withFont.items, itemOrder: withFont.itemOrder, asking: om.parseAsking('restart omarchy-font-set\npassword omarchy-dns\npassword omarchy-font-set\nnonsense\n')}));
+  const s = d.specs.find(x => x.key === 'appearance.font');
+  assert.equal(s.readOnly, true);
+  assert.match(s.note, /restarts the shell this window runs in: use Omarchy's menu \(Appearance › Font\)/);
+  assert.deepEqual(plain(om.parseAsking('password a\nrestart a\npassword b')), {a: 'restart', b: 'password'});
+  assert.match(om.askingScript(), /omarchy-restart-shell/);
 });
 
 test('a choice nobody checked is read-only with a reason; hardware that is not there has no row', () => {
@@ -256,11 +277,24 @@ test('Cancel: touched Omarchy rows and overrides back to the state from opening'
   const steps = plain(cc.revertPlan(snapshot, after, {omarchy: {'appearance.windows.corners': true, 'appearance.windows.gaps-on': true},
                                                       hypr: {'general:gaps_out': true, 'decoration:rounding': true}}));
   assert.deepEqual(steps.slice(0, 2), [
-    {domain: 'omarchy', key: 'appearance.windows.corners', value: 'appearance.windows.corners.theme', action: 'omarchy-hyprland-corners theme'},
-    {domain: 'omarchy', key: 'appearance.windows.gaps-on', value: 'appearance.windows.gaps-on', action: 'omarchy-hyprland-window-gaps-toggle'}]);
+    {domain: 'omarchy', key: 'appearance.windows.gaps-on', value: 'appearance.windows.gaps-on', action: 'omarchy-hyprland-window-gaps-toggle'},
+    {domain: 'omarchy', key: 'appearance.windows.corners', value: 'appearance.windows.corners.theme', action: 'omarchy-hyprland-corners theme'}]);
   assert.equal(steps[2].domain, 'hypr');
   assert.deepEqual(steps[2].changes, {'general:gaps_out': '8', 'decoration:rounding': ''});
   assert.deepEqual(plain(cc.revertPlan(snapshot, snapshot, {omarchy: {'appearance.windows.corners': true}})), [], 'nothing differs: nothing runs');
+});
+
+test('Cancel runs in reverse and takes the action from opening for a row hidden now', () => {
+  const snapshot = cc.copy(live);
+  const after = cc.copy(live);
+  after.omarchySpecs = after.omarchySpecs.filter(x => x.key !== 'appearance.windows.corners');   // hidden by another change
+  after.omarchy['appearance.windows.corners'] = 'unknown';
+  after.omarchy['appearance.windows.gaps-on'] = 'appearance.windows.gaps-off';
+  const steps = plain(cc.revertPlan(snapshot, after, {omarchy: {'appearance.windows.corners': true, 'appearance.windows.gaps-on': true}}));
+  assert.deepEqual(steps.map(x => x.key), ['appearance.windows.gaps-on', 'appearance.windows.corners']);
+  assert.equal(steps[1].action, 'omarchy-hyprland-corners theme');
+  const opened = cc.liveState({}, config, 'disabled', null, null, null);
+  assert.equal(cc.fillSnapshot(opened, live, 'omarchy', {}).omarchySpecs.length, live.omarchySpecs.length, 'the rows at opening join the snapshot with their values');
 });
 
 test('a late answer fills the snapshot, except for rows Use touched', () => {

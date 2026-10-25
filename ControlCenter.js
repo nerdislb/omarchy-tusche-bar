@@ -445,16 +445,22 @@ function revertPlan(snapshot, live, applied) {
   var steps = []
   if (!snapshot || !live) return steps
   applied = applied || {}
-  // Omarchy rows Use touched, back to their value from opening (when that is
-  // one the row can set; a toggle runs only while it differs).
-  if (applied.omarchy && snapshot.omarchy && live.omarchy)
-    Object.keys(applied.omarchy).forEach(function(key) {
+  // Omarchy rows Use touched, back to their value from opening (a toggle
+  // runs only while it differs), in the reverse order of Use: a row another
+  // one hides (Clock formats under a side bar Position) is offered again once
+  // that one is back. The action comes from the row as it was at opening when
+  // the row is not offered right now.
+  if (applied.omarchy && snapshot.omarchy && live.omarchy) {
+    var order = settings(snapshot).concat(settings(live)).map(function(s) { return s.id })
+    Object.keys(applied.omarchy).sort(function(a, b) {
+      return order.indexOf("omarchy." + b) - order.indexOf("omarchy." + a)
+    }).forEach(function(key) {
       var before = snapshot.omarchy[key]
       if (before === undefined || before === "unknown" || live.omarchy[key] === before) return
-      if (!available(live, "omarchy." + key)) return
-      var action = omarchyAction(live, key, before)
+      var action = omarchyAction(live, key, before) || omarchyAction(snapshot, key, before)
       if (action) steps.push({ domain: "omarchy", key: key, value: before, action: action })
     })
+  }
   if (applied.hypr && snapshot.hypr && live.hypr) {
     var back = {}
     Object.keys(applied.hypr).forEach(function(option) {
@@ -494,14 +500,29 @@ function revertPlan(snapshot, live, applied) {
 // whose rows arrive later (Omarchy, the overrides), but not for rows Use has
 // touched since. Returns the new snapshot, or null when nothing changed.
 function fillSnapshot(snapshot, live, domain, touched) {
+  // called on every live change while open, so it copies only when it fills
   if (!snapshot || !live || !live[domain]) return null
-  var s = copy(snapshot), changed = false
-  if (!s[domain]) { s[domain] = copy(live[domain]); changed = true }
-  else Object.keys(live[domain]).forEach(function(k) {
-    if (touched && touched[k]) return
-    if ((s[domain][k] === undefined || s[domain][k] === "unknown") && live[domain][k] !== "unknown") { s[domain][k] = live[domain][k]; changed = true }
+  if (!snapshot[domain]) {
+    var s = copy(snapshot)
+    s[domain] = copy(live[domain])
+    // the rows as they were at opening: Cancel's actions when a row is hidden later
+    if (domain === "omarchy") s.omarchySpecs = copy(live.omarchySpecs)
+    return s
+  }
+  var missing = Object.keys(live[domain]).filter(function(k) {
+    return !(touched && touched[k]) && (snapshot[domain][k] === undefined || snapshot[domain][k] === "unknown") && live[domain][k] !== "unknown"
   })
-  return changed ? s : null
+  if (!missing.length) return null
+  var out = copy(snapshot)
+  missing.forEach(function(k) { out[domain][k] = live[domain][k] })
+  // a row that appeared later brings its actions for Cancel along
+  if (domain === "omarchy") {
+    out.omarchySpecs = out.omarchySpecs || []
+    ;(live.omarchySpecs || []).forEach(function(spec) {
+      if (missing.indexOf(spec.key) !== -1 && !out.omarchySpecs.some(function(x) { return x.key === spec.key })) out.omarchySpecs.push(copy(spec))
+    })
+  }
+  return out
 }
 
 // Does the island's own state (omarchy-shell tusche-island state →

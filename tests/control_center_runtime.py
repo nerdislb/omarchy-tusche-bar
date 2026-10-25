@@ -101,11 +101,14 @@ function guards() {
   .concat(["appearance.windows.gaps-on:w:" + (gaps ? 0 : 1), "appearance.windows.gaps-off:w:" + (gaps ? 1 : 0),
            "setup.network.dns.dhcp:c:1", "setup.network.dns.cloudflare:c:0"]).join("\n")
 }
+// "rounded" stands for an action the shims refuse (exit 75, nothing changes)
 function act(action) {
  actions.push(action)
+ if (/omarchy-hyprland-corners rounded$/.test(action)) return 75
  var m = /omarchy-hyprland-corners (\w+)$/.exec(action)
  if (m) corners = m[1]
  if (/omarchy-hyprland-window-gaps-toggle$/.test(action)) gaps = !gaps
+ return 0
 }
 function hyprStatus() {
  var effective = {"general:gaps_out": "5", "general:gaps_in": "3"}
@@ -143,13 +146,15 @@ QtObject {
  property bool running: false
  property var stdout: null
  property var stderr: null
+ property int forced: -1
  signal exited(int exitCode, int exitStatus)
  function answer() {
   var c = root.command, joined = c.join(" ")
   if (c[0] === "bash" && joined.indexOf("__omarchy_groups") >= 0) return S.guards()
+  if (c[0] === "bash" && joined.indexOf("omarchy-restart-shell") >= 0) return "password omarchy-dns"
   if (c[0] === "bash" && joined.indexOf("words_of") >= 0) return "omarchy-dns"
   if (c[0] === "bash" && joined.indexOf("omarchy-font-current") >= 0) return ""
-  if (c[0] === "sh" && String(c[2]).indexOf('bash -lc "$1"') >= 0) { S.act(c[4]); return "" }
+  if (c[0] === "sh" && String(c[2]).indexOf('bash -lc "$1"') >= 0) { root.forced = S.act(c[4]); return "" }
   if (c[0] === "python3" && joined.indexOf("hypr-overrides.py") >= 0) { if (c[2] === "apply") S.hyprApply(c[3]); return S.hyprStatus() }
   if (c[0] === "python3" && joined.indexOf("focus-mode.py") >= 0) return '{"hidden": false, "owned": false, "changed": false}'
   if (c[0] === "python3" && joined.indexOf("full-width.py") >= 0) { if (c[2] === "set") S.fullWidth = c[3]; return S.fullWidth }
@@ -158,12 +163,12 @@ QtObject {
   return "0"
  }
  // the injected drift: the vendored menu model differs from Omarchy's (cmp exits 1)
- function code() { return root.command[0] === "cmp" ? 1 : 0 }
+ function code() { if (root.forced >= 0) { var f = root.forced; root.forced = -1; return f } return root.command[0] === "cmp" ? 1 : 0 }
  onRunningChanged: if (running) Qt.callLater(function() {
   var out = root.answer()
   if (root.stdout && typeof root.stdout.read === "function") out.split("\n").forEach(function(l) { if (l !== "") root.stdout.read(l) })
   else if (root.stdout) root.stdout.text = out
-  if (root.stderr) root.stderr.text = ""
+  if (root.stderr) root.stderr.text = root.forced === 75 ? "omarchy-launch-floating-terminal-with-presentation: this needs a window or a question; use Omarchy's menu for it" : ""
   root.running = false; root.exited(root.code(),0)
  })
 }
@@ -438,11 +443,29 @@ ShellRoot {
          check(!cc.open&&!cc.working,"Cancel closes")
          check(S.corners==="theme"&&S.hypr["general:gaps_out"]===undefined,"Cancel restores the corners and drops the override")
          check(S.actions.length===2&&/omarchy-hyprland-corners theme$/.test(S.actions[1]),"Cancel ran the action for the value from opening")
-         testOmarchyReadOnly()
+         testOmarchyRefused()
         })
        })
       })
      })
+    })
+   })
+  })
+ }
+ function testOmarchyRefused() {
+  cc.requestedArea="windows";cc.open=true
+  schedule(700,function(){
+   cc.pick("omarchy.appearance.windows.corners","appearance.windows.corners.rounded")
+   cc.use()
+   schedule(900,function(){
+    check(!cc.working&&cc.messageError&&cc.message.indexOf("needs a window")>=0,"a refused action fails the step with the shim's reason: "+cc.message)
+    check(S.corners==="theme"&&S.actions.length===3,"the refused action changed nothing")
+    check(!!cc.applied.omarchy&&!!cc.applied.omarchy["appearance.windows.corners"],"a started action counts as touched")
+    cc.cancel()
+    schedule(900,function(){
+     check(!cc.open&&!cc.working&&S.actions.length===3,"Cancel compares and runs nothing where the state from opening holds")
+     S.actions=[]
+     testOmarchyReadOnly()
     })
    })
   })
@@ -461,7 +484,7 @@ ShellRoot {
    check(hits2.length>0&&hits2[0].id==="omarchy.appearance.windows.corners","search finds an Omarchy row by its command")
    shot("cc-system",function(){
     cc.cancel()
-    schedule(300,function(){check(!cc.open&&S.actions.length===2,"read-only view closes without running anything");fakeHost.pluginDir="";testPreviewKeyboard()})
+    schedule(300,function(){check(!cc.open&&S.actions.length===0,"read-only view closes without running anything");fakeHost.pluginDir="";testPreviewKeyboard()})
    })
   })
  }

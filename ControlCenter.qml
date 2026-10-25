@@ -109,13 +109,13 @@ PanelWindow {
   // ---------------------------------------------------------------- Omarchy and overrides (read-only probes)
   // Omarchy's settings come from its menu: the definition and guard answers
   // (OmarchyMenuSource), the Control Center's reader batch (Position Bar,
-  // fonts, power profiles, languages) and its word probe (scripts that use
-  // sudo or pkexec stay read-only). Only answers from after this opening
+  // fonts, power profiles, languages) and its word probe (scripts that
+  // restart the shell or use sudo or pkexec stay read-only). Only answers from after this opening
   // count, so an outside change between two openings is never taken as live.
   OmarchyMenuSource { id: omarchyMenu; live: win.open }
   property var omarchyReaders: null         // OmarchySettings.parseReaders · null: not read yet
   property double readersAt: 0              // start of the reader run that produced omarchyReaders
-  property var omarchyAsking: null          // { word: true } · null: not read yet
+  property var omarchyAsking: null          // { word: "restart" | "password" } · null: not read yet
   property double askingAt: 0
   property double omarchyDoneAt: 0          // an Omarchy step's action ended: confirm with answers from after it
   readonly property bool omarchyFresh: omarchyMenu.resultsAt >= openedAt && readersAt >= openedAt && askingAt >= openedAt && openedAt > 0
@@ -165,10 +165,9 @@ PanelWindow {
     property double startedAt: 0
     stdout: StdioCollector { id: askingOut }
     onExited: function(code) {
-      var words = ({})
-      String(askingOut.text || "").split("\n").forEach(function(w) { w = w.trim(); if (w) words[w] = true })
-      win.omarchyAsking = words
+      win.omarchyAsking = OmarchySettings.parseAsking(askingOut.text)
       win.askingAt = askingProc.startedAt
+      if (win.open && askingProc.startedAt < win.openedAt) Qt.callLater(win.startAsking)   // started before this opening
     }
   }
   function refreshHypr() {
@@ -187,6 +186,7 @@ PanelWindow {
       win.hyprStatus = code === 0 ? (CC.hyprFacts(hyprProbeOut.text) || { values: {}, effective: {}, error: "hypr-overrides.py status was unreadable" })
                                   : { values: {}, effective: {}, error: "hypr-overrides.py status failed" }
       win.hyprStatusAt = hyprProbe.startedAt
+      if (win.open && hyprProbe.startedAt < win.openedAt) Qt.callLater(win.refreshHypr)   // started before this opening
     }
   }
   property double hyprSetAt: 0              // last confirmed write: older probes do not count
@@ -203,9 +203,7 @@ PanelWindow {
   }
   // (on live itself: a handler on omarchyDerived or hyprStatus may run before
   // the live binding has taken the new answer)
-  onLiveChanged: if (open && snapshot && (!snapshot.omarchy || !snapshot.hypr || JSON.stringify(snapshot.omarchy).indexOf('"unknown"') !== -1)) {
-    fillLateSnapshot("omarchy"); fillLateSnapshot("hypr")
-  }
+  onLiveChanged: if (open && snapshot) { fillLateSnapshot("omarchy"); fillLateSnapshot("hypr") }
 
   readonly property var healthList: CC.healthChecks({
     watchdog: host && host.watchdogModel !== undefined ? { state: host.watchdogModel, enabled: host.watchdogEnabled === true, now: Date.now() } : null,
@@ -426,6 +424,7 @@ PanelWindow {
   property double phaseAt: 0
   property double stepAt: 0
   property var doneDomains: ({})
+  property int stepSerial: 0               // a setter's exit counts only for the step that started it
   property bool cancelAfterWork: false
   property bool beginAfterWork: false
 
@@ -446,23 +445,15 @@ PanelWindow {
   function setPhase(p) { phase = p; phaseAt = Date.now() }
   function nextStep() {
     if (!queue.length) { finishQueue(""); return }
-    step = queue[0]; queue = queue.slice(1); stepAt = Date.now()
+    step = queue[0]; queue = queue.slice(1); stepAt = Date.now(); stepSerial++
     workText = (queueMode === "cancel" || queueMode === "revert" ? "Restoring · " : "Applying · ") + stepLabel(step)
-    if (step.domain === "omarchy") {
-      // The menu entry's own action, as the menu runs it (a login shell), with
-      // bin/cc-shim first on its PATH: a terminal, a window, a question or a
-      // password prompt behind this window could never be answered.
-      if (shimDir === "") { failStep("Omarchy: the plugin's code directory is not known"); return }
-      setPhase("set")
-      omarchySet.command = ["sh", "-c",
-        'err=$(mktemp) || exit 70; bash -lc "$1" </dev/null >/dev/null 2>"$err"; c=$?; tail -c 600 "$err" >&2; rm -f "$err"; exit $c',
-        "sh", "export PATH=" + Util.shellQuote(shimDir) + ':"$PATH"; ' + step.action]
-      omarchySet.running = true
-    } else if (step.domain === "hypr") {
-      if (hyprScript === "") { failStep("Hyprland overrides: the plugin's code directory is not known"); return }
-      setPhase("set")
-      hyprSet.command = ["python3", hyprScript, "apply", JSON.stringify(CC.hyprPayload(step.changes))].concat(CC.hyprOptions())
-      hyprSet.running = true
+    if (step.domain === "omarchy" || step.domain === "hypr") {
+      if ((step.domain === "omarchy" ? shimDir : hyprScript) === "") { failStep(stepLabel(step) + ": the plugin's code directory is not known"); return }
+      // Counted as touched from the start: if the setter ran but its
+      // confirmation fails, Cancel still compares the row with the state
+      // from opening (and runs nothing where they agree).
+      markTouched(step)
+      setPhase("start")                       // tick starts the setter once the previous one has stopped
     } else if (step.domain === "island") {
       setPhase("set")
       islandSet.command = ["omarchy-shell", "tusche-island", "set", step.key, String(step.value)]
@@ -485,6 +476,30 @@ PanelWindow {
     } else setPhase("wait")
     stepTimer.restart()
   }
+  // The setter of an Omarchy or override step. The Omarchy action runs as
+  // the menu runs it (a login shell), with bin/cc-shim first on its PATH: a
+  // terminal, a window, a question or a password prompt behind this window
+  // could never be answered.
+  function startSetter(s) {
+    setPhase("set")
+    if (s.domain === "omarchy") {
+      omarchySet.token = stepSerial
+      omarchySet.command = ["sh", "-c",
+        'err=$(mktemp) || exit 70; bash -lc "$1" </dev/null >/dev/null 2>"$err"; c=$?; tail -c 600 "$err" >&2; rm -f "$err"; exit $c',
+        "sh", "export PATH=" + Util.shellQuote(shimDir) + ':"$PATH"; ' + s.action]
+      omarchySet.running = true
+    } else {
+      hyprSet.token = stepSerial
+      hyprSet.command = ["python3", hyprScript, "apply", JSON.stringify(CC.hyprPayload(s.changes))].concat(CC.hyprOptions())
+      hyprSet.running = true
+    }
+  }
+  function markTouched(s) {
+    var d = Object.assign({}, doneDomains), touched = Object.assign({}, d[s.domain] || {})
+    ;(s.keys || [s.key]).forEach(function(k) { touched[k] = true })
+    d[s.domain] = touched
+    doneDomains = d
+  }
   function stepDone(settle) {
     var d = Object.assign({}, doneDomains)
     if (step.domain === "screens" || step.domain === "omarchy" || step.domain === "hypr") {
@@ -497,7 +512,13 @@ PanelWindow {
     if (settle) setPhase("settle")            // let the shell and the plugins reload shell.json
     else { stepTimer.stop(); nextStep() }
   }
-  function failStep(msg) { stepTimer.stop(); queue = []; step = null; finishQueue(msg) }
+  function failStep(msg) {
+    stepTimer.stop(); queue = []; step = null
+    // a setter still running (a timeout) stops here; its exit no longer counts
+    if (omarchySet.running) omarchySet.running = false
+    if (hyprSet.running) hyprSet.running = false
+    finishQueue(msg)
+  }
 
   function tick() {
     var s = step
@@ -505,10 +526,12 @@ PanelWindow {
     var now = Date.now()
     if (phase === "settle") { if (now - phaseAt >= 600) { stepTimer.stop(); nextStep() } return }
     if (now - stepAt > 15000) { failStep(stepLabel(s) + " timed out"); return }
-    if (s.domain === "omarchy") {
+    if (s.domain === "omarchy" || s.domain === "hypr") {
+      if (phase === "start") { if (!(s.domain === "omarchy" ? omarchySet : hyprSet).running) startSetter(s); return }
       // Omarchy's own answers from after the action must show the new value
-      // (the guards and the reader batch, as the menu reads them).
-      if (phase !== "confirm") return
+      // (the guards and the reader batch, as the menu reads them); the
+      // override helper confirms in its exit.
+      if (s.domain === "hypr" || phase !== "confirm") return
       var fresh = omarchyMenu.resultsAt >= omarchyDoneAt && readersAt >= omarchyDoneAt
       if (fresh && live.omarchy && live.omarchy[s.key] === s.value) { stepDone(true); return }
       if (now - phaseAt > 6000) {
@@ -660,9 +683,10 @@ PanelWindow {
 
   Process {
     id: omarchySet
+    property int token: 0
     stderr: StdioCollector { id: omarchySetErr }
     onExited: function(code) {
-      if (!win.step || win.step.domain !== "omarchy") return
+      if (omarchySet.token !== win.stepSerial || !win.step || win.step.domain !== "omarchy") return
       if (code !== 0) {
         var err = String(omarchySetErr.text || "").trim().split("\n").pop()
         win.failStep(win.stepLabel(win.step) + ": " + (err || "the action exited with " + code))
@@ -683,10 +707,11 @@ PanelWindow {
   }
   Process {
     id: hyprSet
+    property int token: 0
     stdout: StdioCollector { id: hyprSetOut }
     stderr: StdioCollector { id: hyprSetErr }
     onExited: function(code) {
-      if (!win.step || win.step.domain !== "hypr") return
+      if (hyprSet.token !== win.stepSerial || !win.step || win.step.domain !== "hypr") return
       var facts = code === 0 ? CC.hyprFacts(hyprSetOut.text) : null
       if (!facts || facts.error) {
         var err = facts && facts.error ? facts.error : String(hyprSetErr.text || "").trim().split("\n").pop()

@@ -142,30 +142,60 @@ function simpleAction(action) {
 }
 // Can the Control Center run this action itself? `asking` holds the first
 // words whose scripts use sudo or pkexec (askingScript).
-function runnable(action, asking) {
-  if (!simpleAction(action)) return false
+function runnable(action, asking) { return why(action, asking) === "" }
+// Why the Control Center will not run an action itself: "window" (a terminal,
+// a window or a shell construct), "password" (sudo, pkexec) or "restart" (it
+// restarts the shell this window runs in, as omarchy-font-set does); "" when
+// it can.
+function why(action, asking) {
+  if (!simpleAction(action)) return "window"
   var w = firstWord(action)
-  if (/^omarchy-launch-/.test(w)) return false
-  return !(asking && asking[w] === true)
+  if (/^omarchy-launch-/.test(w)) return "window"
+  var reason = asking ? asking[w] : undefined
+  return reason === "restart" || reason === "password" ? reason : reason ? "password" : ""
+}
+var WHY = {
+  window: "Changing it opens a terminal or a window",
+  password: "Changing it may ask for your password",
+  restart: "Changing it restarts the shell this window runs in"
 }
 function shown(m, e) { return !e.when || (m.when && m.when[e.id] === true) }
 
-// The guard with its negations and compared literals taken out: the two
-// entries of a toggle canonicalize alike ("! x" / "x", "== on" / "!= on",
-// "== \"off\"" / "== \"on\"").
-function canonWhen(s) {
-  return String(s || "")
-    .replace(/!=/g, "==")
-    .replace(/(^|[\s(&|])!\s+/g, "$1")
-    .replace(/==\s*("[^"]*"|'[^']*'|[^\s\]]+)/g, "== _")
-    .replace(/\s+/g, " ").trim()
+// Two guards that are each other's negation: the same text up to one more
+// negation on one side ("! x" / "x", "!= on" / "== on"), or the same test of
+// one value against two complementary literals ("== \"off\"" / "== \"on\"").
+// Other literal pairs (light / dark …) are not taken: nothing says only those
+// two exist.
+var COMPLEMENT = { on: "off", off: "on", "true": "false", "false": "true", yes: "no", no: "yes",
+                   enabled: "disabled", disabled: "enabled", "1": "0", "0": "1" }
+function negations(s) { return (String(s || "").match(/!=|(^|[\s(&|])!\s+/g) || []).length }
+function withoutNegation(s) {
+  return String(s || "").replace(/!=/g, "==").replace(/(^|[\s(&|])!\s+/g, "$1").replace(/\s+/g, " ").trim()
+}
+function literalsOf(s) {
+  var lits = []
+  var text = String(s || "").replace(/(==|!=)\s*("[^"]*"|'[^']*'|[^\s\]]+)/g, function(all, op, lit) {
+    lits.push(lit.replace(/^["']|["']$/g, "")); return op + " _"
+  })
+  return { text: text.replace(/\s+/g, " ").trim(), lits: lits }
+}
+function negatedGuards(a, b) {
+  if (!a || !b || a === b) return false
+  if (withoutNegation(a) === withoutNegation(b)) return Math.abs(negations(a) - negations(b)) === 1
+  var la = literalsOf(a), lb = literalsOf(b), swaps = 0
+  if (la.text !== lb.text || la.lits.length !== lb.lits.length) return false
+  for (var i = 0; i < la.lits.length; i++) {
+    if (la.lits[i] === lb.lits[i]) continue
+    if (COMPLEMENT[la.lits[i]] !== lb.lits[i]) return false
+    swaps++
+  }
+  return swaps === 1
 }
 function togglePair(a, b) {
   if (!a || !b || a.parent !== b.parent) return false
   if (!a.action || !b.action || a.checked || b.checked || a.provider || b.provider) return false
   if (a.kind === "menu" || b.kind === "menu" || a.kind === "link" || b.kind === "link") return false
-  if (!a.when || !b.when || a.when === b.when) return false
-  return canonWhen(a.when) === canonWhen(b.when)
+  return negatedGuards(a.when, b.when)
 }
 
 // Words every label shares at the start or the end ("Theme Corners", "Sharp
@@ -211,7 +241,11 @@ function derive(m) {
     var known = spec.values.some(function(v) { return v.id === live })
     spec.readOnly = !pick.length || !known || !spec.values.filter(function(v) { return v.id === live })[0].pick
     if (!known) spec.note = "Omarchy reports none of these as active: the value is set elsewhere (your own config?)"
-    else if (spec.readOnly) spec.note = "Changing it may ask for your password or open a window: use Omarchy's menu (" + spec.path + ")"
+    else if (spec.readOnly) {
+      var reasons = spec.values.map(function(v) { return why(v.action, asking) }).filter(function(r) { return r })
+      var reason = reasons.indexOf("restart") >= 0 ? "restart" : reasons.indexOf("password") >= 0 ? "password" : "window"
+      spec.note = WHY[reason] + ": use Omarchy's menu" + (spec.path ? " (" + spec.path + ")" : "")
+    }
     // a read-only row shows only what is live
     if (spec.readOnly && known) spec.values = spec.values.filter(function(v) { return v.id === live })
     specs.push(spec)
@@ -348,10 +382,12 @@ function readerGroups(items, order, guardReaders) {
 }
 
 // The words the Control Center must not run itself, from the first words of
-// all actions: scripts that use sudo or pkexec (a password prompt, or a
-// privileged change better made through Omarchy's own menu). Prints one word
-// per line; binaries are skipped unread (OmarchyMenuSource.askScript does the
-// same for the drop-down).
+// all actions: scripts that restart the shell (omarchy-restart-shell: the
+// window and its Cancel would go with it) or use sudo or pkexec (a password
+// prompt, or a privileged change better made through Omarchy's own menu).
+// Prints `restart <word>` / `password <word>` lines (parseAsking); binaries
+// are skipped unread (OmarchyMenuSource.askScript does the same for the
+// drop-down).
 function askingScript() {
   return [
     "declare -A words_of=()",
@@ -363,11 +399,23 @@ function askingScript() {
     "  words_of[$p]+=\"$w \"",
     "done",
     "(( ${#words_of[@]} )) || exit 0",
+    "grep -lE -- '\\<omarchy-restart-shell\\>' \"${!words_of[@]}\" 2>/dev/null | while IFS= read -r f; do",
+    "  for w in ${words_of[$f]}; do printf 'restart %s\\n' \"$w\"; done",
+    "done",
     "grep -lE -- '\\<(sudo|pkexec)\\>' \"${!words_of[@]}\" 2>/dev/null | while IFS= read -r f; do",
-    "  for w in ${words_of[$f]}; do printf '%s\\n' \"$w\"; done",
+    "  for w in ${words_of[$f]}; do printf 'password %s\\n' \"$w\"; done",
     "done",
     "exit 0"
   ].join("\n")
+}
+// askingScript's lines → { word: "restart" | "password" } (restart wins).
+function parseAsking(text) {
+  var out = {}
+  String(text || "").split("\n").forEach(function(line) {
+    var m = /^(restart|password) (\S+)$/.exec(line.trim())
+    if (m && out[m[2]] !== "restart") out[m[2]] = m[1]
+  })
+  return out
 }
 function actionWords(items, order) {
   var seen = {}, out = []
