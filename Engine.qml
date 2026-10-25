@@ -398,7 +398,8 @@ Item {
   // ---------------------------------------------------------------- panel contract
   // The panel is the Control Center. Closing it is Cancel: whatever Use
   // applied goes back (see ControlCenter.qml). payloadJson may name an
-  // area: {"area": "quick|bar|screens|motion|island|cards|health"}.
+  // area: {"area": "quick|health|cards|windows|motion|bar|island|dock|input|screens|power|apps|system"}
+  // (the old "extras" opens Windows).
   property bool isOpen: false
   readonly property bool opened: isOpen
   function open(payloadJson) {

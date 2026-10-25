@@ -55,12 +55,16 @@ QtObject {
  property QtObject bar: QtObject { property color background: "#e9edf0"; property color text: "#171c24" }
 }
 ''')
-        for name in ['Watchdog.js','ControlCenter.qml','ControlCenter.js','ScreenProfiles.qml','VisualBarEditor.qml','BarSpecimen.qml','MotionPreview.qml','VisualEditor.js','Presets.js','BarMaterialCard.qml','MaterialCard.qml','InkSheet.qml','MetalShape.qml','GlassFrameGlint.qml','GlassMath.js','GlassBackdrop.qml','GlassSurface.qml']:
+        for name in ['Watchdog.js','ControlCenter.qml','ControlCenter.js','OmarchySettings.js','ScreenProfiles.qml','VisualBarEditor.qml','BarSpecimen.qml','MotionPreview.qml','VisualEditor.js','Presets.js','BarMaterialCard.qml','MaterialCard.qml','InkSheet.qml','MetalShape.qml','GlassFrameGlint.qml','GlassMath.js','GlassBackdrop.qml','GlassSurface.qml']:
             shutil.copy2(ROOT / name, tmp / name)
         (tmp / 'modules').mkdir()
         for name in ['QuotaFace.qml','StatusFace.qml','WorkspacesFace.qml','WorkspaceMiniature.qml','ArchLogo.qml','SealLogo.qml']:
             shutil.copy2(ROOT / 'modules' / name, tmp / 'modules' / name)
         shutil.copytree(ROOT / 'shaders',tmp / 'shaders')
+        shutil.copytree(ROOT / 'vendor',tmp / 'vendor')
+        # Omarchy's menu source reads a fixture menu and answers its guards from
+        # the fixture state (FixtureIo), never the real menu or commands.
+        (tmp / 'OmarchyMenuSource.qml').write_text((ROOT / 'OmarchyMenuSource.qml').read_text().replace('import Quickshell.Io','import "FixtureIo"'))
         shutil.copytree(ROOT / 'bridge',tmp / 'bridge')
         ui = tmp / 'Ui'
         ui.mkdir()
@@ -70,7 +74,67 @@ QtObject {
         io = tmp / 'FixtureIo'
         io.mkdir()
         # The Full width helper keeps its state across Process objects, like the file would.
-        (io / 'State.js').write_text('.pragma library\nvar fullWidth = "edge"\n')
+        (io / 'State.js').write_text(r'''.pragma library
+var fullWidth = "edge"
+// Omarchy: a fixture menu in its own format, its state and the actions run
+var corners = "theme"
+var gaps = true
+var hypr = {}
+var actions = []
+var menu = JSON.stringify({
+ "appearance": {"label": "Appearance"},
+ "appearance.windows": {"label": "Windows"},
+ "appearance.windows.corners": {"label": "Window Corners"},
+ "appearance.windows.corners.theme": {"label": "Theme Corners", "checked": "[[ $(omarchy-hyprland-corners) == \"theme\" ]]", "action": "omarchy-hyprland-corners theme"},
+ "appearance.windows.corners.sharp": {"label": "Sharp Corners", "checked": "[[ $(omarchy-hyprland-corners) == \"sharp\" ]]", "action": "omarchy-hyprland-corners sharp"},
+ "appearance.windows.corners.rounded": {"label": "Rounded Corners", "checked": "[[ $(omarchy-hyprland-corners) == \"rounded\" ]]", "action": "omarchy-hyprland-corners rounded"},
+ "appearance.windows.gaps-on": {"label": "Window Gaps On", "when": "omarchy-hyprland-toggle-enabled window-no-gaps", "action": "omarchy-hyprland-window-gaps-toggle"},
+ "appearance.windows.gaps-off": {"label": "Window Gaps Off", "when": "! omarchy-hyprland-toggle-enabled window-no-gaps", "action": "omarchy-hyprland-window-gaps-toggle"},
+ "setup": {"label": "Setup"},
+ "setup.network": {"label": "Network"},
+ "setup.network.dns": {"label": "DNS"},
+ "setup.network.dns.dhcp": {"label": "DHCP", "checked": "[[ \"$(omarchy-dns)\" == \"DHCP\" ]]", "action": "omarchy-dns DHCP"},
+ "setup.network.dns.cloudflare": {"label": "Cloudflare", "checked": "[[ \"$(omarchy-dns)\" == \"Cloudflare\" ]]", "action": "omarchy-dns Cloudflare"}
+})
+function guards() {
+ return ["theme", "sharp", "rounded"].map(function(c) { return "appearance.windows.corners." + c + ":c:" + (c === corners ? 1 : 0) })
+  .concat(["appearance.windows.gaps-on:w:" + (gaps ? 0 : 1), "appearance.windows.gaps-off:w:" + (gaps ? 1 : 0),
+           "setup.network.dns.dhcp:c:1", "setup.network.dns.cloudflare:c:0"]).join("\n")
+}
+function act(action) {
+ actions.push(action)
+ var m = /omarchy-hyprland-corners (\w+)$/.exec(action)
+ if (m) corners = m[1]
+ if (/omarchy-hyprland-window-gaps-toggle$/.test(action)) gaps = !gaps
+}
+function hyprStatus() {
+ var effective = {"general:gaps_out": "5", "general:gaps_in": "3"}
+ for (var k in hypr) effective[k] = String(hypr[k])
+ return JSON.stringify({values: hypr, effective: effective, error: ""})
+}
+function hyprApply(json) {
+ var c = JSON.parse(json), next = {}
+ for (var k in hypr) next[k] = hypr[k]
+ for (var j in c) { if (c[j] === null) delete next[j]; else next[j] = c[j] }
+ hypr = next
+}
+''')
+        (io / 'FileView.qml').write_text('''import QtQuick
+import "State.js" as S
+QtObject {
+ id: fv
+ property string path: ""
+ property bool watchChanges: false
+ property bool printErrors: true
+ signal loaded()
+ signal loadFailed(int error)
+ signal fileChanged()
+ function text() { return /default\\/omarchy\\/omarchy-menu\\.jsonc$/.test(path) ? S.menu : "{}" }
+ function reload() { Qt.callLater(fv.loaded) }
+ onPathChanged: Qt.callLater(fv.loaded)
+}
+''')
+        (io / 'SplitParser.qml').write_text('import QtQuick\nQtObject { signal read(string data) }\n')
         (io / 'Process.qml').write_text("""import QtQuick
 import "State.js" as S
 QtObject {
@@ -82,6 +146,11 @@ QtObject {
  signal exited(int exitCode, int exitStatus)
  function answer() {
   var c = root.command, joined = c.join(" ")
+  if (c[0] === "bash" && joined.indexOf("__omarchy_groups") >= 0) return S.guards()
+  if (c[0] === "bash" && joined.indexOf("words_of") >= 0) return "omarchy-dns"
+  if (c[0] === "bash" && joined.indexOf("omarchy-font-current") >= 0) return ""
+  if (c[0] === "sh" && String(c[2]).indexOf('bash -lc "$1"') >= 0) { S.act(c[4]); return "" }
+  if (c[0] === "python3" && joined.indexOf("hypr-overrides.py") >= 0) { if (c[2] === "apply") S.hyprApply(c[3]); return S.hyprStatus() }
   if (c[0] === "python3" && joined.indexOf("focus-mode.py") >= 0) return '{"hidden": false, "owned": false, "changed": false}'
   if (c[0] === "python3" && joined.indexOf("full-width.py") >= 0) { if (c[2] === "set") S.fullWidth = c[3]; return S.fullWidth }
   if (c[0] === "python3") return "disabled"
@@ -91,7 +160,9 @@ QtObject {
  // the injected drift: the vendored menu model differs from Omarchy's (cmp exits 1)
  function code() { return root.command[0] === "cmp" ? 1 : 0 }
  onRunningChanged: if (running) Qt.callLater(function() {
-  if (root.stdout) root.stdout.text = root.answer()
+  var out = root.answer()
+  if (root.stdout && typeof root.stdout.read === "function") out.split("\n").forEach(function(l) { if (l !== "") root.stdout.read(l) })
+  else if (root.stdout) root.stdout.text = out
   if (root.stderr) root.stderr.text = ""
   root.running = false; root.exited(root.code(),0)
  })
@@ -130,6 +201,8 @@ import Quickshell
 import qs.Commons
 import qs.Commons as Commons
 import "Presets.js" as Presets
+import "ControlCenter.js" as CC
+import "FixtureIo/State.js" as S
 import "bridge" as Bridge
 ShellRoot {
  id: root
@@ -291,12 +364,19 @@ ShellRoot {
   fakeHost.pluginDir="/h/.config/omarchy/plugins/nerdibeard.tusche-bar/generations/b15c4a797a1b1527"
   cc.requestedArea="extras";cc.open=true
   schedule(400,function(){
-   check(cc.area==="extras","Extras area opens by name")
+   check(cc.area==="windows","the old Extras name opens Windows")
    check(!!cc.live.extras&&cc.live.extras.fullWidth==="edge"&&cc.live.extras.sheet==="off","Extras read the toggle and find the installed sheet (off: not in shell.json)")
    check(cc.snapshot.extras.fullWidth==="edge","a toggle read after opening joins the snapshot")
    fullyInViewport(findItem(cc.contentItem,function(item){return item.settingId==="extras.fullWidth"}),"Full width row")
-   fullyInViewport(findItem(cc.contentItem,function(item){return item.settingId==="extras.sheet"}),"Shortcut sheet row")
+   cc.showArea("input")
+   schedule(120,function(){
+   var sheetRow=findItem(cc.contentItem,function(item){return item.settingId==="extras.sheet"})
+   cc.scrollToRow("extras.sheet")
+   schedule(80,function(){
+   fullyInViewport(sheetRow,"Shortcut sheet row in Input & keys")
    check(!!button("Open the sheet")&&!button("Open the sheet").enabled,"Open the sheet waits while the sheet is off")
+   cc.showArea("windows")
+   schedule(120,function(){
    var hc=cc.healthList.filter(function(c){return c.id==="extras"})[0]
    check(!!hc&&hc.state==="ok","Health reports the extras")
    shot("cc-extras",function(){
@@ -309,10 +389,79 @@ ShellRoot {
       cc.cancel()
       schedule(900,function(){
        check(!cc.open&&!cc.working&&cc.fullWidthStatus==="edge","Cancel switches full width back")
-       fakeHost.pluginDir="";testPreviewKeyboard()
+       testOmarchy()
       })
      })
     })
+   })
+   })
+   })
+   })
+  })
+ }
+ function row(id) {return findItem(cc.contentItem,function(item){return item.settingId===id&&item.height>0})}
+ function testOmarchy() {
+  cc.requestedArea="windows";cc.open=true
+  schedule(700,function(){
+   check(cc.area==="windows","Windows area opens")
+   check(cc.omarchyState==="ok"&&!!cc.live.omarchy,"Omarchy's settings read from its menu")
+   check(cc.live.omarchy["appearance.windows.corners"]==="appearance.windows.corners.theme","corners live from the checked guard")
+   check(cc.live.omarchy["appearance.windows.gaps-on"]==="appearance.windows.gaps-on","gaps toggle live from the entry the menu does not offer")
+   check(!!cc.live.hypr&&cc.live.hypr["general:gaps_out"]==="","overrides read: none set")
+   check(cc.snapshot.omarchy["appearance.windows.corners"]==="appearance.windows.corners.theme","Omarchy values read after opening join the snapshot")
+   fullyInViewport(row("omarchy.appearance.windows.corners"),"Corners row")
+   check(!!row("hypr.general:gaps_out"),"Outer gap override row")
+   check(!row("hypr.decoration:blur:size"),"advanced rows hidden")
+   cc.showAdvanced=true
+   schedule(120,function(){
+    check(!!row("hypr.decoration:blur:size"),"Advanced shows them")
+    cc.showAdvanced=false
+    shot("cc-windows",function(){
+     cc.pick("omarchy.appearance.windows.corners","appearance.windows.corners.sharp")
+     cc.pick("hypr.general:gaps_out","8")
+     check(S.corners==="theme"&&S.hypr["general:gaps_out"]===undefined&&S.actions.length===0,"staging runs nothing")
+     check(cc.changeList.length===2,"two rows staged")
+     cc.use()
+     schedule(2200,function(){
+      check(!cc.working&&cc.usedLive&&cc.message.indexOf("Applied")===0,"Use finished: "+cc.message)
+      check(S.corners==="sharp"&&S.actions.length===1&&S.actions[0].indexOf("/bin/cc-shim")>0&&/omarchy-hyprland-corners sharp$/.test(S.actions[0]),"the corners action ran once, shim first on PATH")
+      check(cc.live.omarchy["appearance.windows.corners"]==="appearance.windows.corners.sharp","Omarchy reports sharp")
+      check(S.hypr["general:gaps_out"]===8&&cc.live.hypr["general:gaps_out"]==="8","the override is written")
+      check(!!cc.applied.omarchy["appearance.windows.corners"]&&!!cc.applied.hypr["general:gaps_out"],"Use records the touched rows")
+      cc.toggleChanged()
+      schedule(150,function(){
+       check(!!row("hypr.general:gaps_out")&&!!row("omarchy.appearance.windows.corners")===false,"Changed only lists the set override (Omarchy rows only while staged)")
+       shot("cc-changed",function(){
+        cc.toggleChanged()
+        cc.cancel()
+        schedule(2400,function(){
+         check(!cc.open&&!cc.working,"Cancel closes")
+         check(S.corners==="theme"&&S.hypr["general:gaps_out"]===undefined,"Cancel restores the corners and drops the override")
+         check(S.actions.length===2&&/omarchy-hyprland-corners theme$/.test(S.actions[1]),"Cancel ran the action for the value from opening")
+         testOmarchyReadOnly()
+        })
+       })
+      })
+     })
+    })
+   })
+  })
+ }
+ function testOmarchyReadOnly() {
+  cc.requestedArea="system";cc.open=true
+  schedule(700,function(){
+   var dns=cc.live.omarchySpecs.filter(function(s){return s.key==="setup.network.dns"})[0]
+   check(!!dns&&dns.readOnly&&!CC.available(cc.live,"omarchy.setup.network.dns"),"a sudo script's row is read-only")
+   cc.pick("omarchy.setup.network.dns","setup.network.dns.cloudflare")
+   check(cc.changeList.length===0,"a read-only row does not stage")
+   fullyInViewport(row("omarchy.setup.network.dns"),"DNS row shown read-only")
+   var hits=CC.search(CC.searchIndex(cc.live,{}),"gaps_out",4)
+   check(hits.length>0&&hits[0].id==="hypr.general:gaps_out","search finds an override by its Hyprland option")
+   var hits2=CC.search(CC.searchIndex(cc.live,{}),"omarchy-hyprland-corners",4)
+   check(hits2.length>0&&hits2[0].id==="omarchy.appearance.windows.corners","search finds an Omarchy row by its command")
+   shot("cc-system",function(){
+    cc.cancel()
+    schedule(300,function(){check(!cc.open&&S.actions.length===2,"read-only view closes without running anything");fakeHost.pluginDir="";testPreviewKeyboard()})
    })
   })
  }
@@ -355,7 +504,7 @@ ShellRoot {
         env={**os.environ,'QT_QPA_PLATFORM':'xcb','QSG_RHI_BACKEND':'opengl','LIBGL_ALWAYS_SOFTWARE':'1','QT_LOGGING_RULES':'quickshell.dbus*:false'}
         with (out / 'runtime.log').open('w') as log:
             proc=subprocess.Popen(['xvfb-run','-a','-s','-screen 0 1100x1650x24','quickshell','-n','-p',str(tmp)],env=env,stdout=log,stderr=subprocess.STDOUT,text=True,start_new_session=True)
-            try: proc.wait(timeout=35)
+            try: proc.wait(timeout=70)
             except subprocess.TimeoutExpired:
                 os.killpg(proc.pid,signal.SIGTERM);proc.wait(timeout=5)
         log=(out / 'runtime.log').read_text()

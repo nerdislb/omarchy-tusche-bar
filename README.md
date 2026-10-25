@@ -323,10 +323,17 @@ change needs sudo). Test: `python3 tests/boot_logo.py`.
 ## Control Center
 
 `ControlCenter.qml` (pure model in `ControlCenter.js`): Quick · Configure,
-areas on the left (Quick, Tusche Bar, Screens, Motion, Tusche Island, Card
-picker, Extras, Health),
-editor on the right, Ctrl+K search over settings and their values, a Health
-chip. Edits are staged and confirmed explicitly:
+areas on the left in five groups (Overview: Quick, Health · Appearance: Theme
+& font, Windows, Material & motion · Bar: Tusche Bar, Tusche Island, Dock ·
+Work: Input & keys, Screens · System: Power & sleep, Default apps, System),
+editor on the right, Ctrl+K search over settings, their values and the
+commands, Hyprland options and Omarchy menu paths behind them, the filters
+**Changed only** (staged rows, overrides that are set, Tusche options away
+from their defaults, across all areas) and **Advanced**, and a Health chip.
+Every row that is not plainly ours carries a tag: **Omarchy** (runs
+Omarchy's own command) or **Override** (a Hyprland value in the Control
+Center's own toggle file); **Tusche** marks ours where an area mixes them.
+Edits are staged and confirmed explicitly:
 
 - **Use** applies the staged changes live; the window stays open.
 - **Save** applies what is still staged and closes.
@@ -334,18 +341,75 @@ chip. Edits are staged and confirmed explicitly:
   other close) restores the state from opening if Use applied something, then
   closes.
 
-Bar options go out as one write (layout changes rebuild the bar; look options do not), island settings
+Omarchy's settings run their menu action, one at a time, and wait until
+Omarchy reports the new value; the overrides go out as one write and one
+Hyprland reload; bar options go out as one write (layout changes rebuild the bar; look options do not), island settings
 through `omarchy-shell tusche-island set …`, the card picker through its
 `menu-override.py`, the extras through `bin/full-width.py` and the shell's
 plugin IPC; one step at a time, each confirmed before the next. Health
 only reports live checks (base layout, AI usage refresh, notification takeover
-marker, card picker override, last write, saved combinations, extras).
+marker, card picker override, last write, saved combinations, extras,
+Omarchy's settings, the override file).
 
-### Extras
+### Omarchy's settings
 
-Switches beyond the bar, staged and confirmed like every other setting:
+The rows tagged Omarchy are not a copy: `OmarchySettings.js` reads them from
+Omarchy's own menu (`omarchy-menu.jsonc` plus your extensions, merged and
+answered by `OmarchyMenuSource.qml` with Omarchy's model library), so a
+setting Omarchy adds to its menu appears here by itself (unplaced ones under
+System › More from Omarchy). Three shapes count as settings:
 
-- **Full width windows**: *Edge to edge* makes a window that is full width
+- a menu whose entries have `checked:` guards (Window Corners, Bar
+  Background, Clock, Dock Position, Workspace Layout, DNS, Defaults …): one
+  row, the checked entry live;
+- two neighbouring entries whose `when:` guards are each other's negation
+  (Window Gaps On / Off, Nightlight, Stay Awake, Battery %, Touchpad …): one
+  row, live is the entry the menu does *not* offer;
+- a menu of `<reader> <value>` actions whose reader is one of Omarchy's own
+  value readers (Position Bar: `omarchy-bar position top`), plus the lists the
+  native menu fills from bash (fonts, power profiles, languages), read by the
+  Control Center's own reader batch.
+
+A value runs exactly its menu entry's action in a login shell, as the menu
+does, with `bin/cc-shim` first on its PATH: the Control Center holds the
+keyboard, so a terminal, a window, a question or a password prompt behind it
+could never be answered. The shims refuse those (an Omarchy default app that
+is not installed yet, say) and the step fails with the reason. Scripts that
+use `sudo` or `pkexec` (DNS, Language), actions that open a terminal (Update
+channel, GPU mode) and choices where Omarchy reports no value as active (a
+clock format or workspace layout of your own) are shown read-only, with
+where to change them in Omarchy's menu. Only answers read after the window
+opened count, and Cancel runs the action of the value from opening.
+
+### Hyprland overrides
+
+Rows tagged Override (Windows › Fine values; Input & keys › Keyboard, Pointer,
+Touchpad) set Hyprland values Omarchy has no switch for: gaps, border width,
+corner radius, blur, dimming, key repeat, pointer speed and acceleration,
+cursor hiding, touchpad scrolling. `bin/hypr-overrides.py` keeps them in one
+Omarchy toggle file, `~/.local/state/omarchy/toggles/hypr/00-tusche-settings.lua`,
+with the values on a `-- tusche-overrides:` line it reads back and the Lua
+generated from them. Omarchy loads its toggle directory after your hypr
+config and the theme, in name order, so these win over both but come before
+Omarchy's other toggles: Gaps Off, Sharp or Rounded corners and Animations
+Off still win. **Default** drops a value; the number shown dimmed is what
+Hyprland runs with. Writes are atomic, Hyprland reloads once per Use, and a
+failed reload or new `hyprctl configerrors` restore the previous file. A file
+of that name the Control Center did not write is left alone. Delete it and
+run `hyprctl reload` to drop all overrides by hand.
+
+Tests: `node tests/omarchy_settings.cjs` (the model, against a small menu and
+Omarchy's real one: the known toggle pairs must still pair),
+`python3 tests/hypr_overrides.py` (scratch state folder, fake `hyprctl`) and
+the Omarchy/override part of `tests/control_center_runtime.py` (the real window
+under Xvfb with a fixture menu: read, stage, Use, Changed only, Cancel).
+
+### Full width and the shortcut sheet
+
+Two switches beyond the bar (once the Extras area; `cc extras` still opens
+Windows), staged and confirmed like every other setting:
+
+- **Full width windows** (Windows): *Edge to edge* makes a window that is full width
   (Super+Alt+F, Omarchy's maximize) fill the screen without outer gaps, border
   or rounding; *With gaps and border* is Omarchy's default. It is an Omarchy
   Hyprland toggle: `bin/full-width.py` copies `assets/hypr/full-width-edge.lua`
@@ -354,13 +418,13 @@ Switches beyond the bar, staged and confirmed like every other setting:
   previous state comes back and the step fails. Real full screen (Super+F) is
   not affected. The idea comes from the
   [hyprperks dotfiles](https://github.com/hyprwm/hyprperks-dotfiles).
-- **Shortcut sheet**: on or off for the Shortcut Sheet overlay plugin
+- **Shortcut sheet** (Input & keys): on or off for the Shortcut Sheet overlay plugin
   (`nerdibeard.shortcut-sheet`), through `omarchy-plugin-enable` /
   `omarchy-plugin-disable`; the step waits until shell.json shows the change.
   Without the plugin installed the row stays unavailable. **Open the sheet**
   closes the Control Center and opens it, once nothing is staged or live.
 
-`omarchy-shell tusche-bar cc extras` opens the area. Tests:
+Tests:
 `node tests/extras.cjs`, `python3 tests/full_width.py` (scratch state folder
 and a fake `hyprctl`), and the Extras part of `tests/control_center_runtime.py`.
 
@@ -528,7 +592,7 @@ group may differ) and `state` reports it in `lastResult`.
 
 ## IPC
 
-- `omarchy-shell tusche-bar options` (Control Center, toggle) · `cc quick|bar|screens|motion|island|cards|health` · `preset today|tidy|focus` · `set <element> <variant>` · `save|load <name>` · `menu` (drop-down) · `search` (drop-down as a launcher) · `apps` (drop-down on the Apps list) · `recaptureBase` · `state`.
+- `omarchy-shell tusche-bar options` (Control Center, toggle) · `cc quick|health|cards|windows|motion|bar|island|dock|input|screens|power|apps|system` · `preset today|tidy|focus` · `set <element> <variant>` · `save|load <name>` · `menu` (drop-down) · `search` (drop-down as a launcher) · `apps` (drop-down on the Apps list) · `recaptureBase` · `state`.
 - `omarchy-shell tusche-bar screenProfile <output> inherit|compact|detailed` applies a presentation profile directly; `focus start|show|release|toggle` controls the optional focus seal.
 - Module IPC (tests, keybinds): `tusche-quota toggle|select <agent>|state`, `tusche-status group net|phone|system|all`, `tusche-status member <widget-id>`, `tusche-centre state`.
 - `tusche-bar ask <payload>` is the menu shims' entry (an `omarchy-menu-select`/`-input` payload; answers `ok` when a drop-down took it).
@@ -549,7 +613,7 @@ Omarchy's centre-box layout (`centerBegin`, `center`, `centerEnd`) and the tray 
 
 Presentation checks: `node tests/presentation.cjs`, `python3 tests/focus_mode.py`,
 `node tests/workspace_geometry.cjs`, `node tests/announce.cjs`, `node tests/watchdog.cjs`,
-`node tests/health.cjs`, `node tests/focus_seal.cjs`, `node tests/omi_art.cjs`, `node tests/idle_director.cjs`, `node tests/omi_share.cjs` and `node tests/visual_editor.cjs`.
+`node tests/health.cjs`, `node tests/focus_seal.cjs`, `node tests/omi_art.cjs`, `node tests/idle_director.cjs`, `node tests/omi_share.cjs`, `node tests/visual_editor.cjs`, `node tests/extras.cjs`, `node tests/omarchy_settings.cjs`, `python3 tests/full_width.py` and `python3 tests/hypr_overrides.py`.
 Native isolated renderer checks (Qt, Quickshell, Xvfb or offscreen):
 `python3 tests/workspace_runtime.py --output /tmp/workspace-proof`,
 `python3 tests/announce_runtime.py`, `python3 tests/watchdog_runtime.py`,

@@ -24,10 +24,13 @@ const config = (sheetListed) => ({plugins: [{id: 'nerdibeard.tusche-bar'}].conca
                                    bar: {layout: {left: [], center: [], right: []}}});
 const facts = (fullWidth, sheetInstalled) => ({fullWidth, sheetInstalled});
 
-test('the Extras area sits before Health and lists its two settings', () => {
-  const ids = cc.AREAS.map(a => a.id);
-  assert.equal(ids.indexOf('extras'), ids.indexOf('health') - 1);
-  assert.deepEqual(plain(cc.settings().filter(s => s.area === 'extras').map(s => s.id)), ['extras.fullWidth', 'extras.sheet']);
+test('the extras live in Windows and Input & keys; the old Extras name opens Windows', () => {
+  assert.equal(cc.setting('extras.fullWidth').area, 'windows');
+  assert.equal(cc.setting('extras.sheet').area, 'input');
+  assert.ok(cc.isArea('extras'));
+  assert.equal(cc.resolveArea('extras'), 'windows');
+  assert.deepEqual(plain(cc.areaRows('windows', {extras: {fullWidth: 'edge', sheet: 'on'}}).filter(r => r.kind === 'row' && r.id.indexOf('extras.') === 0)),
+                   [{kind: 'row', id: 'extras.fullWidth'}]);
 });
 
 test('live state: unread facts leave the domain out; the sheet follows shell.json', () => {

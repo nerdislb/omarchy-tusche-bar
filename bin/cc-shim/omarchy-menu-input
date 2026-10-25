@@ -1,0 +1,7 @@
+#!/bin/bash
+# The Control Center runs Omarchy's menu actions with this directory first on
+# their PATH (ControlCenter.qml, the omarchy steps). It holds the keyboard
+# exclusively, so a terminal, a window or a question opened behind it could
+# never be answered: refuse instead, and the step reports why.
+echo "omarchy-menu-input: this needs a window or a question; use Omarchy's menu for it" >&2
+exit 75

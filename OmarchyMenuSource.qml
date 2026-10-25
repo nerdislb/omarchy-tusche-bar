@@ -29,6 +29,11 @@ Item {
   property bool evaluated: false
   property var checkedResults: ({})
   property var disabledResults: ({})
+  // Start time (ms) of the guard run that produced the answers above, and of
+  // the newest run that failed (its answers were not taken): a reader that
+  // changed something waits for answers from after its change.
+  property double resultsAt: 0
+  property double failedAt: 0
   property bool pending: false
   // While the menu is up, a changed definition is re-checked at once.
   property bool live: false
@@ -48,12 +53,15 @@ Item {
     if (live) evaluate()
   }
 
+  // A read caught mid-write (an update, a checkout, an editor's save) keeps
+  // the previous rows, as the native menu does (MenuModel.keepMenuRows); the
+  // shipped menu is never legitimately empty.
   FileView {
     id: defaultFile
     path: src.omarchyPath + "/default/omarchy/omarchy-menu.jsonc"
     watchChanges: true
     printErrors: false
-    onLoaded: { src.defaultItems = MenuModel.parseMenuJsonc(text()); src.rebuild() }
+    onLoaded: { src.defaultItems = MenuModel.keepMenuRows(src.defaultItems, text(), true); src.rebuild() }
     onLoadFailed: { src.defaultItems = []; src.rebuild() }
     onFileChanged: reload()
   }
@@ -62,7 +70,7 @@ Item {
     path: Quickshell.env("HOME") + "/.config/omarchy/extensions/omarchy-menu.jsonc"
     watchChanges: true
     printErrors: false
-    onLoaded: { src.userItems = MenuModel.parseMenuJsonc(text()); src.rebuild() }
+    onLoaded: { src.userItems = MenuModel.keepMenuRows(src.userItems, text(), false); src.rebuild() }
     onLoadFailed: { src.userItems = []; src.rebuild() }
     onFileChanged: reload()
   }
@@ -135,6 +143,7 @@ Item {
     var script = MenuModel.guardScript(items)
     if (!script) { whenResults = ({}); checkedResults = ({}); disabledResults = ({}); return }
     guardProc.collected = ""
+    guardProc.startedAt = Date.now()
     guardProc.command = ["bash", "-lc", script]
     guardProc.running = true
   }
@@ -142,8 +151,10 @@ Item {
   Process {
     id: guardProc
     property string collected: ""
+    property double startedAt: 0
     stdout: SplitParser { onRead: function(data) { guardProc.collected += data + "\n" } }
     onExited: function(exitCode, exitStatus) {
+      if (exitCode !== 0 || exitStatus !== 0) src.failedAt = guardProc.startedAt
       if (exitCode === 0 && exitStatus === 0) {
         var w = ({}), c = ({}), d = ({})
         var lines = guardProc.collected.split("\n")
@@ -161,6 +172,7 @@ Item {
           else if (tag === "d") d[id] = value
         }
         src.whenResults = w; src.checkedResults = c; src.disabledResults = d
+        src.resultsAt = guardProc.startedAt
         src.evaluated = true
       }
       if (src.pending) Qt.callLater(src.evaluate)

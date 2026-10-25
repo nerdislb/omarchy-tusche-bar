@@ -1,0 +1,10 @@
+#!/bin/bash
+# The Control Center runs Omarchy's menu actions with this directory first on
+# their PATH (ControlCenter.qml, the omarchy steps). A password prompt behind
+# its exclusive keyboard could never be answered: sudo runs non-interactively,
+# so only a passwordless rule lets it through.
+for real in /usr/bin/sudo /bin/sudo; do
+  [[ -x $real ]] && exec "$real" -n "$@"
+done
+echo "sudo: not found" >&2
+exit 75

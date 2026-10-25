@@ -5,7 +5,9 @@
 // Control Center model: the settings registry, staging for Save · Use ·
 // Cancel, the apply/revert plans, search and health checks. Pure functions;
 // ControlCenter.qml runs the plans (bar options through the engine's apply,
-// island settings through its IPC, the card picker through its script).
+// island settings through its IPC, the card picker through its script,
+// Omarchy's settings through their menu actions, Hyprland overrides through
+// bin/hypr-overrides.py).
 //
 // State shape (live, snapshot, pending):
 //   { bar: <normalized Tusche Bar options>,
@@ -13,7 +15,11 @@
 //     island: { notifications, noteStyle } | null (not configured),
 //     cards: { override: "enabled" | "disabled" } | null (not known),
 //     extras: { fullWidth: "edge" | "gaps" | "unknown" | "error",
-//               sheet: "on" | "off" | "missing" | "unknown" } | null (not read) }
+//               sheet: "on" | "off" | "missing" | "unknown" } | null (not read),
+//     omarchy: { <row key>: <value id> | "unknown" } | null (not read),
+//     omarchySpecs: [<rows from OmarchySettings.derive>],
+//     hypr: { <Hyprland option>: <override> | "" (none) } | null (not read),
+//     hyprEffective: { <Hyprland option>: <value Hyprland runs with> } }
 // Values are strings, as the island IPC takes them. Staged edits are an
 // overlay { "<domain>.<key>": value } on top of the live state, so a setting
 // nobody touched follows the live value.
@@ -22,25 +28,77 @@ var ISLAND_ID = "nerdibeard.tusche-island"
 var CARDS_ID = "nerdibeard.card-picker"
 var SHEET_ID = "nerdibeard.shortcut-sheet"
 
-var AREAS = [
-  { id: "quick", label: "Quick", note: "Most-used switches" },
-  { id: "bar", label: "Tusche Bar", note: "Presets, combinations, every bar option" },
-  { id: "screens", label: "Screens", note: "Presentation profiles, not display settings" },
-  { id: "motion", label: "Motion", note: "Try the current material without changing it" },
-  { id: "island", label: "Tusche Island", note: "Notifications in the bar" },
-  { id: "cards", label: "Card picker", note: "Theme and wallpaper menus" },
-  { id: "extras", label: "Extras", note: "Window and desktop extras" },
-  { id: "health", label: "Health", note: "Checks from live state" }
+// The sidebar: areas in groups. Every row says where it comes from: Tusche
+// (our plugins), Omarchy (runs Omarchy's own command) or Override (a Hyprland
+// value in the Control Center's own toggle file).
+var GROUPS = [
+  { id: "overview", label: "OVERVIEW" },
+  { id: "appearance", label: "APPEARANCE" },
+  { id: "bar", label: "BAR" },
+  { id: "work", label: "WORK" },
+  { id: "system", label: "SYSTEM" }
 ]
+var AREAS = [
+  { id: "quick", group: "overview", label: "Quick", note: "Most-used switches" },
+  { id: "health", group: "overview", label: "Health", note: "Checks from live state" },
+  { id: "cards", group: "appearance", label: "Theme & font", note: "Theme and wallpaper menus, the system font" },
+  { id: "windows", group: "appearance", label: "Windows", note: "Omarchy's window switches, full width and fine values" },
+  { id: "motion", group: "appearance", label: "Material & motion", note: "Try the current material without changing it" },
+  { id: "bar", group: "bar", label: "Tusche Bar", note: "Presets, combinations, every bar option, Omarchy's bar" },
+  { id: "island", group: "bar", label: "Tusche Island", note: "Notifications in the bar, Omarchy's do not disturb" },
+  { id: "dock", group: "bar", label: "Dock", note: "Omarchy's dock" },
+  { id: "input", group: "work", label: "Input & keys", note: "Touchpad, keyboard, pointer and the shortcut sheet" },
+  { id: "screens", group: "work", label: "Screens", note: "Bar presentation per screen, display switches" },
+  { id: "power", group: "system", label: "Power & sleep", note: "Power profile, staying awake, the screensaver" },
+  { id: "apps", group: "system", label: "Default apps", note: "What Omarchy opens for browsing, terminals, editing, agents" },
+  { id: "system", group: "system", label: "System", note: "Omarchy's other settings" }
+]
+// Older names still open their area (IPC: cc <area>).
+var AREA_ALIASES = { extras: "windows" }
+// Generic rows (Omarchy, overrides, full width) per area, in this section
+// order; sections not listed follow in the order they come.
+var SECTIONS = {
+  windows: ["WINDOWS", "FINE VALUES", "LAYOUT"],
+  input: ["DEVICES", "KEYBOARD", "POINTER", "TOUCHPAD"],
+  power: ["POWER", "SLEEP"],
+  system: ["SYSTEM", "HARDWARE", "MORE FROM OMARCHY"]
+}
 
 // Extras: switches beyond the bar. fullWidth is a Hyprland toggle file
 // (bin/full-width.py); sheet is the Shortcut Sheet plugin's enabled state in
 // shell.json, offered only when that plugin is installed.
 var EXTRAS_SETTINGS = [
-  { key: "fullWidth", label: "Full width windows", hint: "Super+Alt+F",
+  { key: "fullWidth", label: "Full width windows", hint: "Super+Alt+F", area: "windows", section: "WINDOWS",
     values: [{ id: "edge", label: "Edge to edge" }, { id: "gaps", label: "With gaps and border" }] },
-  { key: "sheet", label: "Shortcut sheet", hint: "Plugin nerdibeard.shortcut-sheet",
+  { key: "sheet", label: "Shortcut sheet", hint: "Plugin nerdibeard.shortcut-sheet", area: "input", section: "SHORTCUTS",
     values: [{ id: "on", label: "On" }, { id: "off", label: "Off" }] }
+]
+
+// Hyprland overrides: values the Control Center writes into its own Omarchy
+// toggle file (bin/hypr-overrides.py → 00-tusche-settings.lua). It loads
+// after your hypr config and the theme but before Omarchy's other toggles,
+// so Omarchy's switches (Gaps Off, Sharp or Rounded corners, Animations Off)
+// still win over a value here. "" is no override: Hyprland keeps what your
+// config says. Values are strings; hyprPayload types them for the helper.
+var HYPR_FILE = "00-tusche-settings.lua"
+var HYPR_SETTINGS = [
+  { option: "general:gaps_in", label: "Inner gap", type: "int", min: 0, max: 30, step: 1, unit: "px", area: "windows", section: "FINE VALUES" },
+  { option: "general:gaps_out", label: "Outer gap", type: "int", min: 0, max: 40, step: 1, unit: "px", area: "windows", section: "FINE VALUES" },
+  { option: "general:border_size", label: "Border width", type: "int", min: 0, max: 8, step: 1, unit: "px", area: "windows", section: "FINE VALUES" },
+  { option: "decoration:rounding", label: "Corner radius", type: "int", min: 0, max: 24, step: 1, unit: "px", area: "windows", section: "FINE VALUES" },
+  { option: "decoration:blur:enabled", label: "Blur", type: "bool", area: "windows", section: "FINE VALUES" },
+  { option: "decoration:blur:size", label: "Blur size", type: "int", min: 1, max: 16, step: 1, area: "windows", section: "FINE VALUES", advanced: true },
+  { option: "decoration:dim_inactive", label: "Dim inactive windows", type: "bool", area: "windows", section: "FINE VALUES" },
+  { option: "decoration:dim_strength", label: "Dim strength", type: "float", min: 0.05, max: 0.9, step: 0.05, area: "windows", section: "FINE VALUES", advanced: true },
+  { option: "input:repeat_rate", label: "Key repeat rate", type: "int", min: 10, max: 80, step: 5, unit: "/s", area: "input", section: "KEYBOARD" },
+  { option: "input:repeat_delay", label: "Key repeat delay", type: "int", min: 150, max: 1000, step: 25, unit: "ms", area: "input", section: "KEYBOARD" },
+  { option: "input:sensitivity", label: "Pointer speed", type: "float", min: -1, max: 1, step: 0.1, area: "input", section: "POINTER" },
+  { option: "input:accel_profile", label: "Pointer acceleration", type: "choice", area: "input", section: "POINTER", advanced: true,
+    choices: [{ id: "adaptive", label: "Adaptive" }, { id: "flat", label: "Flat" }] },
+  { option: "cursor:hide_on_key_press", label: "Hide the cursor while typing", type: "bool", area: "input", section: "POINTER" },
+  { option: "input:touchpad:natural_scroll", label: "Natural scrolling", type: "bool", area: "input", section: "TOUCHPAD" },
+  { option: "input:touchpad:scroll_factor", label: "Scroll speed", type: "float", min: 0.1, max: 2, step: 0.1, area: "input", section: "TOUCHPAD" },
+  { option: "input:touchpad:disable_while_typing", label: "Off while typing", type: "bool", area: "input", section: "TOUCHPAD", advanced: true }
 ]
 
 var ISLAND_SETTINGS = [
@@ -53,24 +111,52 @@ var ISLAND_SETTINGS = [
 var CARDS_SETTING = { key: "override", label: "Theme & wallpaper menus",
   values: [{ id: "enabled", label: "Card picker" }, { id: "disabled", label: "Omarchy pickers" }] }
 
-// Quick area: the most-used switches, in this order.
+// Quick area: the most-used switches, in this order. Desktop ones show when
+// they exist (Omarchy rows come from its menu).
 var QUICK = ["bar.edge", "bar.logo", "bar.keys", "island.notifications", "island.noteStyle"]
+var QUICK_DESKTOP = ["omarchy.trigger.toggle.nightlight-on", "omarchy.trigger.toggle.notifications-on",
+                     "omarchy.trigger.toggle.idle-lock-on", "extras.fullWidth"]
 
 function copy(v) { return JSON.parse(JSON.stringify(v)) }
 
-function areaLabel(id) {
-  for (var i = 0; i < AREAS.length; i++) if (AREAS[i].id === id) return AREAS[i].label
-  return ""
+function areaOf(id) {
+  id = AREA_ALIASES[id] || id
+  for (var i = 0; i < AREAS.length; i++) if (AREAS[i].id === id) return AREAS[i]
+  return null
 }
-function areaNote(id) {
-  for (var i = 0; i < AREAS.length; i++) if (AREAS[i].id === id) return AREAS[i].note
-  return ""
+function areaLabel(id) { var a = areaOf(String(id)); return a ? a.label : "" }
+function areaNote(id) { var a = areaOf(String(id)); return a ? a.note : "" }
+function isArea(id) { return areaOf(String(id)) !== null }
+function resolveArea(id) { var a = areaOf(String(id)); return a ? a.id : "" }
+// The sidebar as rows: a head per group, then its areas.
+function sidebar() {
+  var out = []
+  GROUPS.forEach(function(g) {
+    out.push({ kind: "group", id: g.id, label: g.label })
+    AREAS.forEach(function(a) { if (a.group === g.id) out.push({ kind: "area", id: a.id, label: a.label }) })
+  })
+  return out
 }
-function isArea(id) { return areaLabel(String(id)) !== "" }
 
-// Every editable setting. Bar rows come from Presets.ELEMENTS, so new
-// options appear here (and in search) without touching the Control Center.
-function settings() {
+// Where a row comes from, for its tag.
+function sourceOf(spec) {
+  if (!spec) return ""
+  return spec.domain === "omarchy" ? "Omarchy" : spec.domain === "hypr" ? "Override" : "Tusche"
+}
+
+function hyprSpec(s) {
+  var values = s.type === "bool" ? [{ id: "", label: "Default" }, { id: "true", label: "On" }, { id: "false", label: "Off" }]
+    : s.type === "choice" ? [{ id: "", label: "Default" }].concat(s.choices) : []
+  return { id: "hypr." + s.option, domain: "hypr", key: s.option, area: s.area, section: s.section, label: s.label,
+           hint: s.option, kind: s.type === "int" || s.type === "float" ? "number" : "choice", type: s.type,
+           min: s.min, max: s.max, step: s.step, unit: s.unit || "", advanced: !!s.advanced, values: values,
+           terms: [s.option, HYPR_FILE] }
+}
+
+// Every editable setting. Bar rows come from Presets.ELEMENTS and Omarchy's
+// from its menu (live.omarchySpecs), so new options appear here (and in
+// search) without touching the Control Center.
+function settings(live) {
   var out = []
   for (var key in Presets.ELEMENTS) {
     var e = Presets.ELEMENTS[key]
@@ -83,15 +169,72 @@ function settings() {
   out.push({ id: "cards.override", domain: "cards", key: "override", area: "cards", label: CARDS_SETTING.label,
              values: CARDS_SETTING.values, hint: "" })
   EXTRAS_SETTINGS.forEach(function(s) {
-    out.push({ id: "extras." + s.key, domain: "extras", key: s.key, area: "extras", label: s.label,
+    out.push({ id: "extras." + s.key, domain: "extras", key: s.key, area: s.area, section: s.section, label: s.label,
                values: s.values, hint: s.hint || "" })
+  })
+  HYPR_SETTINGS.forEach(function(s) { out.push(hyprSpec(s)) })
+  if (live && Array.isArray(live.omarchySpecs)) out = out.concat(live.omarchySpecs)
+  return out
+}
+function setting(id, live) {
+  var all = settings(live)
+  for (var i = 0; i < all.length; i++) if (all[i].id === id) return all[i]
+  return null
+}
+function hyprSetting(option) {
+  for (var i = 0; i < HYPR_SETTINGS.length; i++) if (HYPR_SETTINGS[i].option === option) return HYPR_SETTINGS[i]
+  return null
+}
+function hyprOptions() { return HYPR_SETTINGS.map(function(s) { return s.option }) }
+// A Hyprland value as the Control Center keeps it ("8", "0.4", "true",
+// "flat"), or null when it is not a value of that setting. "" is no override.
+function hyprValue(option, v) {
+  var s = hyprSetting(option)
+  if (!s) return null
+  v = String(v === undefined || v === null ? "" : v).trim()
+  if (v === "") return ""
+  if (s.type === "bool") return v === "true" || v === "false" ? v : null
+  if (s.type === "choice") return s.choices.some(function(c) { return c.id === v }) ? v : null
+  var n = Number(v)
+  if (!isFinite(n) || n < s.min - 1e-9 || n > s.max + 1e-9) return null
+  if (s.type === "int") return Math.round(n) === n ? String(n) : null
+  var places = String(s.step).indexOf(".") >= 0 ? String(s.step).split(".")[1].length : 0
+  return String(Number(n.toFixed(places)))
+}
+// One step up or down from the value shown (the override, else what
+// Hyprland runs with), inside the setting's range.
+function hyprStep(option, shown, direction) {
+  var s = hyprSetting(option)
+  if (!s || (s.type !== "int" && s.type !== "float")) return null
+  var n = Number(shown)
+  if (!isFinite(n)) n = s.min
+  var next = Math.min(s.max, Math.max(s.min, n + direction * s.step))
+  return hyprValue(option, s.type === "int" ? Math.round(next) : next.toFixed(6))
+}
+// The helper takes typed JSON: numbers, booleans, strings, null to drop one.
+function hyprPayload(changes) {
+  var out = {}
+  Object.keys(changes || {}).forEach(function(option) {
+    var s = hyprSetting(option), v = changes[option]
+    if (!s) return
+    out[option] = v === "" ? null : s.type === "bool" ? v === "true" : s.type === "choice" ? v : Number(v)
   })
   return out
 }
-function setting(id) {
-  var all = settings()
-  for (var i = 0; i < all.length; i++) if (all[i].id === id) return all[i]
-  return null
+// hypr-overrides.py status → { values, effective, error } with every value a
+// string the way hyprValue keeps them, or null when unreadable.
+function hyprFacts(text) {
+  try {
+    var d = JSON.parse(String(text))
+    if (!d || typeof d !== "object") return null
+    var values = {}, effective = {}
+    HYPR_SETTINGS.forEach(function(s) {
+      var v = d.values && d.values[s.option] !== undefined && d.values[s.option] !== null ? hyprValue(s.option, String(d.values[s.option])) : ""
+      values[s.option] = v === null ? "" : v
+      effective[s.option] = d.effective && d.effective[s.option] !== undefined ? String(d.effective[s.option]) : ""
+    })
+    return { values: values, effective: effective, error: typeof d.error === "string" ? d.error : "" }
+  } catch (e) { return null }
 }
 function barIds() { return Object.keys(Presets.ELEMENTS).map(function(k) { return "bar." + k }) }
 function valueLabel(spec, v) {
@@ -134,23 +277,44 @@ function extrasValues(config, facts) {
     : facts.sheetInstalled === false ? "missing" : "unknown"
   return { fullWidth: fw, sheet: sheet }
 }
-function liveState(options, config, cardsStatus, extrasFacts) {
+// omarchy: OmarchySettings.derive's answer ({ specs, values }) or null while
+// it has not read Omarchy's menu; hypr: hyprFacts or null (not read yet).
+function liveState(options, config, cardsStatus, extrasFacts, omarchy, hypr) {
   var entries = config && Array.isArray(config.plugins) ? config.plugins : []
   var owner = entries.filter(function(p) { return p && p.id === "nerdibeard.tusche-bar" })[0]
   return { bar: Presets.normalizeOptions(options || {}),
            screens: Presets.normalizeScreens(owner && owner.screenProfiles),
            island: islandValues(islandEntry(config)),
            cards: cardsStatus === "enabled" || cardsStatus === "disabled" ? { override: cardsStatus } : null,
-           extras: extrasValues(config, extrasFacts) }
+           extras: extrasValues(config, extrasFacts),
+           omarchy: omarchy ? omarchy.values : null,
+           omarchySpecs: omarchy ? omarchy.specs : [],
+           hypr: hypr && !hypr.error ? hypr.values : null,
+           hyprEffective: hypr ? hypr.effective : {} }
 }
 // Can this setting be changed now? An extra only while its live value is one
-// of its choices (not while unknown, failed or not installed).
+// of its choices (not while unknown, failed or not installed); an Omarchy row
+// only while it is not read-only and its live value is one it can go back to.
 function available(live, id) {
-  var spec = setting(id)
+  var spec = setting(id, live)
   if (!spec || !live || !live[spec.domain]) return false
+  if (spec.domain === "omarchy") {
+    if (spec.readOnly) return false
+    var now = live.omarchy[spec.key]
+    return spec.values.some(function(x) { return x.id === now && x.pick })
+  }
   if (spec.domain !== "extras") return true
   var v = live.extras[spec.key]
   return spec.values.some(function(x) { return x.id === v })
+}
+// A value this setting may be staged with.
+function acceptable(live, id, v) {
+  var spec = setting(id, live)
+  if (!spec) return false
+  if (spec.domain === "hypr") return hyprValue(spec.key, v) === v
+  if (spec.domain === "omarchy") return spec.values.some(function(x) { return x.id === v && x.pick })
+  if (spec.domain === "extras") return spec.values.some(function(x) { return x.id === v })
+  return true
 }
 
 function split(id) { var i = String(id).indexOf("."); return { domain: String(id).slice(0, i), key: String(id).slice(i + 1) } }
@@ -179,7 +343,8 @@ function stage(edits, live, id, v) {
   var out = Object.assign({}, edits)
   if (!live || !live[p.domain]) return out
   if (p.domain === "screens" && (!Presets.screenNameValid(p.key) || ["inherit", "compact", "detailed"].indexOf(v) < 0)) return out
-  if (p.domain === "extras" && (!available(live, id) || !setting(id).values.some(function(x) { return x.id === v }))) return out
+  if ((p.domain === "extras" || p.domain === "omarchy" || p.domain === "hypr") &&
+      (!available(live, id) || !acceptable(live, id, v))) return out
   if (value(live, id) === v) delete out[id]
   else out[id] = v
   return out
@@ -203,7 +368,7 @@ function prune(edits, live) {
 // Staged changes that differ from live, in registry order.
 function changes(edits, live) {
   var out = []
-  settings().forEach(function(s) {
+  settings(live).forEach(function(s) {
     if (!(s.id in edits) || !live || !live[s.domain]) return
     var from = live[s.domain][s.key], to = edits[s.id]
     if (from !== to) out.push({ id: s.id, domain: s.domain, key: s.key, area: s.area, from: from, to: to })
@@ -222,13 +387,29 @@ function sameOptions(a, b) {
   return JSON.stringify(Presets.normalizeOptions(a)) === JSON.stringify(Presets.normalizeOptions(b))
 }
 
-// Steps for Use / Save. Island first (the island writes shell.json from the
-// shell's in-memory copy), then the card picker (its own menu file), the
-// extras (a Hyprland toggle file; the sheet through the shell's plugin IPC),
-// the bar last as ONE apply (each bar write rebuilds the bar).
+// The action that sets an Omarchy row to value v.
+function omarchyAction(live, key, v) {
+  var spec = setting("omarchy." + key, live)
+  var hit = spec ? spec.values.filter(function(x) { return x.id === v && x.pick })[0] : null
+  return hit ? hit.action : ""
+}
+// Steps for Use / Save. Omarchy's settings first, one action each (some write
+// shell.json, so each waits until Omarchy reports the new value), then the
+// Hyprland overrides as ONE write and reload, the island (it writes
+// shell.json from the shell's in-memory copy), the card picker (its own menu
+// file), the extras (a Hyprland toggle file; the sheet through the shell's
+// plugin IPC), the bar last as ONE apply (each bar write rebuilds the bar).
 function plan(edits, live) {
   var ch = changes(edits, live)
   var steps = []
+  ch.forEach(function(c) {
+    if (c.domain !== "omarchy") return
+    var action = omarchyAction(live, c.key, c.to)
+    if (action) steps.push({ domain: "omarchy", key: c.key, value: c.to, action: action })
+  })
+  var hypr = {}
+  ch.forEach(function(c) { if (c.domain === "hypr") hypr[c.key] = c.to })
+  if (Object.keys(hypr).length) steps.push({ domain: "hypr", keys: Object.keys(hypr), changes: hypr })
   ch.forEach(function(c) { if (c.domain === "island") steps.push({ domain: "island", key: c.key, value: c.to }) })
   ch.forEach(function(c) { if (c.domain === "cards") steps.push({ domain: "cards", key: c.key, value: c.to }) })
   ch.forEach(function(c) { if (c.domain === "extras") steps.push({ domain: "extras", key: c.key, value: c.to }) })
@@ -264,6 +445,24 @@ function revertPlan(snapshot, live, applied) {
   var steps = []
   if (!snapshot || !live) return steps
   applied = applied || {}
+  // Omarchy rows Use touched, back to their value from opening (when that is
+  // one the row can set; a toggle runs only while it differs).
+  if (applied.omarchy && snapshot.omarchy && live.omarchy)
+    Object.keys(applied.omarchy).forEach(function(key) {
+      var before = snapshot.omarchy[key]
+      if (before === undefined || before === "unknown" || live.omarchy[key] === before) return
+      if (!available(live, "omarchy." + key)) return
+      var action = omarchyAction(live, key, before)
+      if (action) steps.push({ domain: "omarchy", key: key, value: before, action: action })
+    })
+  if (applied.hypr && snapshot.hypr && live.hypr) {
+    var back = {}
+    Object.keys(applied.hypr).forEach(function(option) {
+      var before = snapshot.hypr[option] === undefined ? "" : snapshot.hypr[option]
+      if (live.hypr[option] !== before) back[option] = before
+    })
+    if (Object.keys(back).length) steps.push({ domain: "hypr", keys: Object.keys(back), changes: back })
+  }
   if (applied.island && snapshot.island && live.island)
     ISLAND_SETTINGS.forEach(function(s) {
       if (live.island[s.key] !== snapshot.island[s.key]) steps.push({ domain: "island", key: s.key, value: snapshot.island[s.key] })
@@ -291,6 +490,20 @@ function revertPlan(snapshot, live, applied) {
   return steps
 }
 
+// Read after opening: fill what the snapshot did not know yet in a domain
+// whose rows arrive later (Omarchy, the overrides), but not for rows Use has
+// touched since. Returns the new snapshot, or null when nothing changed.
+function fillSnapshot(snapshot, live, domain, touched) {
+  if (!snapshot || !live || !live[domain]) return null
+  var s = copy(snapshot), changed = false
+  if (!s[domain]) { s[domain] = copy(live[domain]); changed = true }
+  else Object.keys(live[domain]).forEach(function(k) {
+    if (touched && touched[k]) return
+    if ((s[domain][k] === undefined || s[domain][k] === "unknown") && live[domain][k] !== "unknown") { s[domain][k] = live[domain][k]; changed = true }
+  })
+  return changed ? s : null
+}
+
 // Does the island's own state (omarchy-shell tusche-island state →
 // notifications) show this value?
 function islandReports(notes, key, v) {
@@ -302,23 +515,34 @@ function islandReports(notes, key, v) {
 }
 
 // ---------------------------------------------------------------- search
-// Index entries: { id, area, label, values: [labels], current }.
+// Index entries: { id, area, label, values: [labels], current, terms }.
+// terms: the commands, Hyprland options and Omarchy menu paths behind a row.
 function searchIndex(live, edits, extra) {
   var pending = pendingState(live, edits || {})
   var out = []
-  settings().forEach(function(s) {
+  settings(live).forEach(function(s) {
     if (!live || !live[s.domain]) return
+    var now = pending[s.domain][s.key]
     out.push({ id: s.id, area: s.area, label: s.label,
                values: s.values.map(function(v) { return v.label }),
-               current: valueLabel(s, pending[s.domain][s.key]) })
+               current: s.domain === "hypr" ? hyprShown(live, s.key, now) : valueLabel(s, now),
+               terms: (s.terms || []).concat(s.hint ? [s.hint] : []).filter(function(t) { return t }) })
   })
   return out.concat(extra || [])
+}
+// What an override row shows: its value, else Hyprland's with "default".
+function hyprShown(live, option, v) {
+  var s = hyprSetting(option)
+  if (v !== "" && v !== undefined) return s && s.type === "bool" ? (v === "true" ? "On" : "Off") : String(v) + (s && s.unit ? " " + s.unit : "")
+  var e = live && live.hyprEffective ? live.hyprEffective[option] : ""
+  return e === "" || e === undefined ? "default" : "default · " + e
 }
 function wordScore(text, token, prefix, inner) {
   if (text.indexOf(token) === 0 || text.indexOf(" " + token) !== -1 || text.indexOf("(" + token) !== -1) return prefix
   return text.indexOf(token) !== -1 ? inner : 0
 }
-// Every token must match the label, a value, the area name or the id.
+// Every token must match the label, a value, the area name, a term (command,
+// Hyprland option, Omarchy menu path) or the id.
 function search(index, query, limit) {
   var tokens = String(query || "").toLowerCase().split(/\s+/).filter(function(t) { return t !== "" })
   if (!tokens.length) return []
@@ -327,6 +551,7 @@ function search(index, query, limit) {
     var label = String(e.label || "").toLowerCase()
     var area = areaLabel(e.area).toLowerCase()
     var values = (e.values || []).map(function(v) { return String(v).toLowerCase() })
+    var terms = (e.terms || []).map(function(v) { return String(v).toLowerCase() })
     var total = 0, matched = ""
     for (var t = 0; t < tokens.length; t++) {
       var tok = tokens[t]
@@ -338,6 +563,7 @@ function search(index, query, limit) {
       }
       var s = Math.max(ls, vs)
       if (vs > ls && !matched) matched = vl
+      if (!s) for (var k = 0; k < terms.length && !s; k++) s = terms[k].indexOf(tok) !== -1 ? (terms[k].indexOf(tok) === 0 ? 2 : 1) : 0
       if (!s && area.indexOf(tok) !== -1) s = 1
       if (!s && String(e.id).toLowerCase().indexOf(tok) !== -1) s = 1
       if (!s) return
@@ -350,10 +576,66 @@ function search(index, query, limit) {
   return hits.slice(0, limit || 8)
 }
 
+// ---------------------------------------------------------------- generic rows
+// The rows of an area the window lays out from the registry (Omarchy rows,
+// overrides, full width), as heads and setting ids in section order. The
+// hand-made parts of an area (presets, screens, the sheet button …) stay in
+// ControlCenter.qml. opts: { advanced: show advanced rows }.
+var GENERIC = { omarchy: true, hypr: true }
+function genericRow(s) { return GENERIC[s.domain] === true || s.id === "extras.fullWidth" }
+function areaRows(area, live, opts) {
+  opts = opts || {}
+  var sections = [], bySection = {}
+  settings(live).forEach(function(s) {
+    if (s.area !== area || !genericRow(s) || (s.advanced && !opts.advanced)) return
+    if (s.domain !== "hypr" && (!live || !live[s.domain])) return
+    var sec = s.section || ""
+    if (!bySection[sec]) { bySection[sec] = []; sections.push(sec) }
+    bySection[sec].push(s.id)
+  })
+  var order = SECTIONS[area] || []
+  sections.sort(function(a, b) {
+    var x = order.indexOf(a), y = order.indexOf(b)
+    return (x < 0 ? 99 : x) - (y < 0 ? 99 : y) || sections.indexOf(a) - sections.indexOf(b)
+  })
+  var out = []
+  sections.forEach(function(sec) {
+    if (sec) out.push({ kind: "head", text: sec })
+    bySection[sec].forEach(function(id) { out.push({ kind: "row", id: id }) })
+  })
+  return out
+}
+// "Changed only": staged rows, Hyprland overrides that are set, Tusche
+// options away from their defaults. Omarchy's own settings have no default
+// to compare with, so they show only when staged. Grouped by area.
+function changedRows(live, edits, opts) {
+  var pending = pendingState(live, edits || {})
+  var defaults = Presets.normalizeOptions({})
+  var byArea = {}
+  settings(live).forEach(function(s) {
+    if (!live || !live[s.domain] || (s.advanced && !(opts && opts.advanced) && !(s.id in (edits || {})))) return
+    var now = pending[s.domain][s.key]
+    var staged = (s.id in (edits || {})) && edits[s.id] !== live[s.domain][s.key]
+    var away = s.domain === "hypr" ? now !== ""
+      : s.domain === "bar" ? now !== defaults[s.key]
+      : s.domain === "island" ? now !== (ISLAND_SETTINGS.filter(function(x) { return x.key === s.key })[0] || {}).fallback
+      : false
+    if (staged || away) (byArea[s.area] = byArea[s.area] || []).push(s.id)
+  })
+  var out = []
+  AREAS.forEach(function(a) {
+    if (!byArea[a.id]) return
+    out.push({ kind: "head", text: a.label.toUpperCase(), area: a.id })
+    byArea[a.id].forEach(function(id) { out.push({ kind: "row", id: id }) })
+  })
+  return out
+}
+
 // ---------------------------------------------------------------- health
 // Facts come from live state only (engine properties, shell.json, the
 // island's IPC state, the takeover marker, usage record ages, the card
-// picker's script). state: ok | issue | unknown.
+// picker's script, Omarchy's menu, the override file). state: ok | issue |
+// unknown.
 function healthChecks(f) {
   f = f || {}
   var out = []
@@ -450,6 +732,27 @@ function healthChecks(f) {
 
   if (f.savedError) add("saved", "Saved combinations", "issue", f.savedError)
   else add("saved", "Saved combinations", "ok", (f.savedCount || 0) + " saved (presets.json)")
+
+  // Omarchy's settings: { state: reading | ok | failed | empty, rows, readOnly }.
+  var om = f.omarchy
+  if (om) {
+    if (om.state === "ok") add("omarchy", "Omarchy settings", "ok", om.rows + " read from Omarchy's menu" +
+                               (om.readOnly ? " · " + om.readOnly + " read-only (password, window or no active value)" : ""))
+    else if (om.state === "failed") add("omarchy", "Omarchy settings", "issue", "Omarchy's menu guards did not answer: its rows stay hidden (the drop-down menu shows the same)")
+    else if (om.state === "empty") add("omarchy", "Omarchy settings", "issue", "Omarchy's menu file was not found or is empty (" + (f.omarchyPath || "OMARCHY_PATH") + ")")
+    else add("omarchy", "Omarchy settings", "unknown", "Reading Omarchy's menu …")
+  }
+  // The override file: hyprFacts, or null while unread, or { error }.
+  var ov = f.overrides
+  if (ov !== undefined) {
+    if (ov === null) add("overrides", "Hyprland overrides", "unknown", "Reading " + HYPR_FILE + " …")
+    else if (ov.error) add("overrides", "Hyprland overrides", "issue", ov.error)
+    else {
+      var set = Object.keys(ov.values).filter(function(k) { return ov.values[k] !== "" })
+      add("overrides", "Hyprland overrides", "ok", set.length ? set.length + (set.length === 1 ? " value" : " values") + " in " + HYPR_FILE + ": " + set.join(", ")
+                                                              : "None set: Hyprland runs your config")
+    }
+  }
 
   // Shown when the window passes the extras (null: not read yet).
   var x = f.extras

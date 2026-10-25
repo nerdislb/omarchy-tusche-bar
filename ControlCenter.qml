@@ -9,12 +9,15 @@ import qs.Commons as Commons
 import qs.Ui as Ui
 import "Presets.js" as Presets
 import "ControlCenter.js" as CC
+import "OmarchySettings.js" as OmarchySettings
+import "vendor/MenuModel.js" as MenuModel
 import "bridge" as Bridge
 
-// Control Center: one window for the Tusche Bar, the Tusche Island and the
-// card picker, plus Health. Structure after Shibumi's (Quick · Configure,
-// areas on the left, editor on the right, Ctrl+K search over settings and
-// their values, a Health chip), with explicit commits:
+// Control Center: one window for the Tusche Bar, the Tusche Island, the card
+// picker, Omarchy's own settings and Hyprland overrides, plus Health.
+// Structure after Shibumi's (Quick · Configure, grouped areas on the left,
+// editor on the right, Ctrl+K search over settings, their values and the
+// commands behind them, a Health chip), with explicit commits:
 //   Use    applies the staged changes live, the window stays open;
 //   Save   applies what is still staged and closes;
 //   Cancel (button, ×, Esc once the search is closed, click outside, or
@@ -22,7 +25,9 @@ import "bridge" as Bridge
 //          something, then closes.
 // Writes go through the engine's apply (bar), the island's IPC (island), the
 // card picker's menu-override.py (cards), bin/full-width.py and the shell's
-// plugin IPC (extras) — see ControlCenter.js.
+// plugin IPC (extras), Omarchy's own menu actions (omarchy, read from its
+// menu through OmarchyMenuSource and OmarchySettings.js) and
+// bin/hypr-overrides.py (hypr) — see ControlCenter.js.
 PanelWindow {
   id: win
 
@@ -44,9 +49,13 @@ PanelWindow {
   property string closeNote: ""            // a failed revert, shown at the next opening
   property string flashId: ""
   property int searchSel: 0
+  property bool changedOnly: false         // the "Changed only" view instead of an area
+  property bool showAdvanced: false        // advanced rows (kept across openings)
+  property double openedAt: 0              // answers read before this do not count
 
   readonly property var live: CC.liveState(host ? host.options : ({}), host ? host.config : ({}), cardsStatus,
-                                           { fullWidth: fullWidthStatus, sheetInstalled: sheetInstalled })
+                                           { fullWidth: fullWidthStatus, sheetInstalled: sheetInstalled },
+                                           omarchyDerived, hyprFresh ? hyprStatus : null)
   readonly property var pending: CC.pendingState(live, edits)
   readonly property var changeList: CC.changes(edits, live)
   readonly property bool islandAvailable: live.island !== null
@@ -97,6 +106,107 @@ PanelWindow {
     return w.snapshot ? "snapshot" : "missing"
   }
 
+  // ---------------------------------------------------------------- Omarchy and overrides (read-only probes)
+  // Omarchy's settings come from its menu: the definition and guard answers
+  // (OmarchyMenuSource), the Control Center's reader batch (Position Bar,
+  // fonts, power profiles, languages) and its word probe (scripts that use
+  // sudo or pkexec stay read-only). Only answers from after this opening
+  // count, so an outside change between two openings is never taken as live.
+  OmarchyMenuSource { id: omarchyMenu; live: win.open }
+  property var omarchyReaders: null         // OmarchySettings.parseReaders · null: not read yet
+  property double readersAt: 0              // start of the reader run that produced omarchyReaders
+  property var omarchyAsking: null          // { word: true } · null: not read yet
+  property double askingAt: 0
+  property double omarchyDoneAt: 0          // an Omarchy step's action ended: confirm with answers from after it
+  readonly property bool omarchyFresh: omarchyMenu.resultsAt >= openedAt && readersAt >= openedAt && askingAt >= openedAt && openedAt > 0
+  readonly property var omarchyDerived: omarchyFresh ? OmarchySettings.derive({
+    items: omarchyMenu.items, itemOrder: omarchyMenu.itemOrder, evaluated: omarchyMenu.evaluated,
+    when: omarchyMenu.whenResults, checked: omarchyMenu.checkedResults,
+    asking: omarchyAsking, readers: omarchyReaders, guardReaders: MenuModel.GUARD_READERS }) : null
+  readonly property string omarchyState: omarchyMenu.builtinCount === 0 ? "empty"
+    : omarchyDerived ? "ok"
+    : omarchyMenu.failedAt >= openedAt && omarchyMenu.resultsAt < openedAt && openedAt > 0 ? "failed" : "reading"
+  readonly property string shimDir: codeDir !== "" ? codeDir + "/bin/cc-shim" : ""
+  readonly property string hyprScript: codeDir !== "" ? codeDir + "/bin/hypr-overrides.py" : ""
+  property var hyprStatus: null             // CC.hyprFacts of the newest status · null: not read
+  property double hyprStatusAt: 0
+  readonly property bool hyprFresh: !!hyprStatus && hyprStatusAt >= openedAt && openedAt > 0
+
+  function refreshOmarchy() {
+    omarchyMenu.evaluate()
+    if (readerProc.running) readerProc.again = true
+    else startReaders()
+    if (!askingProc.running && (askingAt < openedAt || omarchyAsking === null)) startAsking()
+  }
+  function startReaders() {
+    readerProc.again = false
+    readerProc.startedAt = Date.now()
+    readerProc.command = ["bash", "-lc", OmarchySettings.readerScript(OmarchySettings.readerGroups(omarchyMenu.items, omarchyMenu.itemOrder, MenuModel.GUARD_READERS))]
+    readerProc.running = true
+  }
+  function startAsking() {
+    askingProc.startedAt = Date.now()
+    askingProc.command = ["bash", "-lc", OmarchySettings.askingScript(), "bash"].concat(OmarchySettings.actionWords(omarchyMenu.items, omarchyMenu.itemOrder))
+    askingProc.running = true
+  }
+  Process {
+    id: readerProc
+    property double startedAt: 0
+    property bool again: false
+    stdout: StdioCollector { id: readerOut }
+    onExited: function(code) {
+      win.omarchyReaders = OmarchySettings.parseReaders(readerOut.text)
+      win.readersAt = readerProc.startedAt
+      if (readerProc.again) Qt.callLater(win.startReaders)
+    }
+  }
+  Process {
+    id: askingProc
+    property double startedAt: 0
+    stdout: StdioCollector { id: askingOut }
+    onExited: function(code) {
+      var words = ({})
+      String(askingOut.text || "").split("\n").forEach(function(w) { w = w.trim(); if (w) words[w] = true })
+      win.omarchyAsking = words
+      win.askingAt = askingProc.startedAt
+    }
+  }
+  function refreshHypr() {
+    if (hyprScript === "" || hyprProbe.running) return
+    hyprProbe.startedAt = Date.now()
+    hyprProbe.running = true
+  }
+  Process {
+    id: hyprProbe
+    property double startedAt: 0
+    command: ["python3", win.hyprScript, "status"].concat(CC.hyprOptions())
+    stdout: StdioCollector { id: hyprProbeOut }
+    onExited: function(code) {
+      if (win.working && win.step && win.step.domain === "hypr") return
+      if (hyprProbe.startedAt < win.hyprSetAt) { Qt.callLater(win.refreshHypr); return }   // read before the change
+      win.hyprStatus = code === 0 ? (CC.hyprFacts(hyprProbeOut.text) || { values: {}, effective: {}, error: "hypr-overrides.py status was unreadable" })
+                                  : { values: {}, effective: {}, error: "hypr-overrides.py status failed" }
+      win.hyprStatusAt = hyprProbe.startedAt
+    }
+  }
+  property double hyprSetAt: 0              // last confirmed write: older probes do not count
+
+  // Values read after opening fill in what the snapshot did not know yet,
+  // except for rows Use has touched since (their values then are no longer
+  // the state from opening).
+  function fillLateSnapshot(domain) {
+    if (!open || !snapshot) return
+    var touched = Object.assign({}, applied[domain] || {}, doneDomains[domain] || {})
+    if (working && step && step.domain === domain) (step.keys || [step.key]).forEach(function(k) { touched[k] = true })
+    var s = CC.fillSnapshot(snapshot, live, domain, touched)
+    if (s) snapshot = s
+  }
+  // (on live itself: a handler on omarchyDerived or hyprStatus may run before
+  // the live binding has taken the new answer)
+  onLiveChanged: if (open && snapshot && (!snapshot.omarchy || !snapshot.hypr || JSON.stringify(snapshot.omarchy).indexOf('"unknown"') !== -1)) {
+    fillLateSnapshot("omarchy"); fillLateSnapshot("hypr")
+  }
+
   readonly property var healthList: CC.healthChecks({
     watchdog: host && host.watchdogModel !== undefined ? { state: host.watchdogModel, enabled: host.watchdogEnabled === true, now: Date.now() } : null,
     generation: { loaded: CC.loadedGeneration(codeDir), installed: installedGeneration },
@@ -116,6 +226,10 @@ PanelWindow {
     cards: cardsStatus,
     cardsConfigured: host ? CC.listed(host.config, CC.CARDS_ID) : false,
     extras: live.extras,
+    omarchy: { state: omarchyState, rows: live.omarchySpecs.length,
+               readOnly: live.omarchySpecs.filter(function(s) { return s.readOnly }).length },
+    omarchyPath: omarchyRoot,
+    overrides: hyprScript === "" ? undefined : hyprFresh ? hyprStatus : null,
     lastResult: host ? host.lastResult : "",
     savedError: host && !host.savedReady ? host.saveResult : "",
     savedCount: host ? host.savedPresets.length : 0
@@ -156,12 +270,35 @@ PanelWindow {
     if (id === "screens") return Object.keys(live.screens).length + " overrides"
     if (id === "island") return !live.island ? "not found" : live.island.notifications === "true" ? "in the bar" : "Omarchy"
     if (id === "cards") return cardsStatus === "enabled" ? "on" : cardsStatus === "disabled" ? "off" : cardsStatus === "missing" ? "not installed" : ""
-    if (id === "extras") return live.extras && live.extras.fullWidth === "edge" ? "edge to edge" : live.extras && live.extras.fullWidth === "gaps" ? "gaps" : ""
+    if (id === "windows" || id === "input") {
+      var set = live.hypr ? CC.HYPR_SETTINGS.filter(function(s) { return s.area === id && live.hypr[s.option] !== "" }).length : 0
+      return set ? set + (set === 1 ? " override" : " overrides") : ""
+    }
+    if (id === "dock") return omarchyLabel("appearance.dock.position")
+    if (id === "power") return omarchyLabel("power-profile")
+    if (id === "apps") return omarchyLabel("setup.default.browser")
     if (id === "health") return health.label
     return ""
   }
+  // Quick › Desktop: the rows of CC.QUICK_DESKTOP this machine has.
+  readonly property var quickDesktop: CC.QUICK_DESKTOP.filter(function(id) {
+    var spec = CC.setting(id, live)
+    return !!spec && !!live[spec.domain] && !spec.readOnly
+  })
+  readonly property var genericRows: CC.areaRows(area, live, { advanced: showAdvanced })
+  readonly property var changedRowList: changedOnly ? CC.changedRows(live, edits, { advanced: showAdvanced }) : []
+  // Areas with Omarchy rows say so while Omarchy's menu is still being read.
+  readonly property bool omarchyPending: !live.omarchy && ["cards", "windows", "bar", "island", "dock", "input", "screens", "power", "apps", "system"].indexOf(area) !== -1
+  // The live value's label of an Omarchy row, "" while unknown.
+  function omarchyLabel(key) {
+    var spec = CC.setting("omarchy." + key, live)
+    var v = live.omarchy ? live.omarchy[key] : undefined
+    return spec && v !== undefined && v !== "unknown" ? CC.valueLabel(spec, v) : ""
+  }
   function areaHasEdits(id) {
-    return changeList.some(function(c) { return id === "quick" ? CC.QUICK.indexOf(c.id) !== -1 : c.area === id })
+    return changeList.some(function(c) {
+      return id === "quick" ? CC.QUICK.indexOf(c.id) !== -1 || CC.QUICK_DESKTOP.indexOf(c.id) !== -1 : c.area === id
+    })
   }
 
   // ---------------------------------------------------------------- open / close
@@ -170,12 +307,18 @@ PanelWindow {
   function begin() {
     if (working) { beginAfterWork = true; return }
     cancelAfterWork = false
-    area = CC.isArea(requestedArea) ? requestedArea : "quick"
+    area = CC.isArea(requestedArea) ? CC.resolveArea(requestedArea) : "quick"
     if (area !== "quick") configureArea = area
     requestedArea = ""
+    changedOnly = false
     edits = ({}); usedLive = false; applied = ({}); committed = false
     cardsStatus = ""                            // read again below; joins the snapshot when it arrives
-    snapshot = CC.copy(live)
+    openedAt = Date.now()                       // Omarchy and override answers are read again below
+    // Omarchy's settings and the overrides join the snapshot when they have
+    // been read for this opening (fillLateSnapshot), never from an earlier one.
+    var s = CC.copy(live)
+    s.omarchy = null; s.omarchySpecs = []; s.hypr = null; s.hyprEffective = {}
+    snapshot = s
     message = closeNote; messageError = closeNote !== ""; closeNote = ""
     flashId = ""; searchSel = 0
     searchField.text = ""; comboName.text = ""
@@ -209,13 +352,19 @@ PanelWindow {
 
   function showArea(a) {
     if (!CC.isArea(a)) return false
+    a = CC.resolveArea(a)
     area = a
+    changedOnly = false
     if (a !== "quick") configureArea = a
     editor.contentY = 0
     if (a === "health") refreshHealth()
     else if (a === "cards" && !working) refreshCards()
-    else if (a === "extras" && !working) refreshExtras()
+    else if ((a === "windows" || a === "input" || a === "quick") && !working) refreshExtras()
     return true
+  }
+  function toggleChanged() {
+    changedOnly = !changedOnly
+    editor.contentY = 0
   }
   function stepArea(d) {
     var ids = CC.AREAS.map(function(x) { return x.id })
@@ -287,6 +436,8 @@ PanelWindow {
   }
   function stepLabel(s) {
     if (s.domain === "screens") return "Screen presentation · " + s.keys.join(", ")
+    if (s.domain === "omarchy") { var o = CC.setting("omarchy." + s.key, live); return "Omarchy · " + (o ? o.label + ": " + CC.valueLabel(o, s.value) : s.key) }
+    if (s.domain === "hypr") return "Hyprland overrides · " + s.keys.length + (s.keys.length === 1 ? " value" : " values") + " (Hyprland reloads)"
     if (s.domain === "island") { var spec = CC.setting("island." + s.key); return "Tusche Island · " + spec.label + ": " + CC.valueLabel(spec, s.value) }
     if (s.domain === "cards") return "Card picker · " + CC.valueLabel(CC.setting("cards.override"), s.value)
     if (s.domain === "extras") { var x = CC.setting("extras." + s.key); return "Extras · " + x.label + ": " + CC.valueLabel(x, s.value) }
@@ -297,7 +448,22 @@ PanelWindow {
     if (!queue.length) { finishQueue(""); return }
     step = queue[0]; queue = queue.slice(1); stepAt = Date.now()
     workText = (queueMode === "cancel" || queueMode === "revert" ? "Restoring · " : "Applying · ") + stepLabel(step)
-    if (step.domain === "island") {
+    if (step.domain === "omarchy") {
+      // The menu entry's own action, as the menu runs it (a login shell), with
+      // bin/cc-shim first on its PATH: a terminal, a window, a question or a
+      // password prompt behind this window could never be answered.
+      if (shimDir === "") { failStep("Omarchy: the plugin's code directory is not known"); return }
+      setPhase("set")
+      omarchySet.command = ["sh", "-c",
+        'err=$(mktemp) || exit 70; bash -lc "$1" </dev/null >/dev/null 2>"$err"; c=$?; tail -c 600 "$err" >&2; rm -f "$err"; exit $c',
+        "sh", "export PATH=" + Util.shellQuote(shimDir) + ':"$PATH"; ' + step.action]
+      omarchySet.running = true
+    } else if (step.domain === "hypr") {
+      if (hyprScript === "") { failStep("Hyprland overrides: the plugin's code directory is not known"); return }
+      setPhase("set")
+      hyprSet.command = ["python3", hyprScript, "apply", JSON.stringify(CC.hyprPayload(step.changes))].concat(CC.hyprOptions())
+      hyprSet.running = true
+    } else if (step.domain === "island") {
       setPhase("set")
       islandSet.command = ["omarchy-shell", "tusche-island", "set", step.key, String(step.value)]
       islandSet.running = true
@@ -321,10 +487,11 @@ PanelWindow {
   }
   function stepDone(settle) {
     var d = Object.assign({}, doneDomains)
-    if (step.domain === "screens") {
-      var touched = Object.assign({}, d.screens || {})
-      step.keys.forEach(function(name) { touched[name] = true })
-      d.screens = touched
+    if (step.domain === "screens" || step.domain === "omarchy" || step.domain === "hypr") {
+      // which rows, for Cancel: screen names, Omarchy row keys, Hyprland options
+      var touched = Object.assign({}, d[step.domain] || {})
+      ;(step.keys || [step.key]).forEach(function(name) { touched[name] = true })
+      d[step.domain] = touched
     } else d[step.domain] = true
     doneDomains = d
     if (settle) setPhase("settle")            // let the shell and the plugins reload shell.json
@@ -338,7 +505,20 @@ PanelWindow {
     var now = Date.now()
     if (phase === "settle") { if (now - phaseAt >= 600) { stepTimer.stop(); nextStep() } return }
     if (now - stepAt > 15000) { failStep(stepLabel(s) + " timed out"); return }
-    if (s.domain === "island") {
+    if (s.domain === "omarchy") {
+      // Omarchy's own answers from after the action must show the new value
+      // (the guards and the reader batch, as the menu reads them).
+      if (phase !== "confirm") return
+      var fresh = omarchyMenu.resultsAt >= omarchyDoneAt && readersAt >= omarchyDoneAt
+      if (fresh && live.omarchy && live.omarchy[s.key] === s.value) { stepDone(true); return }
+      if (now - phaseAt > 6000) {
+        var spec = CC.setting("omarchy." + s.key, live)
+        var shown = live.omarchy && spec ? CC.valueLabel(spec, live.omarchy[s.key]) : "nothing"
+        failStep(stepLabel(s) + " did not take: Omarchy still reports " + shown)
+        return
+      }
+      if (fresh && !readerProc.running && !omarchyMenu.pending && now - lastConfirmAsk > 500) { lastConfirmAsk = now; askAfterAction() }
+    } else if (s.domain === "island") {
       var v = String(s.value)
       if (phase === "config") {
         var values = CC.islandValues(CC.islandEntry(host.config))
@@ -394,7 +574,7 @@ PanelWindow {
     edits = CC.prune(edits, live)
     if (mode === "use" || mode === "save") {
       var a = Object.assign({}, applied)
-      for (var d in done) a[d] = d === "screens" ? Object.assign({}, a.screens || {}, done.screens) : true
+      for (var d in done) a[d] = d === "screens" || d === "omarchy" || d === "hypr" ? Object.assign({}, a[d] || {}, done[d]) : true
       applied = a
       if (Object.keys(done).length) usedLive = true
     }
@@ -478,6 +658,51 @@ PanelWindow {
     }
   }
 
+  Process {
+    id: omarchySet
+    stderr: StdioCollector { id: omarchySetErr }
+    onExited: function(code) {
+      if (!win.step || win.step.domain !== "omarchy") return
+      if (code !== 0) {
+        var err = String(omarchySetErr.text || "").trim().split("\n").pop()
+        win.failStep(win.stepLabel(win.step) + ": " + (err || "the action exited with " + code))
+        return
+      }
+      win.omarchyDoneAt = Date.now()
+      win.setPhase("confirm")
+      win.lastConfirmAsk = win.omarchyDoneAt
+      win.askAfterAction()
+    }
+  }
+  property double lastConfirmAsk: 0
+  // After an Omarchy action: its guards and the reader batch again.
+  function askAfterAction() {
+    omarchyMenu.evaluate()
+    if (readerProc.running) readerProc.again = true
+    else startReaders()
+  }
+  Process {
+    id: hyprSet
+    stdout: StdioCollector { id: hyprSetOut }
+    stderr: StdioCollector { id: hyprSetErr }
+    onExited: function(code) {
+      if (!win.step || win.step.domain !== "hypr") return
+      var facts = code === 0 ? CC.hyprFacts(hyprSetOut.text) : null
+      if (!facts || facts.error) {
+        var err = facts && facts.error ? facts.error : String(hyprSetErr.text || "").trim().split("\n").pop()
+        win.failStep("Hyprland overrides: " + (err || "hypr-overrides.py failed"))
+        return
+      }
+      var s = win.step
+      var wrong = s.keys.filter(function(o) { return facts.values[o] !== s.changes[o] })
+      win.hyprSetAt = Date.now()
+      win.hyprStatus = facts
+      win.hyprStatusAt = win.hyprSetAt
+      if (wrong.length) { win.failStep("Hyprland overrides: the file does not show " + wrong.join(", ")); return }
+      win.stepDone(false)
+    }
+  }
+
   // ---------------------------------------------------------------- health probes
   function refreshHealth() {
     if (!host) return
@@ -489,7 +714,7 @@ PanelWindow {
       if (!generationProbe.running) generationProbe.running = true
     }
     if (live.island) probeIsland()
-    if (!working) { refreshCards(); refreshExtras() }
+    if (!working) { refreshCards(); refreshExtras(); refreshOmarchy(); refreshHypr() }
   }
   function refreshCards() { if (!cardsStatusProc.running) cardsStatusProc.running = true }
   function refreshExtras() {
@@ -600,6 +825,8 @@ PanelWindow {
     if (r) jumpTo(r.id, r.area)
   }
   function jumpTo(id, a) {
+    var spec = CC.setting(id, live)
+    if (spec && spec.advanced) showAdvanced = true
     showArea(a)
     flashId = id
     flashTimer.restart()
@@ -641,6 +868,7 @@ PanelWindow {
   function stateObject() {
     return { open: open, area: area, working: working, step: workText, used: usedLive, applied: Object.keys(applied),
              staged: changeList.map(function(c) { return c.id + "=" + c.to }), message: message, health: health.label, extras: live.extras,
+             omarchy: live.omarchy, hypr: live.hypr, changedOnly: changedOnly, advanced: showAdvanced,
              issues: healthList.filter(function(c) { return c.state === "issue" }).map(function(c) { return c.id + ": " + c.detail }) }
   }
 
@@ -753,7 +981,7 @@ PanelWindow {
           Item {
             id: searchBox
             x: segments.width + Style.space(16)
-            width: Math.max(Style.space(160), Math.min(Style.space(520), healthRow.x - x - Style.space(16)))
+            width: Math.max(Style.space(160), Math.min(Style.space(440), filterRow.x - x - Style.space(16)))
             height: Math.max(Style.space(30), searchField.implicitHeight)
             anchors.verticalCenter: parent.verticalCenter
             Face { anchors.fill: parent; inset: true; fill: Qt.darker(Commons.Color.popups.background, 1.25) }
@@ -795,6 +1023,16 @@ PanelWindow {
               Keycap { label: "K" }
             }
           }
+          // Filters: rows away from their defaults (and staged ones) across all
+          // areas; advanced rows (fine values most people leave alone).
+          Row {
+            id: filterRow
+            x: healthRow.x - width - Style.space(14)
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Style.space(6)
+            Chip { label: "Changed only"; selected: win.changedOnly; enabled: true; onPicked: win.toggleChanged() }
+            Chip { label: "Advanced"; selected: win.showAdvanced; enabled: true; onPicked: win.showAdvanced = !win.showAdvanced }
+          }
           Row {
             id: healthRow
             x: parent.width - width
@@ -823,30 +1061,50 @@ PanelWindow {
           width: parent.width
           height: footer.y - y - Style.space(10)
 
-          Column {
-            id: areaList
+          // Areas in groups (CC.sidebar); scrolls when the window is short.
+          Flickable {
+            id: areaScroll
             width: Style.space(200)
-            spacing: Style.space(2)
+            height: parent.height
+            contentHeight: areaList.implicitHeight
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            Column {
+            id: areaList
+            width: areaScroll.width
+            spacing: Style.space(1)
             Repeater {
-              model: CC.AREAS
+              model: CC.sidebar()
               Rectangle {
                 id: areaRow
                 required property var modelData
-                readonly property bool current: win.area === modelData.id
+                readonly property bool isGroup: modelData.kind === "group"
+                readonly property bool current: !isGroup && win.area === modelData.id && !win.changedOnly
                 width: areaList.width
-                height: Math.max(Style.space(32), areaLabel.implicitHeight + Style.space(12))
+                height: isGroup ? groupLabel.implicitHeight + Style.space(index === 0 ? 2 : 10)
+                  : Math.max(Style.space(28), areaLabel.implicitHeight + Style.space(10))
+                required property int index
+                Caption {
+                  id: groupLabel
+                  visible: areaRow.isGroup
+                  x: Style.space(8); y: parent.height - implicitHeight - Style.space(1)
+                  text: areaRow.modelData.label
+                  font.bold: true
+                  color: Util.alpha(Commons.Color.popups.text, 0.5)
+                }
                 color: current ? Util.alpha(Commons.Color.accent, 0.18)
-                  : areaMouse.containsMouse ? Style.hoverFillFor(Commons.Color.popups.text, Commons.Color.accent, Commons.Color.urgent) : "transparent"
+                  : areaMouse.containsMouse && !isGroup ? Style.hoverFillFor(Commons.Color.popups.text, Commons.Color.accent, Commons.Color.urgent) : "transparent"
                 Rectangle { width: Style.space(3); height: parent.height; color: Commons.Color.accent; visible: areaRow.current }
                 Rectangle {
                   x: Style.space(8); anchors.verticalCenter: parent.verticalCenter
                   width: Math.max(4, Style.space(5)); height: width
                   color: Commons.Color.accent
-                  visible: win.areaHasEdits(areaRow.modelData.id)
+                  visible: !areaRow.isGroup && win.areaHasEdits(areaRow.modelData.id)
                 }
                 // The area name wins; its note gets what is left.
                 Body {
                   id: areaLabel
+                  visible: !areaRow.isGroup
                   x: Style.space(18)
                   anchors.verticalCenter: parent.verticalCenter
                   width: Math.min(implicitWidth, parent.width - x - Style.space(8))
@@ -858,12 +1116,13 @@ PanelWindow {
                   id: areaNote
                   anchors.right: parent.right; anchors.rightMargin: Style.space(8)
                   anchors.verticalCenter: parent.verticalCenter
-                  visible: implicitWidth <= parent.width - areaLabel.x - areaLabel.width - Style.space(18)
-                  text: win.areaMeta(areaRow.modelData.id)
+                  visible: !areaRow.isGroup && implicitWidth <= parent.width - areaLabel.x - areaLabel.width - Style.space(18)
+                  text: areaRow.isGroup ? "" : win.areaMeta(areaRow.modelData.id)
                   color: areaRow.modelData.id === "health" && win.health.issues ? Commons.Color.urgent : Util.alpha(Commons.Color.popups.text, 0.6)
                 }
-                MouseArea { id: areaMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: win.showArea(areaRow.modelData.id) }
+                MouseArea { id: areaMouse; anchors.fill: parent; enabled: !areaRow.isGroup; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: win.showArea(areaRow.modelData.id) }
               }
+            }
             }
           }
           Rectangle { x: areaList.width + Style.space(10); width: 1; height: parent.height; color: Util.alpha(Commons.Color.popups.text, 0.12) }
@@ -888,7 +1147,7 @@ PanelWindow {
                 height: areaHead.implicitHeight + Style.space(6)
                 Strong {
                   id: areaHead
-                  text: CC.areaLabel(win.area)
+                  text: win.changedOnly ? "Changed" : CC.areaLabel(win.area)
                   color: Commons.Color.accent
                   font.pixelSize: Style.font.title
                   font.bold: true
@@ -898,19 +1157,22 @@ PanelWindow {
                   anchors.baseline: areaHead.baseline
                   width: Math.max(0, parent.width - areaHead.implicitWidth - Style.space(10))
                   elide: Text.ElideRight
-                  text: (win.area === "quick" ? "" : "Configure · ") + CC.areaNote(win.area)
+                  text: win.changedOnly ? "Staged rows, Hyprland overrides that are set, Tusche options away from their defaults"
+                    : (win.area === "quick" ? "" : "Configure · ") + CC.areaNote(win.area)
                 }
               }
 
               // ---- Quick
               Column {
-                visible: win.area === "quick"
+                visible: win.area === "quick" && !win.changedOnly
                 width: parent.width
                 spacing: Style.space(2)
                 SectionHead { text: "LOOK" }
                 Repeater { model: CC.QUICK.filter(function(id) { return id.indexOf("bar.") === 0 }); delegate: settingRow }
                 SectionHead { visible: win.islandAvailable; text: "TUSCHE ISLAND" }
                 Repeater { model: win.islandAvailable ? CC.QUICK.filter(function(id) { return id.indexOf("island.") === 0 }) : []; delegate: settingRow }
+                SectionHead { visible: win.quickDesktop.length > 0; text: "DESKTOP" }
+                Repeater { model: win.quickDesktop.map(function(id) { return { kind: "row", id: id } }); delegate: genericRow }
                 SectionHead { text: "PRESETS" }
                 PresetFlow {}
                 SectionHead { text: "FOCUS MODE" }
@@ -941,7 +1203,7 @@ PanelWindow {
 
               // ---- Tusche Bar
               Column {
-                visible: win.area === "bar"
+                visible: win.area === "bar" && !win.changedOnly
                 width: parent.width
                 spacing: Style.space(2)
                 Loader {
@@ -1032,21 +1294,25 @@ PanelWindow {
               }
 
               // ---- Per-screen presentation (never changes display topology)
-              Loader {
-                active: win.open && win.area === "screens"
-                visible: active
+              Column {
+                visible: !win.changedOnly
                 width: parent.width
-                sourceComponent: ScreenProfiles {
+                Loader {
+                  active: win.open && win.area === "screens"
+                  visible: active
                   width: parent.width
-                  screens: win.screenChoices; profiles: win.pending.screens
-                  enabled: !win.working
-                  onPicked: function(name, profile) { win.pick("screens." + name, profile) }
+                  sourceComponent: ScreenProfiles {
+                    width: parent.width
+                    screens: win.screenChoices; profiles: win.pending.screens
+                    enabled: !win.working
+                    onPicked: function(name, profile) { win.pick("screens." + name, profile) }
+                  }
                 }
               }
 
               // ---- Isolated production-material playback
               Column {
-                visible: win.area === "motion"
+                visible: win.area === "motion" && !win.changedOnly
                 width: parent.width; spacing: Style.space(8)
                 Loader {
                   active: win.open && win.area === "motion"
@@ -1063,7 +1329,7 @@ PanelWindow {
 
               // ---- Tusche Island
               Column {
-                visible: win.area === "island"
+                visible: win.area === "island" && !win.changedOnly
                 width: parent.width
                 spacing: Style.space(2)
                 Caption {
@@ -1083,7 +1349,7 @@ PanelWindow {
 
               // ---- Card picker
               Column {
-                visible: win.area === "cards"
+                visible: win.area === "cards" && !win.changedOnly
                 width: parent.width
                 spacing: Style.space(2)
                 SectionHead { text: "MENUS" }
@@ -1103,13 +1369,29 @@ PanelWindow {
                 }
               }
 
-              // ---- Extras
+              // ---- Rows from the registry: Omarchy's settings, Hyprland
+              // overrides, full width (CC.areaRows), after an area's own parts
               Column {
-                visible: win.area === "extras"
+                visible: !win.changedOnly && win.genericRows.length > 0
                 width: parent.width
                 spacing: Style.space(2)
-                SectionHead { text: "WINDOWS" }
-                Repeater { model: ["extras.fullWidth"]; delegate: settingRow }
+                Repeater { model: win.genericRows; delegate: genericRow }
+              }
+              Caption {
+                visible: win.omarchyPending && !win.changedOnly
+                topPadding: Style.space(8)
+                width: parent.width; wrapMode: Text.WordWrap
+                color: win.omarchyState === "failed" || win.omarchyState === "empty" ? Commons.Color.urgent : Util.alpha(Commons.Color.popups.text, 0.6)
+                text: win.omarchyState === "failed" ? "Omarchy's menu guards did not answer, so its settings are not shown (Health has details)."
+                  : win.omarchyState === "empty" ? "Omarchy's menu file was not found, so its settings are not shown."
+                  : "Reading Omarchy's settings …"
+              }
+
+              // ---- Windows: what full width and the overrides do
+              Column {
+                visible: win.area === "windows" && !win.changedOnly
+                width: parent.width
+                spacing: Style.space(2)
                 Caption {
                   visible: text !== ""
                   width: parent.width; wrapMode: Text.WordWrap
@@ -1122,6 +1404,18 @@ PanelWindow {
                   width: parent.width; wrapMode: Text.WordWrap
                   text: "Edge to edge: a window made full width (Super+Alt+F, Omarchy's maximize) fills the screen without outer gaps, border or rounding. It is an Omarchy Hyprland toggle (tusche-full-width.lua in ~/.local/state/omarchy/toggles/hypr); switching reloads Hyprland. Real full screen (Super+F) is not affected."
                 }
+                Caption {
+                  topPadding: Style.space(6)
+                  width: parent.width; wrapMode: Text.WordWrap
+                  text: "Override rows write one Omarchy toggle file, " + CC.HYPR_FILE + ", reload Hyprland and win over your hypr config and the theme. Omarchy's own switches still win over them: Gaps Off and Sharp or Rounded corners keep their values. Default drops the override; the value Hyprland runs with is shown beside it."
+                }
+              }
+
+              // ---- Input & keys: the overrides, then the shortcut sheet
+              Column {
+                visible: win.area === "input" && !win.changedOnly
+                width: parent.width
+                spacing: Style.space(2)
                 SectionHead { text: "SHORTCUTS" }
                 Repeater { model: ["extras.sheet"]; delegate: settingRow }
                 Flow {
@@ -1149,9 +1443,36 @@ PanelWindow {
                 }
               }
 
+              // ---- Dock
+              Caption {
+                visible: win.area === "dock" && !win.changedOnly && !!win.live.omarchy
+                topPadding: Style.space(6)
+                width: parent.width; wrapMode: Text.WordWrap
+                text: "Omarchy shows its dock with the floating workspace layout (Windows › Default layout)."
+              }
+
+              // ---- Changed only: every row away from its default, by area
+              Column {
+                visible: win.changedOnly
+                width: parent.width
+                spacing: Style.space(2)
+                Repeater { model: win.changedRowList; delegate: genericRow }
+                Caption {
+                  visible: win.changedRowList.length === 0
+                  topPadding: Style.space(8)
+                  width: parent.width; wrapMode: Text.WordWrap
+                  text: "Nothing is staged, no Hyprland override is set and every Tusche option is at its default."
+                }
+                Caption {
+                  topPadding: Style.space(8)
+                  width: parent.width; wrapMode: Text.WordWrap
+                  text: "Omarchy's own settings have no default to compare with: they show here only while staged."
+                }
+              }
+
               // ---- Health
               Column {
-                visible: win.area === "health"
+                visible: win.area === "health" && !win.changedOnly
                 width: parent.width
                 spacing: Style.space(2)
                 Item {
@@ -1195,7 +1516,7 @@ PanelWindow {
                 Caption {
                   topPadding: Style.space(6)
                   width: parent.width; wrapMode: Text.WordWrap
-                  text: "Every check reads live state: the engine, shell.json, the island's IPC state, the takeover marker and its watchdog, the loaded and installed code generation, Quickshell's Hyprland data, the bar's hide flag, Omarchy's menu model, usage record times, the card picker's script and the extras' toggle file and plugin folder. Nothing here changes anything."
+                  text: "Every check reads live state: the engine, shell.json, the island's IPC state, the takeover marker and its watchdog, the loaded and installed code generation, Quickshell's Hyprland data, the bar's hide flag, Omarchy's menu model and menu guards, usage record times, the card picker's script, the extras' toggle file and plugin folder and the override file. Nothing here changes anything."
                 }
               }
             }
@@ -1298,7 +1619,7 @@ PanelWindow {
     id: settingRow
     SettingRow {
       required property var modelData
-      readonly property var spec: CC.setting(modelData)
+      readonly property var spec: CC.setting(modelData, win.live)
       width: editorColumn.width
       settingId: modelData
       label: spec ? spec.label : modelData
@@ -1308,6 +1629,42 @@ PanelWindow {
       current: String(CC.value(win.pending, modelData))
       liveValue: String(CC.value(win.live, modelData))
       onPicked: function(v) { win.pick(modelData, v) }
+    }
+  }
+  // Rows from the registry ({ kind: "head" | "row", text, id }): a section
+  // head, a row of choices, or a number row (Hyprland overrides). Tagged with
+  // where the setting comes from where an area mixes them.
+  Component {
+    id: genericRow
+    Column {
+      id: gen
+      required property var modelData
+      readonly property var spec: modelData.kind === "row" ? CC.setting(modelData.id, win.live) : null
+      readonly property bool mixed: win.changedOnly || win.area === "quick" || win.area === "windows" || win.area === "input"
+      readonly property string tag: !spec ? "" : spec.domain === "omarchy" || spec.domain === "hypr" || gen.mixed ? CC.sourceOf(spec) : ""
+      width: editorColumn.width
+      SectionHead { visible: gen.modelData.kind === "head"; text: gen.modelData.text || "" }
+      SettingRow {
+        visible: !!gen.spec && gen.spec.kind !== "number"
+        width: parent.width
+        settingId: gen.spec ? gen.spec.id : ""
+        label: gen.spec ? gen.spec.label : ""
+        hint: gen.spec ? gen.spec.hint : ""
+        tag: gen.tag
+        note: gen.spec && gen.spec.note ? gen.spec.note : ""
+        values: gen.spec ? gen.spec.values : []
+        available: !!gen.spec && CC.available(win.live, gen.spec.id)
+        current: gen.spec ? String(CC.value(win.pending, gen.spec.id)) : ""
+        liveValue: gen.spec ? String(CC.value(win.live, gen.spec.id)) : ""
+        effective: gen.spec && gen.spec.domain === "hypr" && win.live.hyprEffective ? String(win.live.hyprEffective[gen.spec.key] || "") : ""
+        onPicked: function(v) { win.pick(gen.spec.id, v) }
+      }
+      NumberRow {
+        visible: !!gen.spec && gen.spec.kind === "number"
+        width: parent.width
+        spec: gen.spec && gen.spec.kind === "number" ? gen.spec : null
+        tag: gen.tag
+      }
     }
   }
 
@@ -1450,11 +1807,27 @@ PanelWindow {
     MouseArea { id: chipMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: chip.picked() }
   }
 
+  // Where a row comes from: Tusche, Omarchy (its own command) or Override
+  // (a Hyprland value in the Control Center's toggle file).
+  component Tag: Item {
+    id: tagBox
+    property string text: ""
+    implicitWidth: tagText.implicitWidth + Style.space(8)
+    implicitHeight: tagText.implicitHeight + Style.space(2)
+    width: implicitWidth; height: implicitHeight
+    readonly property color tone: text === "Override" ? Commons.Color.accent : Util.alpha(Commons.Color.popups.text, text === "Omarchy" ? 0.7 : 0.45)
+    Rectangle { anchors.fill: parent; radius: height / 2; color: "transparent"; border.width: 1; border.color: Util.alpha(tagBox.tone, 0.6) }
+    Strong { id: tagText; anchors.centerIn: parent; text: tagBox.text.toUpperCase(); font.pixelSize: Math.max(8, Style.font.caption - 2); font.bold: true; color: tagBox.tone }
+  }
+
   component SettingRow: Item {
     id: row
     property string settingId: ""
     property string label: ""
     property string hint: ""
+    property string tag: ""
+    property string note: ""                // why a row is read-only
+    property string effective: ""           // overrides: what Hyprland runs with now
     property var values: []
     property string current: ""
     property string liveValue: ""
@@ -1462,17 +1835,23 @@ PanelWindow {
     signal picked(string value)
     readonly property bool changed: available && current !== liveValue
     readonly property int labelWidth: Math.min(Style.space(200), Math.round(width * 0.32))
-    height: Math.max(labelColumn.implicitHeight, chips.height) + Style.space(10)
-    opacity: available ? 1 : 0.5
+    height: Math.max(labelColumn.implicitHeight, chips.height) + (noteText.visible ? noteText.implicitHeight + Style.space(4) : 0) + Style.space(10)
     FlashBg { forId: row.settingId }
     Column {
       id: labelColumn
       x: Style.space(6); y: Style.space(5)
       width: row.labelWidth
       spacing: Style.space(1)
+      opacity: row.available ? 1 : 0.6
       Body { width: parent.width; wrapMode: Text.WordWrap; text: row.label }
       Caption { visible: row.changed; width: parent.width; wrapMode: Text.WordWrap; color: Commons.Color.accent; text: "not applied" }
-      Caption { visible: row.hint !== ""; width: parent.width; wrapMode: Text.WordWrap; text: row.hint }
+      Row {
+        visible: row.tag !== "" || row.hint !== ""
+        width: parent.width
+        spacing: Style.space(5)
+        Tag { id: rowTag; visible: row.tag !== ""; text: row.tag; anchors.verticalCenter: parent.verticalCenter }
+        Caption { width: parent.width - (rowTag.visible ? rowTag.width + parent.spacing : 0); elide: Text.ElideRight; text: row.hint; anchors.verticalCenter: parent.verticalCenter }
+      }
     }
     Flow {
       id: chips
@@ -1480,16 +1859,99 @@ PanelWindow {
       width: row.width - x - Style.space(6)
       height: childrenRect.height
       spacing: Style.space(4)
+      opacity: row.available ? 1 : 0.6
       Repeater {
         model: row.values
         Chip {
           required property var modelData
-          label: modelData.label
+          // "Default" of an override names what Hyprland runs with while no override is set
+          label: modelData.id === "" && row.effective !== "" && row.liveValue === "" ? modelData.label + " · " + (row.effective === "true" ? "on" : row.effective === "false" ? "off" : row.effective) : modelData.label
           selected: row.current === modelData.id
           liveMark: row.changed && row.liveValue === modelData.id
-          enabled: row.available && !win.working
+          enabled: row.available && !win.working && modelData.pick !== false
           onPicked: row.picked(modelData.id)
         }
+      }
+    }
+    Caption {
+      id: noteText
+      visible: row.note !== ""
+      x: chips.x; y: Math.max(labelColumn.implicitHeight, chips.height) + Style.space(7)
+      width: chips.width; wrapMode: Text.WordWrap
+      text: row.note
+    }
+  }
+
+  // An override number: Default (no override; shows what Hyprland runs
+  // with), − value +, staged like any other row.
+  component NumberRow: Item {
+    id: nrow
+    property var spec: null
+    property string tag: ""
+    readonly property string settingId: spec ? spec.id : ""
+    readonly property string current: spec ? String(CC.value(win.pending, spec.id)) : ""
+    readonly property string liveValue: spec ? String(CC.value(win.live, spec.id)) : ""
+    readonly property string effective: spec && win.live.hyprEffective ? String(win.live.hyprEffective[spec.key] || "") : ""
+    readonly property bool available: !!spec && CC.available(win.live, spec.id)
+    readonly property bool changed: available && current !== liveValue
+    // the number the steppers start from: the override, else Hyprland's value
+    readonly property string shown: current !== "" ? current : effective
+    readonly property int labelWidth: Math.min(Style.space(200), Math.round(width * 0.32))
+    height: Math.max(nlabel.implicitHeight, controls.height) + Style.space(10)
+    FlashBg { forId: nrow.settingId }
+    Column {
+      id: nlabel
+      x: Style.space(6); y: Style.space(5)
+      width: nrow.labelWidth
+      spacing: Style.space(1)
+      opacity: nrow.available ? 1 : 0.6
+      Body { width: parent.width; wrapMode: Text.WordWrap; text: nrow.spec ? nrow.spec.label : "" }
+      Caption { visible: nrow.changed; width: parent.width; color: Commons.Color.accent; text: "not applied" }
+      Row {
+        width: parent.width
+        spacing: Style.space(5)
+        Tag { id: ntag; visible: nrow.tag !== ""; text: nrow.tag; anchors.verticalCenter: parent.verticalCenter }
+        Caption { width: parent.width - (ntag.visible ? ntag.width + parent.spacing : 0); elide: Text.ElideRight; text: nrow.spec ? nrow.spec.hint : ""; anchors.verticalCenter: parent.verticalCenter }
+      }
+    }
+    Row {
+      id: controls
+      x: nlabel.x + nlabel.width + Style.space(12); y: Style.space(5)
+      spacing: Style.space(4)
+      opacity: nrow.available ? 1 : 0.6
+      Chip {
+        label: "Default"
+        selected: nrow.current === ""
+        liveMark: nrow.changed && nrow.liveValue === ""
+        enabled: nrow.available && !win.working
+        onPicked: win.pick(nrow.settingId, "")
+      }
+      Chip {
+        label: "−"
+        enabled: nrow.available && !win.working && CC.hyprStep(nrow.spec ? nrow.spec.key : "", nrow.shown, -1) !== nrow.current
+        onPicked: { var v = CC.hyprStep(nrow.spec.key, nrow.shown, -1); if (v !== null) win.pick(nrow.settingId, v) }
+      }
+      Item {
+        width: Math.max(Style.space(64), valueText.implicitWidth + Style.space(12)); height: Style.space(26)
+        // the override, else (dimmed) what Hyprland runs with
+        Face { anchors.fill: parent; inset: true; fill: nrow.current !== "" ? Util.alpha(Commons.Color.accent, 0.14) : "transparent" }
+        Body {
+          id: valueText
+          anchors.centerIn: parent
+          text: (nrow.shown !== "" ? nrow.shown : "—") + (nrow.shown !== "" && nrow.spec && nrow.spec.unit ? " " + nrow.spec.unit : "")
+          font.bold: nrow.current !== ""
+          color: nrow.current !== "" ? Commons.Color.popups.text : Util.alpha(Commons.Color.popups.text, 0.5)
+        }
+      }
+      Chip {
+        label: "+"
+        enabled: nrow.available && !win.working && CC.hyprStep(nrow.spec ? nrow.spec.key : "", nrow.shown, 1) !== nrow.current
+        onPicked: { var v = CC.hyprStep(nrow.spec.key, nrow.shown, 1); if (v !== null) win.pick(nrow.settingId, v) }
+      }
+      Caption {
+        anchors.verticalCenter: parent.verticalCenter
+        visible: !!nrow.spec
+        text: nrow.spec ? nrow.spec.min + "–" + nrow.spec.max : ""
       }
     }
   }
