@@ -206,8 +206,18 @@ PanelWindow {
   // rectangles from WorkspaceGeometry can bind `ScreencopyView` and read
   // app names without storing titles in the geometry snapshot.
   readonly property var toplevelMap: {
-    var list = Hyprland.toplevels ? Hyprland.toplevels.values : []
     var map = {}
+    // Umbriel windows have no Hyprland toplevel: their app names label the
+    // workspaces, and the miniature shows plain rectangles.
+    if (Bridge.ModuleBus.umbriel) {
+      var windows = Commons.Compositor.windowList()
+      for (var w = 0; w < windows.length; ++w) {
+        var id = WorkspaceGeometry.address(windows[w].id)
+        if (id) map[id] = { address: windows[w].id, title: windows[w].title, lastIpcObject: { "class": windows[w].appId }, wayland: null }
+      }
+      return map
+    }
+    var list = Hyprland.toplevels ? Hyprland.toplevels.values : []
     for (var i = 0; i < list.length; ++i) {
       var tl = list[i]
       if (!tl) continue

@@ -127,6 +127,39 @@ function eventAffectsMonitors(name) {
     return /^(monitor.*|configreloaded|openlayer|closelayer|moveworkspace(v2)?)$/.test(String(name || ""))
 }
 
+// The same retained snapshot from the shell's compositor service on Umbriel
+// (Commons.Compositor outputList/workspaceList/windowList, with Hyprland's
+// workspace numbering). Output geometry there is already logical, so scale 1
+// and no transform; output positions in the list stand in for monitor IDs.
+// `focused` carries the active window's ID for the focus mark.
+function snapshotFromCompositor(outputs, workspaces, windows, focusedId) {
+    outputs = outputs || []; workspaces = workspaces || []; windows = windows || []
+    var index = {}, monitors = []
+    for (var i = 0; i < outputs.length; ++i) {
+        var o = outputs[i]
+        index[o.name] = i
+        monitors.push({id:i,name:o.name,x:o.x,y:o.y,width:o.width,height:o.height,scale:1,transform:0,
+            reserved:o.reserved,dpmsStatus:o.powered !== false})
+    }
+    var active = {id:finite(focusedId) && focusedId > 0 ? focusedId : 1,name:""}
+    var spaces = []
+    for (var j = 0; j < workspaces.length; ++j) {
+        var w = workspaces[j]
+        if (w.id === active.id) active.name = w.name
+        spaces.push({id:w.id,name:w.name,monitor:w.output,monitorID:index[w.output],windows:w.windows || 0,urgent:w.urgent === true})
+    }
+    var clients = [], focused = ""
+    for (var k = 0; k < windows.length; ++k) {
+        var c = windows[k]
+        if (!(c.workspaceId > 0)) continue
+        if (c.activated) focused = c.id
+        clients.push({address:c.id,at:[c.x,c.y],size:[c.width,c.height],workspace:{id:c.workspaceId},monitor:index[c.output],
+            mapped:true,hidden:c.hidden === true,floating:c.floating === true,fullscreen:c.fullscreen})
+    }
+    return {monitors:monitors.filter(function(m) { return !!monitorRect(m) }),workspaces:spaces.filter(isRegular),
+        clients:clients,active:active,focused:focused}
+}
+
 // hyprctl --batch emits adjacent JSON documents, not one JSON array. Parse
 // balanced values with string/escape awareness; never split on title content.
 // Only the geometry/IDs survive into the retained snapshot (no titles/PIDs).

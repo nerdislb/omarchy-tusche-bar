@@ -145,14 +145,21 @@ Item {
   // Quickshell 0.3.2's Lua IPC path can provide clients but empty monitor/
   // workspace metadata. Retain a sanitized batch snapshot only on that path.
   property var localSnapshot: null
-  readonly property var snapshot: snapshotOwner ? snapshotOwner.localSnapshot : null
+  // On Umbriel the same snapshot comes from the shell's compositor service,
+  // which pushes every change, so there is nothing to query.
+  readonly property bool umbriel: Bridge.ModuleBus.umbriel
+  readonly property var compositorSnapshot: umbriel ? WorkspaceGeometry.snapshotFromCompositor(
+    Commons.Compositor.outputList(), Commons.Compositor.workspaceList(), Commons.Compositor.windowList(),
+    Commons.Compositor.focusedWorkspaceId) : null
+  readonly property var snapshot: umbriel ? compositorSnapshot : snapshotOwner ? snapshotOwner.localSnapshot : null
   readonly property var snapshotOwner: {
     var candidates = Bridge.ModuleBus.instances.workspaces || []
     return candidates.length ? candidates[0] : null
   }
   readonly property var geometryClients: !nativeGeometryReady && snapshot ? snapshot.clients : rawClients
   readonly property var geometryMonitors: !nativeGeometryReady && snapshot ? snapshot.monitors : rawMonitors
-  readonly property string focusedAddress: Hyprland.activeToplevel ? Hyprland.activeToplevel.address : ""
+  readonly property string focusedAddress: umbriel ? (snapshot ? snapshot.focused : "")
+    : Hyprland.activeToplevel ? Hyprland.activeToplevel.address : ""
   function collectGeometry() {
     var result = {}
     for (var i = 0; i < workspaces.length; ++i) {
@@ -194,7 +201,7 @@ Item {
     geometryCooldown.start()
   }
   function refreshGeometry() {
-    if (!geometryOwner) return
+    if (!geometryOwner || umbriel) return
     if (!nativeGeometryReady) {
       if (snapshotProcess.running) snapshotAgain = true
       else snapshotProcess.running = true
@@ -267,11 +274,13 @@ Item {
   }
 
   function focusWorkspace(id) {
+    if (umbriel) { Commons.Compositor.focusWorkspace(id); return }
     if (bar) bar.run("hyprctl dispatch " + Util.shellQuote("hl.dsp.focus({ workspace = " + JSON.stringify(WorkspaceGeometry.workspaceSelector(byId(id), id)) + " })"))
   }
   function focusWindow(id, address) {
     var clean = WorkspaceGeometry.address(address)
     if (!clean) { focusWorkspace(id); return }
+    if (umbriel) { Commons.Compositor.focusWindow(clean); return }
     if (bar) bar.run("hyprctl dispatch " + Util.shellQuote("hl.dsp.focus({ window = " + JSON.stringify("address:0x" + clean) + " })"))
   }
   function step(delta) {

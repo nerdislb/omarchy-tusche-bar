@@ -131,4 +131,29 @@ test('native-metadata fallback parses concatenated JSON safely and discards priv
   assert.equal(ctx.layoutOf(snapshot.workspaces[0], snapshot.clients, snapshot.monitors, '').rectangles.length, 1);
   for (const malformed of ['', text.slice(0,-1), text+' unexpected', '{}', '[] [] [] null', '[] [] [] {}', text.replace('1920','NaN')]) assert.equal(ctx.parseSnapshot(malformed), null);
 });
+test('an Umbriel compositor snapshot maps windows onto their own output', () => {
+  const outputs = [
+    {name: 'HDMI-A-1', x: 0, y: 0, width: 1920, height: 1080, scale: 1.25, reserved: [0, 30, 0, 0], powered: true},
+    {name: 'DP-1', x: 1920, y: 0, width: 2560, height: 1440, scale: 1, reserved: [0, 0, 0, 0], powered: false},
+  ];
+  const workspaces = [{id: 1, name: '1', output: 'HDMI-A-1', windows: 2}, {id: 11, name: '1', output: 'DP-1', windows: 1, urgent: true}];
+  const windows = [
+    {id: 'aa', workspaceId: 1, output: 'HDMI-A-1', x: 0, y: 30, width: 960, height: 1050, activated: true, fullscreen: 0},
+    {id: 'bb', workspaceId: 1, output: 'HDMI-A-1', x: 960, y: 30, width: 960, height: 1050, hidden: true, fullscreen: 0},
+    {id: 'cc', workspaceId: 11, output: 'DP-1', x: 1920, y: 0, width: 2560, height: 1440, fullscreen: 2},
+    {id: 'dd', workspaceId: -1, output: 'DP-1', x: 1920, y: 0, width: 10, height: 10},
+  ];
+  const snapshot = ctx.snapshotFromCompositor(outputs, workspaces, windows, 11);
+  assert.equal(snapshot.active.id, 11);
+  assert.equal(snapshot.focused, 'aa');
+  assert.equal(snapshot.monitors[1].dpmsStatus, false);
+  assert.deepEqual(plain(snapshot.clients.map(c => c.address)), ['aa', 'bb', 'cc'], 'scratchpad windows have no workspace to show on');
+  const own = ctx.layoutOf(snapshot.workspaces[0], snapshot.clients, snapshot.monitors, snapshot.focused);
+  assert.deepEqual(plain(own.rectangles), [{x: 0, y: 0, width: 0.5, height: 1, focused: true, floating: false, fullscreen: false, clipped: false, address: 'aa'}],
+    'logical geometry is not scaled again, and a hidden window drops out');
+  const other = ctx.layoutOf(snapshot.workspaces[1], snapshot.clients, snapshot.monitors, snapshot.focused);
+  assert.equal(other.monitor, 'DP-1');
+  assert.equal(other.rectangles[0].fullscreen, true);
+  assert.equal(snapshot.workspaces[1].urgent, true);
+});
 console.log(`WORKSPACE_GEOMETRY_RESULT ${JSON.stringify({groups})}`);

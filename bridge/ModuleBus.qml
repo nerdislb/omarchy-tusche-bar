@@ -8,6 +8,15 @@ import "../Presets.js" as Presets
 
 QtObject {
   property var instances: ({})
+  // Running on Umbriel rather than Hyprland, decided as the shell's compositor
+  // service (Commons.Compositor) decides it. Workspaces and windows then come
+  // from that service, which only shells built for Umbriel have; on Hyprland
+  // nothing reads it.
+  readonly property bool umbriel: {
+    if (Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")) return false
+    var desktops = String(Quickshell.env("XDG_CURRENT_DESKTOP") || "").toLowerCase().split(":")
+    return !!Quickshell.env("UMBRIEL_SOCKET") || desktops.indexOf("umbriel") >= 0
+  }
   // The bar colour as an opaque ink/fill (Commons.Color.bar.background has alpha 0
   // while Omarchy's bar is transparent).
   readonly property color barColor: Qt.rgba(Commons.Color.bar.background.r, Commons.Color.bar.background.g, Commons.Color.bar.background.b, 1)
