@@ -157,7 +157,7 @@ Item {
   WindowGlint {
     id: windowGlint
     metal: root.material && root.material.metal ? root.material.metal : null
-    glass: root.material && root.material.glass && root.options.glass !== "off" ? root.material.glass : null
+    glass: root.material && root.material.glass && root.material.glass.flat !== true && root.options.glass !== "off" ? root.material.glass : null
     style: root.options.frames === "orbit" ? "orbit" : "sweep"
     enabled: (root.options.frames === "glint" || root.options.frames === "orbit") && (!!metal || !!glass)
   }
@@ -347,6 +347,24 @@ Item {
     return false
   }
   readonly property int usageIntervalSec: Math.max(30, Number(agentsSettings.refreshIntervalSec || 900))
+  // Explicit opt-in: a read-only account query every 15 minutes, also refreshed
+  // when the quota popup opens (at most once a minute). No model or purchase.
+  readonly property bool codexCreditsEnabled: entry.codexCredits === true
+  readonly property bool codexCreditsInBar: entry.codexCreditsInBar !== false
+  property double lastCreditsRun: 0
+  function refreshCredits() {
+    if (!codexCreditsEnabled || creditsUpdate.running || Date.now() - lastCreditsRun < 60000) return
+    lastCreditsRun = Date.now()
+    creditsUpdate.running = true
+  }
+  Timer {
+    interval: 900000
+    running: root.codexCreditsEnabled
+    repeat: true
+    triggeredOnStart: true
+    onTriggered: root.refreshCredits()
+  }
+  Process { id: creditsUpdate; command: ["python3", root.pluginDir + "/bin/codex-credits.py"] }
   readonly property bool usageRunning: usageUpdate.running
   property string pendingUsage: ""
   property double lastLimitsRun: 0
@@ -392,7 +410,7 @@ Item {
   Timer { id: usageRetry; property var ids: []; interval: 30000; onTriggered: root.refreshUsage("limits", ids) }
   Connections {
     target: Bridge.ModuleBus
-    function onUsageRefreshRequested(kind) { root.refreshUsage(kind) }
+    function onUsageRefreshRequested(kind) { root.refreshUsage(kind); root.refreshCredits() }
   }
 
   // ---------------------------------------------------------------- panel contract
@@ -660,7 +678,7 @@ Item {
     function toggle(): void { var i = Bridge.ModuleBus.pick("quota"); if (i) i.togglePopup() }
     // Open the popup on one agent's card (claude, codex, antigravity, deepseek …).
     function select(id: string): string { var i = Bridge.ModuleBus.pick("quota"); if (!i) return "no quota widget"; var r = i.select(id); if (r === "ok") i.open(); return r }
-    function state(): string { var i = Bridge.ModuleBus.pick("quota"); return i ? JSON.stringify({ variant: i.variant, items: i.items, rings: i.ringItems, agents: i.agentIds, shown: i.shownId, open: i.popupOpen }) : "{}" }
+    function state(): string { var i = Bridge.ModuleBus.pick("quota"); return i ? JSON.stringify({ variant: i.variant, items: i.items, rings: i.ringItems, agents: i.agentIds, shown: i.shownId, open: i.popupOpen, credits: i.creditView }) : "{}" }
   }
 
   IpcHandler {

@@ -1,6 +1,7 @@
 import QtQuick
 import "../bridge" as Bridge
 import ".." as Root
+import "../CreditBalance.js" as Credits
 import Quickshell
 import Quickshell.Io
 import qs.Commons
@@ -75,6 +76,28 @@ Item {
 
   // Whole usage records (the agents panel's contract), id -> record.
   property var providers: ({})
+  readonly property bool creditsEnabled: !!(Bridge.ModuleBus.engine && Bridge.ModuleBus.engine.codexCreditsEnabled)
+  readonly property bool creditsInBar: creditsEnabled && Bridge.ModuleBus.engine.codexCreditsInBar
+  property var creditRecord: null
+  property var creditGrants: []
+  readonly property var creditView: Credits.view(creditRecord, now)
+  readonly property string creditGrantText: Credits.grantText(creditGrants)
+  FileView {
+    path: (Quickshell.env("XDG_STATE_HOME") || root.home + "/.local/state") + "/tusche-bar/codex-credits.json"
+    printErrors: false
+    watchChanges: true
+    onFileChanged: reload()
+    onLoaded: { try { root.creditRecord = JSON.parse(text()) } catch (e) { root.creditRecord = null } }
+    onLoadFailed: root.creditRecord = null
+  }
+  FileView {
+    path: root.home + "/.config/omarchy/codex-credit-grants.json"
+    printErrors: false
+    watchChanges: true
+    onFileChanged: reload()
+    onLoaded: { try { root.creditGrants = JSON.parse(text()).grants || [] } catch (e) { root.creditGrants = [] } }
+    onLoadFailed: root.creditGrants = []
+  }
   function setProvider(id, text) {
     var d
     try { d = JSON.parse(text) } catch (e) { return }
@@ -287,7 +310,7 @@ Item {
   readonly property bool hidden: variant === "ondemand" && !(tightest && tightest.percent >= 0.75)
   visible: !hidden
   implicitHeight: barSize
-  implicitWidth: hidden ? 0 : quotaFace.implicitWidth + Style.space(8)
+  implicitWidth: hidden ? 0 : quotaFace.implicitWidth + Style.space(8) + (creditChip.visible ? creditChip.implicitWidth + Style.space(8) : 0)
 
   QuotaFace {
     id: quotaFace
@@ -313,6 +336,26 @@ Item {
     onClicked: function(m) {
       if (m.button === Qt.MiddleButton) { if (root.bar) root.bar.run("omarchy-agent-usage-update --force"); return }
       root.togglePopup()
+    }
+  }
+
+  // The credit pool stays separate from the quota rings. Clicking its amount
+  // goes straight to Codex rather than the previously selected agent.
+  Text {
+    id: creditChip
+    visible: root.creditsInBar
+    x: quotaFace.x + quotaFace.implicitWidth + Style.space(8)
+    anchors.verticalCenter: parent.verticalCenter
+    textFormat: Text.PlainText
+    renderType: Text.NativeRendering
+    text: "X " + root.creditView.compact
+    font.family: Style.font.family
+    font.pixelSize: Style.font.caption
+    color: Util.alpha(root.fg, root.creditView.state === "ok" ? 0.9 : 0.5)
+    MouseArea {
+      anchors.fill: parent
+      cursorShape: Qt.PointingHandCursor
+      onClicked: { root.select("codex"); root.open() }
     }
   }
 
@@ -521,9 +564,29 @@ Item {
           font.family: Style.font.family; font.pixelSize: Style.font.bodySmall
           color: popupKeys.status.urgent ? Commons.Color.urgent : Util.alpha(popupKeys.ink, 0.7) }
 
+        Section { visible: root.creditsEnabled && root.shownId === "codex"; text: "CREDITS · CODEX + WORK" }
+        Column {
+          visible: root.creditsEnabled && root.shownId === "codex"
+          width: list.width
+          spacing: Style.space(4)
+          Text {
+            textFormat: Text.PlainText; renderType: Text.NativeRendering
+            text: root.creditView.amount !== undefined
+              ? root.creditView.amount.toLocaleString(Qt.locale("en_US"), "f", 2) + " credits"
+              : root.creditView.label
+            font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.title
+            color: popupKeys.ink
+          }
+          Caption { width: parent.width; wrapMode: Text.WordWrap
+            text: "Total extra balance · separate from included usage."
+              + (root.creditRecord ? " " + root.agoText(root.creditRecord.updatedAt) + "." : "") }
+          Caption { visible: root.creditGrantText !== ""; width: parent.width; wrapMode: Text.WordWrap
+            text: root.creditGrantText + " The grant's remaining share is not itemized." }
+        }
+
         // Limits: label and reset on one line, the meter and the level under it;
         // a prepaid balance shows its value and the ledger note instead.
-        Section { visible: popupKeys.lims.length > 0; text: popupKeys.lims.some(function(l) { return !l.noQuota }) ? "LIMITS" : "BALANCE" }
+        Section { visible: popupKeys.lims.length > 0; text: root.shownId === "codex" ? "INCLUDED USAGE · % USED" : popupKeys.lims.some(function(l) { return !l.noQuota }) ? "LIMITS" : "BALANCE" }
         Repeater {
           model: popupKeys.lims
           Column {

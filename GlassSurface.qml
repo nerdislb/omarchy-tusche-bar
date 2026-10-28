@@ -36,6 +36,7 @@ Item {
   }
   readonly property real padding: 48
   readonly property bool light: !!spec && spec.light === true
+  readonly property bool flat: !!spec && spec.flat === true
   readonly property color tint: spec && spec.tint ? spec.tint : light ? "#e7eef7" : "#121b27"
   readonly property real blurRadius: spec && spec.blur ? Number(spec.blur) : light ? 18 : 22
   readonly property real backing: spec && spec.backing !== undefined ? Number(spec.backing) : light ? 0.62 : 0.66
@@ -47,7 +48,7 @@ Item {
   TransformWatcher { id: originWatcher; a: root.sceneRoot; b: root }
 
   function play() {
-    if (!active || Style.reduceMotion) return
+    if (!active || flat || Style.reduceMotion) return
     glint.restart()
   }
   function stop() { glint.stop(); strength = 0 }
@@ -116,7 +117,22 @@ Item {
     property real strength: root.strength
     property real gloss: root.spec && root.spec.gloss ? Number(root.spec.gloss) : 0
     property color tint: root.tint
-    fragmentShader: Qt.resolvedUrl("shaders/glass.frag.qsb")
+    fragmentShader: Qt.resolvedUrl(root.flat ? "shaders/flatglass.frag.qsb" : "shaders/glass.frag.qsb")
     blending: true
+  }
+  // A quiet, square outline, clipped with the material's existing reveal.
+  // Kept here so notifications and popup cards receive exactly the same rim.
+  Item {
+    anchors { left: parent.left; top: parent.top; right: parent.right }
+    visible: root.active && root.flat
+    clip: true
+    height: root.height * Math.max(0, Math.min(1, root.reveal))
+    Rectangle {
+      width: root.width; height: root.height
+      radius: root.radius
+      color: "transparent"
+      border.width: 1
+      border.color: root.spec && root.spec.line ? root.spec.line : root.tint
+    }
   }
 }
