@@ -255,7 +255,28 @@ FloatingWindow {
     if (cardA.transform[1].y !== 0) return fail("calm: closing card moved " + cardA.transform[1].y)
     if (ma.popRunning) return
     if (ma.pop !== 0 || cardA.opacity !== 0 || root.minClose < -0.001) return fail("calm: close did not rest at 0")
-    console.log("PASS real Qt: flat pop (overshoot " + root.springPop.toFixed(3) + "), close without bounce, switch handoff, fresh pop after a switch, fallback pop without a rect, Reduced Motion, calm motion")
+    // Apple: a spring from 94 %, a hint of settle, faded by the pop alone
+    ma.calm = false
+    ma.apple = true
+    if (ma.pop !== 0 || cardA.transform[0].xScale !== 0.94) return fail("apple: closed card not at 94 %")
+    root.maxPop = 0; root.closing = false
+    pa.open = true
+    if (ma.warming || !ma.popRunning) return fail("apple: a fresh open waits for steady frames")
+    step = 9; ticks = 0; return
+   }
+   if (step === 9) {
+    if (ticks > 15) return fail("apple: open still running after 900 ms")
+    if (cardA.opacity > 1 || cardA.opacity < 0) return fail("apple: opacity out of range " + cardA.opacity)
+    if (ma.popRunning) return
+    if (root.maxPop > 1.02) return fail("apple: overshoot " + root.maxPop + " (damping 0.86 wants under 2 %)")
+    if (ma.pop !== 1 || !identity(cardA) || cardA.opacity !== 1) return fail("apple: open did not rest")
+    root.closing = true; root.minClose = 1; pa.open = false; step = 10; ticks = 0; return
+   }
+   if (step === 10) {
+    if (cardA.transform[1].y !== 0) return fail("apple: closing card moved " + cardA.transform[1].y)
+    if (ma.popRunning) return
+    if (ma.pop !== 0 || cardA.opacity !== 0 || root.minClose < -0.001) return fail("apple: close did not rest at 0")
+    console.log("PASS real Qt: flat pop (overshoot " + root.springPop.toFixed(3) + "), close without bounce, switch handoff, fresh pop after a switch, fallback pop without a rect, Reduced Motion, calm motion, apple springs (overshoot " + root.maxPop.toFixed(3) + ")")
     Qt.exit(0)
    }
    if (ticks > 60) fail("timeout in step " + step)

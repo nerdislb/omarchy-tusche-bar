@@ -101,7 +101,8 @@ var ELEMENTS = {
     label: "Popup and notification motion",
     variants: [
       { id: "spring", label: "Spring: popups pop out of their icon, notes roll out of the bar" },
-      { id: "calm", label: "Calm: fade in, grow from 98.5 % and settle, as in nbshell" }
+      { id: "calm", label: "Calm: fade in, grow from 98.5 % and settle, as in nbshell" },
+      { id: "apple", label: "Apple: springs that settle without a bounce; notes slide in from above" }
     ]
   },
   // not a layout option: Super+Space opens the bar's menu (bin/keybinds.py)
