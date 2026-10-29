@@ -8,7 +8,9 @@
 (~/.local/state/omarchy/toggles/hypr, loaded after the user's own config, the
 same place `omarchy-hyprland-toggle` uses); `gaps` removes it. Either way
 Hyprland reloads. If the reload reports new config errors, the previous state
-is restored and the command fails.
+is restored and the command fails. On Umbriel, Omarchy's translation of the
+Hyprland config takes the toggle instead (a maximize then fills the edges),
+and a config Umbriel would refuse restores the previous state.
 """
 import os
 from pathlib import Path
@@ -41,6 +43,21 @@ def reload():
     subprocess.run(['hyprctl', 'reload'], capture_output=True, text=True, timeout=10, check=True)
 
 
+def on_umbriel():
+    return not os.environ.get('HYPRLAND_INSTANCE_SIGNATURE') and bool(os.environ.get('UMBRIEL_SOCKET'))
+
+
+def restyle_umbriel():
+    """omarchy-restart-hyprctl writes Umbriel's look and bindings from the
+    Hyprland config, toggles included; then the config Umbriel includes has
+    to hold."""
+    for argv in (['omarchy-restart-hyprctl'], ['umbriel', 'config', 'validate']):
+        result = subprocess.run(argv, capture_output=True, text=True, timeout=30)
+        if result.returncode != 0:
+            lines = (result.stderr or result.stdout).strip().splitlines()
+            raise subprocess.SubprocessError(lines[-1] if lines else ' '.join(argv) + ' failed')
+
+
 def write(want):
     target = toggle_dir() / NAME
     if want == 'edge':
@@ -62,6 +79,18 @@ def set_state(want):
     before = status()
     if want == before:
         return before
+    if on_umbriel():
+        write(want)
+        try:
+            restyle_umbriel()
+        except (OSError, subprocess.SubprocessError) as error:
+            write(before)
+            try:
+                restyle_umbriel()
+            except (OSError, subprocess.SubprocessError):
+                pass
+            raise RuntimeError('Umbriel did not take it, kept ' + before + ': ' + str(error)) from error
+        return status()
     errors_before = config_errors()
     write(want)
     try:

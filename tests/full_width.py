@@ -79,6 +79,23 @@ def main():
         assert not toggle.exists() and not list(toggle.parent.glob('.tusche-full-width*'))
         passed += 1
 
+        # Umbriel: Omarchy's translation takes the toggle, never hyprctl, and a
+        # config Umbriel would refuse restores the previous state.
+        for name, body in [('omarchy-restart-hyprctl', 'echo restyle >>"$FAKE_LOG"'),
+                           ('umbriel', 'echo "umbriel $*" >>"$FAKE_LOG"; [[ -z $FAKE_UMBRIEL_INVALID ]]')]:
+            tool = bin_dir / name
+            tool.write_text('#!/bin/bash\n' + body + '\n')
+            tool.chmod(0o755)
+        umbriel_env = {**env, 'UMBRIEL_SOCKET': str(tmp / 'umbriel.sock')}
+        log.write_text('')
+        r = call(umbriel_env, 'set', 'edge')
+        assert r.returncode == 0 and r.stdout.strip() == 'edge' and toggle.exists(), r
+        assert log.read_text().splitlines() == ['restyle', 'umbriel config validate'], log.read_text()
+        r = call({**umbriel_env, 'FAKE_UMBRIEL_INVALID': '1'}, 'set', 'gaps')
+        assert r.returncode == 1 and 'Umbriel did not take it' in r.stderr and toggle.exists(), r
+        call(umbriel_env, 'set', 'gaps')
+        passed += 1
+
         # Only its own file: other toggles stay as they are.
         other = toggle.parent / 'bar-glassy.lua'
         other.write_text('-- someone else\n')
