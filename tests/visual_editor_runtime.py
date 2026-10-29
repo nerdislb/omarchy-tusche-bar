@@ -32,6 +32,7 @@ QtObject {
  property var bar: ({sizeHorizontal:30})
  function space(n) { return n }
  function duration(n) { return reduceMotion ? 0 : n }
+ readonly property var easeOut: [0.23, 1.0, 0.32, 1.0, 1.0, 1.0]
 }
 ''')
         (commons / 'Color.qml').write_text('''pragma Singleton
@@ -46,7 +47,7 @@ QtObject {
  property QtObject bar: QtObject { property color background: "#e9edf0"; property color text: "#171c24" }
 }
 ''')
-        for name in ['VisualBarEditor.qml','BarSpecimen.qml','MotionPreview.qml','VisualEditor.js','Presets.js','BarMaterialCard.qml','MaterialCard.qml','InkSheet.qml','MetalShape.qml','GlassFrameGlint.qml','GlassMath.js','GlassBackdrop.qml','GlassSurface.qml']:
+        for name in ['VisualBarEditor.qml','BarSpecimen.qml','MotionPreview.qml','VisualEditor.js','Presets.js','BarMaterialCard.qml','MaterialCard.qml','InkSheet.qml','MetalShape.qml','GlassFrameGlint.qml','GlassMath.js','EdgeSpring.qml','GlassBackdrop.qml','GlassSurface.qml']:
             shutil.copy2(ROOT / name, tmp / name)
         (tmp / 'modules').mkdir()
         for name in ['QuotaFace.qml','StatusFace.qml','WorkspacesFace.qml','WorkspaceMiniature.qml','ArchLogo.qml','SealLogo.qml']:

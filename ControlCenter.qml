@@ -1195,6 +1195,25 @@ PanelWindow {
             contentHeight: areaList.implicitHeight
             clip: true
             boundsBehavior: Flickable.StopAtBounds
+            // The current area's fill and accent bar, one for the list, gliding
+            // from area to area (EdgeSpring) short enough for ↑↓ held down.
+            Rectangle {
+              id: areaLens
+              y: areaEdges.start
+              width: areaList.width
+              height: Math.max(0, areaEdges.end - areaEdges.start)
+              visible: !!areaEdges.target
+              color: Util.alpha(Commons.Color.accent, 0.18)
+              Rectangle { width: Style.space(3); height: parent.height; color: Commons.Color.accent }
+              EdgeSpring {
+                id: areaEdges
+                vertical: true
+                live: win.visible
+                leadResponse: 0.16
+                trailResponse: 0.20
+                damping: 1
+              }
+            }
             Column {
             id: areaList
             width: areaScroll.width
@@ -1206,6 +1225,10 @@ PanelWindow {
                 required property var modelData
                 readonly property bool isGroup: modelData.kind === "group"
                 readonly property bool current: !isGroup && win.area === modelData.id && !win.changedOnly
+                readonly property string key: modelData.id || ""
+                // bold as soon as the lens covers most of the row
+                readonly property real lit: !areaEdges.target ? 0
+                  : Math.max(0, Math.min(1, (Math.min(areaEdges.end, y + height) - Math.max(areaEdges.start, y)) / Math.max(1, height)))
                 width: areaList.width
                 height: isGroup ? groupLabel.implicitHeight + Style.space(index === 0 ? 2 : 10)
                   : Math.max(Style.space(28), areaLabel.implicitHeight + Style.space(10))
@@ -1218,9 +1241,7 @@ PanelWindow {
                   font.bold: true
                   color: Util.alpha(Commons.Color.popups.text, 0.5)
                 }
-                color: current ? Util.alpha(Commons.Color.accent, 0.18)
-                  : areaMouse.containsMouse && !isGroup ? Style.hoverFillFor(Commons.Color.popups.text, Commons.Color.accent, Commons.Color.urgent) : "transparent"
-                Rectangle { width: Style.space(3); height: parent.height; color: Commons.Color.accent; visible: areaRow.current }
+                color: !current && areaMouse.containsMouse && !isGroup ? Style.hoverFillFor(Commons.Color.popups.text, Commons.Color.accent, Commons.Color.urgent) : "transparent"
                 Rectangle {
                   x: Style.space(8); anchors.verticalCenter: parent.verticalCenter
                   width: Math.max(4, Style.space(5)); height: width
@@ -1236,7 +1257,7 @@ PanelWindow {
                   width: Math.min(implicitWidth, parent.width - x - Style.space(8))
                   elide: Text.ElideRight
                   text: areaRow.modelData.label
-                  font.bold: areaRow.current
+                  font.bold: areaRow.lit > 0.5
                 }
                 Caption {
                   id: areaNote
@@ -1248,8 +1269,11 @@ PanelWindow {
                 }
                 MouseArea { id: areaMouse; anchors.fill: parent; enabled: !areaRow.isGroup; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: win.showArea(areaRow.modelData.id) }
                 // the current area stays in view (cc <area>, ↑↓, search jumps)
-                onCurrentChanged: if (current) Qt.callLater(win.revealAreaRow, areaRow)
-                Component.onCompleted: if (current) Qt.callLater(win.revealAreaRow, areaRow)
+                onCurrentChanged: {
+                  if (current) { areaEdges.target = areaRow; Qt.callLater(win.revealAreaRow, areaRow) }
+                  else areaEdges.release(areaRow, function() { return areaRow.current })
+                }
+                Component.onCompleted: if (current) { areaEdges.target = areaRow; Qt.callLater(win.revealAreaRow, areaRow) }
               }
             }
             }
@@ -1270,6 +1294,32 @@ PanelWindow {
               id: editorColumn
               width: editor.width - Style.space(12)
               spacing: Style.space(2)
+              // A new area comes in from the side the sidebar's lens heads
+              // for (down: from below), fading up as it settles.
+              transform: Translate { id: editorShift }
+              property string shownKey: ""
+              Component.onCompleted: shownKey = win.changedOnly ? "changed" : win.area
+              function arrive() {
+                var key = win.changedOnly ? "changed" : win.area
+                if (key === shownKey) return
+                var ids = CC.sidebar().map(function(r) { return r.id })
+                var from = ids.indexOf(shownKey), to = ids.indexOf(key)
+                shownKey = key
+                editorIn.stop()
+                if (!win.visible || Style.reduceMotion) { editorColumn.opacity = 1; editorShift.y = 0; return }
+                editorShift.y = (from < 0 || to < 0 ? 0 : to > from ? 1 : -1) * Style.space(10)
+                editorIn.restart()
+              }
+              ParallelAnimation {
+                id: editorIn
+                NumberAnimation { target: editorColumn; property: "opacity"; from: 0; to: 1; duration: Style.duration(180); easing.type: Easing.OutCubic }
+                NumberAnimation { target: editorShift; property: "y"; to: 0; duration: Style.duration(220); easing.type: Easing.Bezier; easing.bezierCurve: Style.easeOut }
+              }
+              Connections {
+                target: win
+                function onAreaChanged() { editorColumn.arrive() }
+                function onChangedOnlyChanged() { editorColumn.arrive() }
+              }
 
               Item {
                 width: parent.width

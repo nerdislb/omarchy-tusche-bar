@@ -1237,6 +1237,18 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
   assert(/Root\.TabLens \{\n\s*id: tabLens\n\s*target: tabs\.currentTab\n\s*live: root\.popupOpen/.test(q), 'a lens marks the shown agent and waits while closed');
   assert(q.includes('readonly property string key: modelData'), 'the lens glides only when the agent changes, not when a reload rebuilds the tabs');
   assert(q.includes('readonly property var rec: cardId ? root.providers[cardId] || null : null'), 'the card follows the tabs a beat behind while it slides');
+  // Apple motion elsewhere in the bar: one gliding indicator per strip or list
+  // on EdgeSpring (tests/edge_spring_runtime.py), never a fill per item
+  const lens = fs.readFileSync(path.join(root, 'TabLens.qml'), 'utf8');
+  assert(/EdgeSpring \{\n\s*id: edges\n\s*target: lens\.target/.test(lens), 'the tab lens runs on the shared edge springs');
+  const wf = fs.readFileSync(path.join(root, 'modules/WorkspacesFace.qml'), 'utf8');
+  assert(/Root\.EdgeSpring \{\n\s*id: marker\n\s*numeric: true/.test(wf) && !/Behavior on activeF/.test(wf), 'the workspace marker is on springs, not a timed curve');
+  const dm = fs.readFileSync(path.join(root, 'DropMenu.qml'), 'utf8');
+  assert(/visible: !menu\.inverting && !menu\.metalHover && !!hotEdges\.target/.test(dm) && /visible: row\.hot && tube && !menu\.inverting/.test(dm), 'the menu\'s hot fill glides; tube and inversion stay on the rows');
+  const ccq = fs.readFileSync(path.join(root, 'ControlCenter.qml'), 'utf8');
+  assert(/id: areaEdges\n\s*vertical: true\n\s*live: win\.visible/.test(ccq) && /font\.bold: areaRow\.lit > 0\.5/.test(ccq), 'the Control Center\'s area lens glides and lights the names it covers');
+  const st = fs.readFileSync(path.join(root, 'modules/Status.qml'), 'utf8');
+  assert(/Root\.EdgeSpring \{ id: cellEdges \}/.test(st) && /cellEdges\.release\(cell,/.test(st), 'the status groups\' fill glides between cells');
   for (const name of ['Caption', 'Section', 'Meter', 'Ring'])
     assert(new RegExp('^  component ' + name + ': ', 'm').test(q), name + ' is a top-level inline component');
   const qc = {Qt: {locale: () => 'en_US'}, now: Date.parse('2026-10-06T17:40:00Z')};

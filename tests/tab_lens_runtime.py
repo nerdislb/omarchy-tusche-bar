@@ -136,7 +136,7 @@ QtObject {
 import QtQuick
 QtObject { property bool reduceMotion: false; property int cornerRadius: 6; function space(n) { return n } function duration(n) { return reduceMotion ? 0 : n } }
 ''')
-        for name in ["TabLens.qml", "GlassMath.js", "Presets.js"]:
+        for name in ["TabLens.qml", "EdgeSpring.qml", "GlassMath.js", "Presets.js"]:
             shutil.copy2(ROOT / name, tmp / name)
         shutil.copytree(ROOT / "bridge", tmp / "bridge")
         (tmp / "test.qml").write_text(TEST)

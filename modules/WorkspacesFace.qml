@@ -1,5 +1,6 @@
 import QtQuick
 import qs.Commons
+import ".." as Root
 
 // Shared presentation only. Live bar and visual settings supply the same
 // data/palette; previews never create a service or perform desktop actions.
@@ -31,8 +32,22 @@ Item {
   function urgent(id) { return urgentIds.indexOf(id) >= 0 }
   function label(id) { return workspaceLabels[id] || (id === 10 ? "0" : String(id)) }
   readonly property int activeIndex: Math.max(0, ids.indexOf(active))
-  property real activeF: activeIndex
-  Behavior on activeF { NumberAnimation { duration: Style.duration(180); easing.type: Easing.OutCubic } }
+  // The active marker's two edges, in cells, on springs (EdgeSpring): it
+  // draws out toward the next workspace and gathers as it lands, as iOS's page
+  // dots do; a burst of switches keeps its pace instead of starting over.
+  Root.EdgeSpring {
+    id: marker
+    numeric: true
+    targetStart: root.activeIndex
+    targetEnd: root.activeIndex + 1
+    leadResponse: 0.22
+    trailResponse: 0.32
+    damping: 0.86
+    epsilon: 0.004
+    restSpeed: 0.05
+  }
+  readonly property real activeF: marker.start
+  readonly property real activeSpan: marker.end - marker.start
   implicitHeight: barSize
   implicitWidth: loader.item ? loader.item.implicitWidth : 0
 
@@ -105,11 +120,12 @@ Item {
         }
       }
 
-      // active marker + rule underneath
+      // active marker + rule underneath, drawn out while it travels
+      readonly property real markerWidth: root.activeSpan * (pips.cell + pips.gap) - pips.gap + 2
       Rectangle {
         x: root.activeF * (pips.cell + pips.gap) - 1
         anchors.verticalCenter: parent.verticalCenter
-        width: pips.cell + 2
+        width: pips.markerWidth
         height: Style.space(8) + Style.space(8) * pips.grow + 2
         color: root.accent
         radius: Math.min(Style.cornerRadius, 2)
@@ -124,7 +140,7 @@ Item {
       Rectangle {
         x: root.activeF * (pips.cell + pips.gap) - 1
         y: root.barSize - Style.space(5)
-        width: pips.cell + 2; height: Math.max(1, Style.space(2))
+        width: pips.markerWidth; height: Math.max(1, Style.space(2))
         color: Util.alpha(root.accent, 0.8)
       }
     }

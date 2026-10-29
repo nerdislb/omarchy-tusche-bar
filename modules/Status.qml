@@ -284,6 +284,19 @@ Item {
   implicitHeight: barSize
   implicitWidth: row.implicitWidth + Style.space(4)
 
+  // The open group's fill, one for the row, gliding from cell to cell as the
+  // popup switches groups (EdgeSpring); a fresh open puts it in place.
+  Rectangle {
+    x: cellEdges.start
+    y: Style.space(3)
+    width: Math.max(0, cellEdges.end - cellEdges.start)
+    height: root.barSize - 2 * Style.space(3)
+    visible: !!cellEdges.target
+    radius: Math.min(Style.cornerRadius, 3)
+    color: Style.selectedFillFor(root.fg, Commons.Color.accent, Commons.Color.urgent)
+    Root.EdgeSpring { id: cellEdges }
+  }
+
   Row {
     id: row
     height: root.barSize
@@ -296,6 +309,7 @@ Item {
         id: groupCell
         required property var modelData
         active: root.popupGroup === modelData.id && root.popupOpen
+        key: modelData.id
         onClicked: root.openGroup(modelData.id, groupCell)
         onRightClicked: { root.popupAnchor = groupCell; root.openMember(modelData.members[0]) }
         width: modelData.id === "phone" ? Style.space(58) : root.barSize + Style.space(2)
@@ -329,6 +343,7 @@ Item {
       id: moreCell
       visible: root.variant === "deviations"
       active: root.popupGroup === "all" && root.popupOpen
+      key: "all"
       width: root.barSize + Style.space(2)
       onClicked: root.openGroup("all", moreCell)
       StatusFace { anchors.fill: parent; glyph: "\u{f01d8}"; ink: root.fg; glyphInk: Util.alpha(root.fg, 0.7); barSize: root.barSize }
@@ -344,12 +359,15 @@ Item {
     onPressed: function(button) { if (button === Qt.RightButton) rightClicked(); else clicked() }
     signal clicked()
     signal rightClicked()
+    // the open group's fill is the row's lens (cellEdges)
+    property string key: ""
+    onActiveChanged: if (active) cellEdges.target = cell; else cellEdges.release(cell, function() { return cell.active })
+    Component.onCompleted: if (active) cellEdges.target = cell
     height: root.barSize
     Rectangle {
       anchors.fill: parent; anchors.topMargin: Style.space(3); anchors.bottomMargin: Style.space(3)
       radius: Math.min(Style.cornerRadius, 3)
-      color: cell.active ? Style.selectedFillFor(root.fg, Commons.Color.accent, Commons.Color.urgent)
-        : hover.hovered ? Style.hoverFillFor(root.fg, Commons.Color.accent, Commons.Color.urgent) : "transparent"
+      color: !cell.active && hover.hovered ? Style.hoverFillFor(root.fg, Commons.Color.accent, Commons.Color.urgent) : "transparent"
     }
     HoverHandler { id: hover }
     MouseArea {
@@ -413,6 +431,29 @@ Item {
         id: content
         width: parent.width
         spacing: Style.space(4)
+        // Another group comes in from the side its cell lies on, fading up.
+        transform: Translate { id: contentShift }
+        property string shownGroup: ""
+        function arrive() {
+          var from = root.shownGroups.map(function(g) { return g.id }).indexOf(shownGroup)
+          var to = root.shownGroups.map(function(g) { return g.id }).indexOf(root.popupGroup)
+          var switching = root.popupOpen && shownGroup !== "" && shownGroup !== root.popupGroup
+          shownGroup = root.popupOpen ? root.popupGroup : ""
+          contentIn.stop()
+          if (!switching || Style.reduceMotion) { content.opacity = 1; contentShift.x = 0; return }
+          contentShift.x = (from < 0 || to < 0 ? 0 : to > from ? 1 : -1) * Style.space(12)
+          contentIn.restart()
+        }
+        ParallelAnimation {
+          id: contentIn
+          NumberAnimation { target: content; property: "opacity"; from: 0; to: 1; duration: Style.duration(180); easing.type: Easing.OutCubic }
+          NumberAnimation { target: contentShift; property: "x"; to: 0; duration: Style.duration(220); easing.type: Easing.Bezier; easing.bezierCurve: Style.easeOut }
+        }
+        Connections {
+          target: root
+          function onPopupGroupChanged() { content.arrive() }
+          function onPopupOpenChanged() { content.arrive() }
+        }
 
         Text { renderType: Text.NativeRendering; textFormat: Text.PlainText;
           text: root.popupTitle

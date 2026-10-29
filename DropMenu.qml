@@ -720,11 +720,37 @@ KeyboardPanel {
         boundsBehavior: Flickable.StopAtBounds
         opacity: menu.listIn
 
+        // One fill for the hot row that glides from row to row (EdgeSpring),
+        // short enough to keep up with key repeat. New rows (a level, a search
+        // keystroke) take it to their hot row at once; the metal tube and the
+        // inversion stay on the rows.
+        Rectangle {
+          x: menu.slideX
+          y: hotEdges.start
+          width: list.width
+          height: Math.max(0, hotEdges.end - hotEdges.start)
+          visible: !menu.inverting && !menu.metalHover && !!hotEdges.target
+          radius: menu.rowRadius
+          color: Util.alpha(menu.ink, 0.09)
+          EdgeSpring {
+            id: hotEdges
+            vertical: true
+            live: menu.open
+            leadResponse: 0.16
+            trailResponse: 0.20
+            damping: 1
+          }
+          Connections { target: menu; function onRowsChanged() { Qt.callLater(hotEdges.place) } }
+        }
+
         delegate: Item {
           id: row
           required property int index
           readonly property var r: menu.rows[index] || ({})
           readonly property bool hot: menu.current === index && !r.separator && !r.disabled
+          readonly property string key: String(index)
+          onHotChanged: if (hot) hotEdges.target = row; else hotEdges.release(row, function() { return row.hot })
+          Component.onCompleted: if (hot) hotEdges.target = row
           readonly property bool opens: r.kind === "menu" || r.kind === "group" || r.kind === "more" || r.kind === "provider" || r.asks === true
           readonly property bool isApp: r.kind === "app"
           x: menu.slideX
@@ -745,8 +771,8 @@ KeyboardPanel {
             y: tube ? Style.space(2) : 0
             width: parent.width - 2 * x
             height: parent.height - 2 * y
-            visible: row.hot && !menu.inverting
-            radius: tube ? menu.hoverRadius(height) : menu.rowRadius
+            visible: row.hot && tube && !menu.inverting
+            radius: menu.hoverRadius(height)
             color: Util.alpha(menu.ink, tube ? 0.07 : 0.09)
           }
           // metal: a chrome tube around the row (pill-shaped, a little inside it)
