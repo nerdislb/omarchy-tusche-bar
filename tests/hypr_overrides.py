@@ -136,6 +136,24 @@ def main():
         assert r.returncode == 1 and target.read_text() == 'hl.config({ general = { gaps_out = 2 } })\n', r
         passed += 1
 
+        # Umbriel: the values go through Omarchy's translation, never hyprctl,
+        # and a config Umbriel would refuse restores the previous file
+        target.unlink()
+        for name, body in [('omarchy-restart-hyprctl', 'echo restyle >>"$FAKE_LOG"'),
+                           ('umbriel', 'echo "umbriel $*" >>"$FAKE_LOG"; [[ -z $FAKE_UMBRIEL_INVALID ]] || ! grep -q "gaps_out = 12" "$XDG_STATE_HOME/omarchy/toggles/hypr/00-tusche-settings.lua" 2>/dev/null')]:
+            tool = bin_dir / name
+            tool.write_text('#!/bin/bash\n' + body + '\n')
+            tool.chmod(0o755)
+        umbriel_env = {**env, 'UMBRIEL_SOCKET': str(tmp / 'umbriel.sock')}
+        log.write_text('')
+        r = call(umbriel_env, 'apply', json.dumps({'general:gaps_out': 7}), *OPTIONS)
+        assert r.returncode == 0 and json.loads(r.stdout)['values'] == {'general:gaps_out': 7}, r
+        assert log.read_text().splitlines()[:2] == ['restyle', 'umbriel config validate'] and 'reload' not in log.read_text(), log.read_text()
+        before = target.read_text()
+        r = call({**umbriel_env, 'FAKE_UMBRIEL_INVALID': '1'}, 'apply', json.dumps({'general:gaps_out': 12}), *OPTIONS)
+        assert r.returncode == 1 and 'Umbriel did not take the values' in r.stderr and target.read_text() == before, r
+        passed += 1
+
         assert call(env).returncode == 2
         passed += 1
     print(f'{passed} hypr-overrides checks passed')
