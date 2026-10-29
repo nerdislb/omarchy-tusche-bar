@@ -342,11 +342,13 @@ Item {
   Binding { target: fp.card; property: "opacity"; value: fp.swapOutK > 0.001 ? 1 : 0; when: fp.popOn && fp.swapOut }
   Binding { target: fp.parent; property: "opacity"; value: fp.swapOutK; when: fp.popOn && fp.swapOut }
   // a fresh pop waits (unseen) for the first steady frame, like the roll
-  Binding { target: fp.card; property: "opacity"; value: 0; when: fp.popOn && fp.warming }
+  Binding { target: fp.card; property: "opacity"; value: 0; when: fp.popOn && fp.warming && !fp.calm }
   // Calm: the pop alone fades and grows the card; the panel's own fade and
-  // 97 % growth rest, or the card would grow from 95.5 %.
+  // 97 % growth rest, or the card would grow from 95.5 %. One binding covers
+  // the warm-up too: one giving way to another restores the panel's own
+  // opacity (1 with `shown` held) for the frames between.
   Binding { target: fp.card && fp.card.shown !== undefined ? fp.card : null; property: "shown"; value: 1; when: fp.popOn && fp.calm }
-  Binding { target: fp.card; property: "opacity"; value: fp.pop; when: fp.popOn && fp.calm && !fp.warming && !fp.swapIn && !fp.swapOut }
+  Binding { target: fp.card; property: "opacity"; value: fp.warming ? 0 : fp.pop; when: fp.popOn && fp.calm && !fp.swapIn && !fp.swapOut }
   onPopRunningChanged: {
     if (!popRunning || !calm) return
     popStart = pop; popTween = 0; popTweenTarget = popTarget

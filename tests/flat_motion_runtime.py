@@ -114,6 +114,12 @@ FloatingWindow {
   }
  }
  function fail(msg) { console.error("FAIL " + msg); Qt.exit(1) }
+ // calm: a card warming up (its first slow frames) stays unseen, whatever
+ // binding gives way to another meanwhile
+ Connections {
+  target: cardA
+  function onOpacityChanged() { if (ma.calm && ma.warming && cardA.opacity > 0) root.fail("calm: card shows while it warms up: " + cardA.opacity) }
+ }
  function identity(c) {
   if (c.transform.length !== 2) return false
   var s = c.transform[0], t = c.transform[1]
