@@ -139,7 +139,9 @@ Item {
   // The selected owner only refreshes on relevant events and pointer entry.
   readonly property var rawClients: Hyprland.toplevels.values.map(function(w) { return w.lastIpcObject })
   readonly property var rawMonitors: Hyprland.monitors.values.map(function(m) { return m.lastIpcObject })
-  readonly property bool nativeGeometryReady: rawMonitors.length > 0 && nativeWorkspaces.every(function(w) {
+  // Not on Umbriel: Quickshell's Hyprland model is no compositor's there, and
+  // Hyprland.monitorFor() still adds a monitor for any screen it is asked about.
+  readonly property bool nativeGeometryReady: !umbriel && rawMonitors.length > 0 && nativeWorkspaces.every(function(w) {
     return w.lastIpcObject && WorkspaceGeometry.finite(w.lastIpcObject.id)
   })
   // Quickshell 0.3.2's Lua IPC path can provide clients but empty monitor/
