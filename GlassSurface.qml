@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Effects
 import Quickshell
 import qs.Commons
+import "bridge" as Bridge
 
 // Bevel Lens material, not a geometry override. The caller hands over its
 // existing radius, width and height; at rest there is no animation clock.
@@ -37,6 +38,12 @@ Item {
   readonly property real padding: 48
   readonly property bool light: !!spec && spec.light === true
   readonly property bool flat: !!spec && spec.flat === true
+  // On Umbriel the compositor blurs what lies behind the bar's popups and
+  // panels (Omarchy's layer rules), real windows included, where the backdrop
+  // rebuilt here shows only the wallpaper. Flat glass is a tint over a blurred
+  // backdrop, so there it is the tint alone at the backing's alpha, which blends
+  // to the same mix. The lens keeps the rebuilt backdrop it refracts.
+  readonly property bool compositorBlur: flat && Bridge.ModuleBus.umbriel
   readonly property color tint: spec && spec.tint ? spec.tint : light ? "#e7eef7" : "#121b27"
   readonly property real blurRadius: spec && spec.blur ? Number(spec.blur) : light ? 18 : 22
   readonly property real backing: spec && spec.backing !== undefined ? Number(spec.backing) : light ? 0.62 : 0.66
@@ -66,7 +73,7 @@ Item {
     x: -root.padding; y: -root.padding
     width: root.width + 2 * root.padding
     height: root.height + 2 * root.padding
-    active: root.active
+    active: root.active && !root.compositorBlur
     live: root.live
     screen: root.screen
     screenX: root.screenX - root.padding
@@ -77,9 +84,9 @@ Item {
   ShaderEffectSource {
     id: raw
     sourceItem: scene
-    textureSize: root.active ? Qt.size(scene.width, scene.height) : Qt.size(1, 1)
+    textureSize: root.active && !root.compositorBlur ? Qt.size(scene.width, scene.height) : Qt.size(1, 1)
     hideSource: true
-    live: root.active
+    live: root.active && !root.compositorBlur
     visible: false
   }
   MultiEffect {
@@ -95,14 +102,14 @@ Item {
   ShaderEffectSource {
     id: frosted
     sourceItem: frost
-    textureSize: root.active ? Qt.size(scene.width, scene.height) : Qt.size(1, 1)
+    textureSize: root.active && !root.compositorBlur ? Qt.size(scene.width, scene.height) : Qt.size(1, 1)
     hideSource: true
-    live: root.active
+    live: root.active && !root.compositorBlur
     visible: false
   }
   ShaderEffect {
     anchors.fill: parent
-    visible: root.active && root.width > 0 && root.height > 0
+    visible: root.active && !root.compositorBlur && root.width > 0 && root.height > 0
     property var src: frosted
     property vector2d size: Qt.vector2d(width, height)
     property vector2d textureSize_: Qt.vector2d(scene.width, scene.height)
@@ -119,6 +126,17 @@ Item {
     property color tint: root.tint
     fragmentShader: Qt.resolvedUrl(root.flat ? "shaders/flatglass.frag.qsb" : "shaders/glass.frag.qsb")
     blending: true
+  }
+  Item {
+    anchors { left: parent.left; top: parent.top; right: parent.right }
+    visible: root.active && root.compositorBlur
+    clip: true
+    height: root.height * Math.max(0, Math.min(1, root.reveal))
+    Rectangle {
+      width: root.width; height: root.height
+      radius: root.radius
+      color: Qt.rgba(root.tint.r, root.tint.g, root.tint.b, Math.max(0, Math.min(1, root.backing)))
+    }
   }
   // A quiet, square outline, clipped with the material's existing reveal.
   // Kept here so notifications and popup cards receive exactly the same rim.
