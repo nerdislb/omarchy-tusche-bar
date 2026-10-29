@@ -1186,13 +1186,13 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
   assert(/if \(currentLayout && !Presets\.layoutDiffers\(opts, options\)\) \{[\s\S]*?layout: currentLayout/.test(engine), 'apply keeps the arranged bar');
   assert(ws.includes('if (!m.appLibrary) { close(); bar.run("omarchy-menu toggle apps"); return }'), 'no app library: Omarchy\'s Apps menu toggles');
   // keybinds.py on a scratch file: adds one block, is idempotent, removes it
-  // cleanly (copied blocks too); a stub hyprctl keeps the real compositor out
+  // cleanly (copied blocks too); a stub reload keeps the real compositor out
   const dir = fs.mkdtempSync(path.join(require('node:os').tmpdir(), 'tb-keys-'));
   try {
     const file = path.join(dir, 'bindings.lua');
-    const bin = path.join(dir, 'bin'), calls = path.join(dir, 'hyprctl.calls');
+    const bin = path.join(dir, 'bin'), calls = path.join(dir, 'reload.calls');
     fs.mkdirSync(bin);
-    fs.writeFileSync(path.join(bin, 'hyprctl'), `#!/bin/sh\necho "$@" >> '${calls}'\n`, {mode: 0o755});
+    fs.writeFileSync(path.join(bin, 'omarchy-restart-hyprctl'), `#!/bin/sh\necho reload >> '${calls}'\n`, {mode: 0o755});
     fs.writeFileSync(file, 'o.bind("SUPER + A", "x", "y")\n', {mode: 0o640});
     const run = a => require('node:child_process').execFileSync('python3', [path.join(root, 'bin/keybinds.py'), a],
       {encoding: 'utf8', env: Object.assign({}, process.env, {OMARCHY_HYPR_BINDINGS: file, PATH: `${bin}:/usr/bin:/bin`})}).trim();

@@ -10,7 +10,8 @@
 Keeps one managed block in ~/.config/hypr/bindings.lua (between the
 "BEGIN/END Tusche Bar keys (managed)" lines), written atomically with the
 file's mode kept; nothing else in the file is touched. Hyprland reloads the
-file by itself; `hyprctl reload` is asked for as well.
+file by itself; omarchy-restart-hyprctl is asked for as well, which on Umbriel
+translates the bindings anew.
 """
 import os
 from pathlib import Path
@@ -57,7 +58,7 @@ def write(text):
         f.write(text)
     os.chmod(tmp, mode)
     os.replace(tmp, PATH)
-    subprocess.run(['hyprctl', 'reload'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.run(['omarchy-restart-hyprctl'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 def main():
