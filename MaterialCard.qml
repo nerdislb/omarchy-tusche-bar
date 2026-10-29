@@ -431,7 +431,10 @@ Item {
         if (swapIn && !swapReady) Qt.callLater(function() { fp.beginSwapIn(true) })
         return
       }
-      if (pop <= 0.001 && !popRunning) { popVelocity = 0; warmTicks = 0; warming = true }   // fresh: wait for steady frames
+      // Fresh: a spring waits for steady frames. Calm starts at once: its timed
+      // step takes at most 1/30 s per frame, so a slow first frame cannot
+      // jump it, and the card shows with the panel's first frame.
+      if (pop <= 0.001 && !popRunning && !calm) { popVelocity = 0; warmTicks = 0; warming = true }
       else popRunning = true
       return
     }

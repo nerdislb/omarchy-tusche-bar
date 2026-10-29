@@ -239,7 +239,9 @@ FloatingWindow {
     ma.calm = true
     if (ma.pop !== 0 || cardA.transform[0].xScale !== 0.985) return fail("calm: closed card not at 98.5 %")
     root.maxPop = 0; root.closing = false
-    pa.open = true; step = 7; ticks = 0; return
+    pa.open = true
+    if (ma.warming || !ma.popRunning) return fail("calm: a fresh open waits for steady frames")
+    step = 7; ticks = 0; return
    }
    if (step === 7) {
     if (ticks > 10) return fail("calm: open still running after 600 ms")
