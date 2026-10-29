@@ -32,7 +32,16 @@ def run(output=None):
             dest.parent.mkdir(parents=True, exist_ok=True)
             dest.write_text(text)
 
-        write('imports/qs/Commons/qmldir', 'module qs.Commons\nsingleton Style 1.0 Style.qml\nsingleton Util 1.0 Util.qml\nsingleton Color 1.0 Color.qml\nsingleton Border 1.0 Border.qml\nTransformWatcher 1.0 TransformWatcher.qml\n')
+        write('imports/qs/Commons/qmldir', 'module qs.Commons\nsingleton Style 1.0 Style.qml\nsingleton Util 1.0 Util.qml\nsingleton Color 1.0 Color.qml\nsingleton Border 1.0 Border.qml\nsingleton Compositor 1.0 Compositor.qml\nTransformWatcher 1.0 TransformWatcher.qml\n')
+        # The shell's compositor service as Umbriel feeds it.
+        write('imports/qs/Commons/Compositor.qml', '''pragma Singleton
+import QtQuick
+QtObject {
+ property int focusedWorkspaceId: 3
+ function outputList() { return [{name:"mock",x:0,y:0,width:1200,height:900,reserved:[0,30,0,0],powered:true}] }
+ function workspaceList() { return [{id:3,name:"3",output:"mock",shown:true,focused:true,windows:2,urgent:false},{id:5,name:"5",output:"mock",shown:false,focused:false,windows:1,urgent:true}] }
+ function windowList() { return [] }
+}''')
         write('imports/qs/Commons/Style.qml', '''pragma Singleton
 import QtQuick
 QtObject {
@@ -153,6 +162,7 @@ QtObject {
  property color barColor: "#eee9df"
  property bool barLight: true
  property string profile: ""
+ property bool umbriel: false
  signal metalPulse()
  function register(kind,item) { var n=Object.assign({},instances); n[kind]=(n[kind]||[]).concat([item]); instances=n }
  function unregister(kind,item) { var n=Object.assign({},instances); n[kind]=(n[kind]||[]).filter(function(x){return x!==item}); instances=n }
@@ -357,6 +367,18 @@ Item {
    item.dropOpen=false
    mouseMove(canvas,580,350)
    tryVerify(function(){return !item.hoverPopoutOpen})
+  }
+  // On Umbriel the workspaces are Umbriel's even when Quickshell's Hyprland
+  // model holds a monitor, as Hyprland.monitorFor() leaves one behind.
+  function test_04d_umbriel_ignores_hyprland_model() {
+   verify(Hyprland.monitors.values.length>0)
+   Bridge.ModuleBus.umbriel=true
+   var module=createTemporaryObject(live,canvas,{x:10,y:10})
+   verify(module)
+   compare(module.active,3)
+   compare(module.windowCounts[3],2)
+   compare(module.urgentIds,[5])
+   Bridge.ModuleBus.umbriel=false
   }
   function test_05_optional_theme_gallery() {
    if(!OUTPUT) return
