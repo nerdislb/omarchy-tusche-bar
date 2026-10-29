@@ -47,7 +47,9 @@ CARD = '''Rectangle {
   // as Omarchy's BorderSurface draws a flat line
   border.color: Border.color(borderSpec)
   border.width: Border.uniformWidth(borderSpec)
-  opacity: PID.open || PID.popoutSwitching ? 1 : 0
+  // as KeyboardPanel's card: its opacity follows `shown`
+  property real shown: PID.open || PID.popoutSwitching ? 1 : 0
+  opacity: shown
   Item { id: HID; anchors.fill: parent; MaterialCard { id: MID; panel: PID; material: null } }
 }'''
 
@@ -276,6 +278,12 @@ FloatingWindow {
     if (cardA.transform[1].y !== 0) return fail("apple: closing card moved " + cardA.transform[1].y)
     if (ma.popRunning) return
     if (ma.pop !== 0 || cardA.opacity !== 0 || root.minClose < -0.001) return fail("apple: close did not rest at 0")
+    // A theme material switched on and off again leaves the closed card hidden,
+    // though the pop holds its `shown` at 1.
+    ma.material = { card: { roll: true } }
+    if (!ma.rolls) return fail("material: the card does not roll")
+    ma.material = null
+    if (!ma.popOn || cardA.opacity !== 0) return fail("material off: the closed card shows at opacity " + cardA.opacity)
     console.log("PASS real Qt: flat pop (overshoot " + root.springPop.toFixed(3) + "), close without bounce, switch handoff, fresh pop after a switch, fallback pop without a rect, Reduced Motion, calm motion, apple springs (overshoot " + root.maxPop.toFixed(3) + ")")
     Qt.exit(0)
    }

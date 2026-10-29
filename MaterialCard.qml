@@ -168,14 +168,12 @@ Item {
   // which unmaps at opacity 0, stays up until the bloom is back in the bar).
   Binding { target: fp.card; property: "color"; value: "transparent"; when: fp.active }
   Binding { target: fp.card; property: "borderSpec"; value: Border.flat("transparent", Math.max(1, Style.space(2))); when: fp.active }
-  Binding { target: fp.card; property: "opacity"; value: Math.max(fp.ink, fp.grow > 0.001 ? 0.004 : 0); when: fp.active }
   // metal: the chrome rim replaces the card's own frame
   Binding { target: fp.card; property: "borderSpec"; value: Border.flat("transparent", Math.max(1, Style.space(2))); when: fp.metalOn }
   Binding { target: fp.card; property: "color"; value: "transparent"; when: fp.glassOn }
   Binding { target: fp.card; property: "borderSpec"; value: Border.flat("transparent", Math.max(1, Style.space(2))); when: fp.glassOn && !fp.metalOn }
   // Rolling (material): the card stays up while it rolls back into the bar;
   // a mask on the card's layer shows only the rolled-out part.
-  Binding { target: fp.card; property: "opacity"; value: fp.panel && (fp.panel.open || fp.roll > 0.001) ? 1 : 0; when: fp.rolls }
   // the card hangs flush from the bar: the inverted source tab runs into it
   Binding { target: fp.panel; property: "gap"; value: 0; when: fp.rolls }
   Binding { target: fp.card ? fp.card.layer : null; property: "enabled"; value: true; when: fp.rolling && !!fp.rollMask }
@@ -344,17 +342,30 @@ Item {
   // (the line's colour only: its spec keeps the content's insets, and a
   // Binding on a var property does not restore the panel's binding)
   Binding { target: fp.card; property: "border.color"; value: "transparent"; when: fp.popOn && (fp.swapIn || fp.swapOut) }
-  Binding { target: fp.card; property: "opacity"; value: fp.swapInK; when: fp.popOn && fp.swapIn }
-  Binding { target: fp.card; property: "opacity"; value: fp.swapOutK > 0.001 ? 1 : 0; when: fp.popOn && fp.swapOut }
   Binding { target: fp.parent; property: "opacity"; value: fp.swapOutK; when: fp.popOn && fp.swapOut }
-  // a fresh pop waits (unseen) for the first steady frame, like the roll
-  Binding { target: fp.card; property: "opacity"; value: 0; when: fp.popOn && fp.warming && !fp.popFades }
   // Calm and apple: the pop alone fades and grows the card; the panel's own fade and
   // 97 % growth rest, or the card would grow from 95.5 %. One binding covers
   // the warm-up too: one giving way to another restores the panel's own
   // opacity (1 with `shown` held) for the frames between.
   Binding { target: fp.card && fp.card.shown !== undefined ? fp.card : null; property: "shown"; value: 1; when: fp.popOn && fp.popFades }
-  Binding { target: fp.card; property: "opacity"; value: fp.warming ? 0 : Math.max(0, Math.min(1, fp.pop)); when: fp.popOn && fp.popFades && !fp.swapIn && !fp.swapOut }
+
+  // The card's opacity, from whichever of the motions above runs it, or
+  // undefined to leave the panel's own. One Binding owns it: Bindings on one
+  // property restore what each found when it took over as it gives way, so
+  // switching the theme material off under a pop motion brought every closed
+  // card back at full opacity (`shown` held at 1), and every popout with it.
+  readonly property var cardOpacity: {
+    if (active) return Math.max(ink, grow > 0.001 ? 0.004 : 0)
+    if (rolls) return panel && (panel.open || roll > 0.001) ? 1 : 0
+    if (!popOn) return undefined
+    if (swapIn) return swapInK
+    if (swapOut) return swapOutK > 0.001 ? 1 : 0
+    if (popFades) return warming ? 0 : Math.max(0, Math.min(1, pop))
+    // a fresh pop waits (unseen) for the first steady frame, like the roll
+    if (warming) return 0
+    return undefined
+  }
+  Binding { target: fp.card; property: "opacity"; value: fp.cardOpacity; when: fp.cardOpacity !== undefined }
   onPopRunningChanged: {
     if (!popRunning || !popFades) return
     popStart = pop; popTween = 0; popTweenTarget = popTarget
