@@ -39,8 +39,8 @@ PanelWindow {
   ScreenMoveRemap { id: remap; window: sealWindow }
 
   // Facts: UPower's display device (the same public service the island reads) and
-  // the workspaces that want you, from the bar's own workspace module or, with
-  // native workspaces, from Hyprland's public list. Read only while the seal shows.
+  // the workspaces that want you, from the bar's own workspace module or, without
+  // one, from the compositor's workspace list. Read only while the seal shows.
   readonly property var battery: UPower.displayDevice
   readonly property bool hasBattery: !!(battery && battery.isPresent)
   readonly property real level: hasBattery ? Math.max(0, Math.min(1, Number(battery.percentage) || 0)) : 0
@@ -49,7 +49,8 @@ PanelWindow {
   readonly property int urgentCount: {
     if (!visible) return 0
     var w = Bridge.ModuleBus.pick("workspaces")
-    var native = Hyprland.workspaces ? Hyprland.workspaces.values.map(function(x) { return { urgent: x.urgent === true } }) : []
+    var native = Bridge.ModuleBus.umbriel ? Commons.Compositor.workspaceList()
+      : Hyprland.workspaces ? Hyprland.workspaces.values.map(function(x) { return { urgent: x.urgent === true } }) : []
     return Model.urgentCount(w && w.urgentIds ? w.urgentIds : null, native)
   }
   readonly property var facts: ({ battery: { present: hasBattery, level: level, charging: charging }, urgent: urgentCount })
