@@ -85,3 +85,25 @@ function material(source, glass, motion) {
   out.glass.spring = motion !== "off"
   return out
 }
+
+// Shapes, Apple's chain (WWDC25, "Get to know the new design system") as the
+// shell's Style shape tokens have it: a popup card has a fixed radius, what
+// sits inside it is concentric (the card's radius less the inset, never under
+// 4 px) and only what stands out (a segmented row's track and lens, a meter)
+// is a capsule. A theme without rounding stays square. `style` is qs.Commons'
+// Style; on a shell without the tokens the card takes the window rounding.
+function rounded(style) {
+  return style && style.rounded !== undefined ? !!style.rounded : !!style && Number(style.cornerRadius) > 0
+}
+function popupRadius(style) {
+  var r = style ? Number(style.popupRadius) : NaN
+  return isFinite(r) && r >= 0 ? r : Math.max(0, style ? Number(style.cornerRadius) || 0 : 0)
+}
+function concentric(style, outer, inset, minimum) {
+  if (!rounded(style)) return 0
+  var floor = minimum === undefined ? 4 : minimum
+  return Math.max(floor, Math.round((Number(outer) || 0) - Math.max(0, Number(inset) || 0)))
+}
+function capsule(style, size) {
+  return rounded(style) ? Math.max(0, Number(size) || 0) / 2 : 0
+}

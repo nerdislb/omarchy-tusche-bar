@@ -2,6 +2,7 @@ import QtQuick
 import "../bridge" as Bridge
 import ".." as Root
 import "../WorkspaceGeometry.js" as WorkspaceGeometry
+import "../GlassMath.js" as GlassMath
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland
@@ -279,7 +280,8 @@ PanelWindow {
     color: Commons.Color.popups.background
     borderSpec: popout.borderSpec
     padding: popout.padding
-    radius: Style.cornerRadius
+    // the popups' radius; the tiles on it are concentric with it
+    radius: GlassMath.popupRadius(Style)
     opacity: popout.open ? 1.0 : 0.0
 
     Behavior on opacity {
@@ -334,7 +336,7 @@ PanelWindow {
 
             width: viewW + pad * 2
             height: headerH + viewH + pad * 2 + Style.space(4)
-            radius: Math.min(Style.cornerRadius, 4)
+            radius: GlassMath.concentric(Style, card.radius, card.contentLeftInset)
             color: isActive
               ? Util.alpha(popout.ink, tileHovered ? 0.13 : 0.09)
               : (tileHovered ? Util.alpha(popout.ink, 0.07) : Util.alpha(popout.ink, 0.03))

@@ -171,7 +171,7 @@ Item {
               x: Style.space(16); y: Style.space(42)
               width: (scene.width - Style.space(48)) / 2; height: Style.space(130)
               color: Commons.Color.popups.background
-              radius: Style.cornerRadius
+              radius: GlassMath.popupRadius(Style)
               property var borderSpec: Border.flat(Commons.Color.popups.text, 1)
               border.width: borderSpec.widths.top; border.color: borderSpec.color
               opacity: popupPanel.open ? 1 : 0

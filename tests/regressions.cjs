@@ -1006,7 +1006,7 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
   assert.equal(rootTitle({logo: 'nerdibeard', variant: 'logo'}), 'Omarchy', 'the numbered frame shows no mark');
   assert.equal(rootTitle({logo: 'omarchy', variant: 'pips'}), 'Omarchy');
   assert.equal(rootTitle(null), 'Omarchy');
-  assert(dm.includes('(menu.level ? menu.level.title : menu.rootTitle).toUpperCase()'));
+  assert(dm.includes(': (menu.level ? menu.level.title : menu.rootTitle)\n'), 'the menu title reads as written (sentence case), not in capitals');
   console.log('PASS: logos Arch and Nerdibeard seal (variants, seal raster and order, unaltered Arch path, tab, menu title)');
 }
 

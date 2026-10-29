@@ -2,12 +2,14 @@ import QtQuick
 import qs.Commons
 import qs.Commons as Commons
 import "bridge" as Bridge
+import "GlassMath.js" as GlassMath
 
 // The selection lens of a row of tabs (the AI quota popup's agents). It
 // glides to the selected tab on two springs, one per edge: the edge in front
 // leads, the one behind follows, so the lens draws out a little on the way and
-// gathers again as it lands, the way Apple's glass tab bars move, but square
-// as the theme (a radius of 3 px at most) and without a bounce. A retarget
+// gathers again as it lands, the way Apple's glass tab bars move, without a
+// bounce: square as the theme (a radius of 3 px at most), or, as the lens of a
+// segmented row (`capsule`), a capsule in the row's capsule track. A retarget
 // mid-flight keeps both edges' velocity, so a burst of switches stays one
 // smooth movement.
 // On glass themes (the theme's glass material, or translucent popups) the lens
@@ -26,7 +28,9 @@ Item {
   // false while the popup is closed: the lens waits on its tab, without flying in
   property bool live: true
   property color ink: Commons.Color.popups.text
-  property real radius: Math.min(Style.cornerRadius, 3)
+  // A segmented row's lens is a capsule, like its track.
+  property bool capsule: false
+  property real radius: capsule ? GlassMath.capsule(Style, height) : Math.min(Style.cornerRadius, 3)
   property string motion: Bridge.ModuleBus.motion
 
   readonly property var glassSpec: {
@@ -119,8 +123,8 @@ Item {
     visible: !lens.glass
     anchors.bottom: parent.bottom
     anchors.bottomMargin: -lens.squeeze
-    x: Style.space(7)
-    width: Math.max(0, parent.width - Style.space(14))
+    x: Math.max(Style.space(7), lens.radius)
+    width: Math.max(0, parent.width - 2 * x)
     height: 2
     color: lens.ink
   }

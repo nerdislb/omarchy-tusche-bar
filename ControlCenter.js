@@ -268,6 +268,22 @@ function areaNote(id) { var a = areaOf(String(id)); return a ? a.note : "" }
 function isArea(id) { return areaOf(String(id)) !== null }
 function resolveArea(id) { var a = areaOf(String(id)); return a ? a.id : "" }
 // The sidebar as rows: a head per group, then its areas.
+// Section and group names stay capitals as keys (SECTIONS orders them by
+// them); the window shows them in sentence case, as the hierarchy comes from
+// weight, not capitals. Names and acronyms keep their own case; a title
+// already written in mixed case is left as it is.
+var TITLE_WORDS = { OMARCHY: "Omarchy", BLUETOOTH: "Bluetooth", TUSCHE: "Tusche", ISLAND: "Island", HYPRLAND: "Hyprland",
+                    "WI-FI": "Wi-Fi", SSH: "SSH", DNS: "DNS", AI: "AI", GPU: "GPU", FIDO2: "FIDO2" }
+function sectionTitle(text) {
+  var s = String(text || "")
+  if (s !== s.toUpperCase() || s === s.toLowerCase()) return s
+  return s.split(" ").map(function(word, i) {
+    if (TITLE_WORDS[word]) return TITLE_WORDS[word]
+    var lower = word.toLowerCase()
+    return i === 0 ? lower.charAt(0).toUpperCase() + lower.slice(1) : lower
+  }).join(" ")
+}
+
 function sidebar() {
   var out = []
   GROUPS.forEach(function(g) {
@@ -819,7 +835,7 @@ function changedRows(live, edits, opts) {
   var out = []
   AREAS.forEach(function(a) {
     if (!byArea[a.id]) return
-    out.push({ kind: "head", text: a.label.toUpperCase(), area: a.id })
+    out.push({ kind: "head", text: a.label, area: a.id })
     byArea[a.id].forEach(function(id) { out.push({ kind: "row", id: id }) })
   })
   return out

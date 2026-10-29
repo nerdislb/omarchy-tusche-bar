@@ -2,6 +2,7 @@ import QtQuick
 import "../bridge" as Bridge
 import ".." as Root
 import "../CreditBalance.js" as Credits
+import "../GlassMath.js" as GlassMath
 import Quickshell
 import Quickshell.Io
 import qs.Commons
@@ -427,9 +428,12 @@ Item {
   // Popup text pieces.
   readonly property color popInk: Commons.Color.popups.text
   component Caption: Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; font.family: Style.font.family; font.pixelSize: Style.font.caption; color: Util.alpha(root.popInk, 0.55) }
-  component Section: Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; font.family: Style.font.family; font.pixelSize: Math.max(10, Style.font.body - 3); font.letterSpacing: Style.space(2.5); color: Util.alpha(root.popInk, 0.6); topPadding: Style.space(4) }
+  // Section heads: small and bold in sentence case; weight, not capitals, sets them apart.
+  component Section: Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; font.family: Style.font.family; font.pixelSize: Math.max(10, Style.font.body - 3); font.bold: true; color: Util.alpha(root.popInk, 0.6); topPadding: Style.space(4) }
+  // A capsule track filled up to the value, the fill a capsule too (at least
+  // as long as it is high, so its end stays round); 0 % shows the track only.
   // Metal family (material.metal.meters): a chrome cylinder filled up to the
-  // value, the rest the material's track; 0 % shows the track only.
+  // value, the rest the material's track.
   component Meter: Item {
     id: meter
     property real value: 0
@@ -438,11 +442,18 @@ Item {
     property bool alarm: true
     height: Style.space(6)
     readonly property var metal: Bridge.ModuleBus.metal && Bridge.ModuleBus.metal.meters !== false ? Bridge.ModuleBus.metal : null
+    readonly property real shown: Math.min(1, Math.max(0, meter.value))
     Rectangle {
       visible: !meter.metal
       anchors.fill: parent
+      radius: GlassMath.capsule(Style, height)
       color: Util.alpha(root.popInk, 0.12)
-      Rectangle { width: meter.width * Math.min(1, Math.max(0, meter.value)); height: meter.height; color: meter.fill }
+      Rectangle {
+        width: meter.shown > 0 && parent.radius > 0 ? Math.max(meter.height, meter.width * meter.shown) : meter.width * meter.shown
+        height: meter.height
+        radius: parent.radius
+        color: meter.fill
+      }
     }
     Root.MetalShape {
       visible: !!meter.metal
@@ -540,71 +551,93 @@ Item {
         width: parent.width
         spacing: Style.space(8)
 
-        // The agents: a ring each (its fullest window), the shown one named.
-        // The lens (TabLens) marks the shown one and glides between them; a
-        // tab keeps the width of its bold name, so nothing shifts as the
-        // weight fades over.
-        Item {
-          id: tabs
-          property Item currentTab: null
-          width: tabStrip.width
-          height: tabStrip.height
-          Root.TabLens {
-            id: tabLens
-            target: tabs.currentTab
-            live: root.popupOpen
-            ink: popupKeys.ink
-          }
-          Row {
-            id: tabStrip
-            spacing: Style.space(4)
-            Repeater {
-              model: root.agentIds
-              Rectangle {
-                id: tab
-                required property string modelData
-                required property int index
-                readonly property bool current: modelData === root.shownId
-                readonly property string key: modelData
-                readonly property var r: root.providers[modelData]
-                readonly property string label: root.names[modelData] || (r ? r.name : modelData)
-                // The name lights up as far as the lens covers it: the tab it
-                // leaves dims, the one it lands on brightens, those it passes glance up.
-                readonly property real lit: !tabLens.visible ? (current ? 1 : 0)
-                  : Math.max(0, Math.min(1, (Math.min(tabLens.edgeRight, x + width) - Math.max(tabLens.edgeLeft, x)) / Math.max(1, width)))
-                onCurrentChanged: if (current) tabs.currentTab = tab
-                Component.onCompleted: if (current) tabs.currentTab = tab
-                width: tabRow.implicitWidth + Style.space(14)
-                height: Style.space(30)
-                radius: tabLens.radius
-                color: !current && tabMouse.containsMouse ? Util.alpha(popupKeys.ink, 0.05) : "transparent"
-                Row {
-                  id: tabRow
-                  anchors.centerIn: parent
-                  spacing: Style.space(6)
-                  Ring {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: Style.space(20); height: width
-                    ink: popupKeys.ink
-                    letterPx: Math.max(8, Style.font.caption - 2)
-                    percent: root.peakOf(tab.r)
-                    letter: root.letters[tab.modelData] || "?"
+        // The agents: a ring each (its fullest window), the shown one named,
+        // as a segmented control: the tabs on a capsule track, the lens
+        // (TabLens), a capsule too, marking the shown one and gliding between
+        // them. A tab keeps the width of its bold name, so nothing shifts as
+        // the weight fades over; the tabs share out what the track has left.
+        Rectangle {
+          id: tabTrack
+          readonly property real pad: Style.space(3)
+          width: Math.max(list.width, tabs.width + 2 * pad)
+          height: tabs.height + 2 * pad
+          radius: GlassMath.capsule(Style, height)
+          color: Util.alpha(popupKeys.ink, 0.06)
+          Item {
+            id: tabs
+            property Item currentTab: null
+            x: tabTrack.pad
+            y: tabTrack.pad
+            width: tabStrip.width
+            height: tabStrip.height
+            // what each tab gets on top of its own width to fill the track
+            readonly property real share: {
+              var natural = 0
+              for (var i = 0; i < tabRepeater.count; i++) {
+                var t = tabRepeater.itemAt(i)
+                if (t) natural += t.natural
+              }
+              return tabRepeater.count > 0 ? Math.max(0, (list.width - 2 * tabTrack.pad - natural) / tabRepeater.count) : 0
+            }
+            Root.TabLens {
+              id: tabLens
+              target: tabs.currentTab
+              live: root.popupOpen
+              ink: popupKeys.ink
+              capsule: true
+            }
+            Row {
+              id: tabStrip
+              Repeater {
+                id: tabRepeater
+                model: root.agentIds
+                Rectangle {
+                  id: tab
+                  required property string modelData
+                  required property int index
+                  readonly property bool current: modelData === root.shownId
+                  readonly property string key: modelData
+                  readonly property var r: root.providers[modelData]
+                  readonly property string label: root.names[modelData] || (r ? r.name : modelData)
+                  // The name lights up as far as the lens covers it: the tab it
+                  // leaves dims, the one it lands on brightens, those it passes glance up.
+                  readonly property real lit: !tabLens.visible ? (current ? 1 : 0)
+                    : Math.max(0, Math.min(1, (Math.min(tabLens.edgeRight, x + width) - Math.max(tabLens.edgeLeft, x)) / Math.max(1, width)))
+                  onCurrentChanged: if (current) tabs.currentTab = tab
+                  Component.onCompleted: if (current) tabs.currentTab = tab
+                  readonly property real natural: tabRow.implicitWidth + Style.space(14)
+                  width: natural + tabs.share
+                  height: Style.space(30)
+                  radius: GlassMath.capsule(Style, height)
+                  color: !current && tabMouse.containsMouse ? Util.alpha(popupKeys.ink, 0.05) : "transparent"
+                  Row {
+                    id: tabRow
+                    anchors.centerIn: parent
+                    spacing: Style.space(6)
+                    Ring {
+                      anchors.verticalCenter: parent.verticalCenter
+                      width: Style.space(20); height: width
+                      ink: popupKeys.ink
+                      letterPx: Math.max(8, Style.font.caption - 2)
+                      percent: root.peakOf(tab.r)
+                      letter: root.letters[tab.modelData] || "?"
+                    }
+                    Item {
+                      anchors.verticalCenter: parent.verticalCenter
+                      width: boldName.implicitWidth
+                      height: boldName.implicitHeight
+                      Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; anchors.centerIn: parent
+                        text: tab.label; opacity: 1 - tab.lit
+                        font.family: Style.font.family; font.pixelSize: Style.font.bodySmall
+                        color: Util.alpha(popupKeys.ink, 0.6) }
+                      Text { id: boldName; renderType: Text.NativeRendering; textFormat: Text.PlainText; anchors.centerIn: parent
+                        text: tab.label; opacity: tab.lit
+                        font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.bodySmall
+                        color: popupKeys.ink }
+                    }
                   }
-                  Item {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: boldName.implicitWidth
-                    height: boldName.implicitHeight
-                    Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; anchors.centerIn: parent
-                      text: tab.label; opacity: 1 - tab.lit
-                      font.family: Style.font.family; font.pixelSize: Style.font.bodySmall
-                      color: Util.alpha(popupKeys.ink, 0.6) }
-                    Text { id: boldName; renderType: Text.NativeRendering; textFormat: Text.PlainText; anchors.centerIn: parent
-                      text: tab.label; opacity: tab.lit
-                      font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.bodySmall
-                      color: popupKeys.ink }
-                  }
+                  MouseArea { id: tabMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.selectedId = tab.modelData }
                 }
-                MouseArea { id: tabMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.selectedId = tab.modelData }
               }
             }
           }
@@ -644,7 +677,7 @@ Item {
             font.family: Style.font.family; font.pixelSize: Style.font.bodySmall
             color: popupKeys.status.urgent ? Commons.Color.urgent : Util.alpha(popupKeys.ink, 0.7) }
 
-          Section { visible: root.creditsEnabled && popupKeys.cardId === "codex"; text: "CREDITS · CODEX + WORK" }
+          Section { visible: root.creditsEnabled && popupKeys.cardId === "codex"; text: "Credits · Codex + work" }
           Column {
             visible: root.creditsEnabled && popupKeys.cardId === "codex"
             width: list.width
@@ -666,7 +699,7 @@ Item {
 
           // Limits: label and reset on one line, the meter and the level under it;
           // a prepaid balance shows its value and the ledger note instead.
-          Section { visible: popupKeys.lims.length > 0; text: popupKeys.cardId === "codex" ? "INCLUDED USAGE · % USED" : popupKeys.lims.some(function(l) { return !l.noQuota }) ? "LIMITS" : "BALANCE" }
+          Section { visible: popupKeys.lims.length > 0; text: popupKeys.cardId === "codex" ? "Included usage · % used" : popupKeys.lims.some(function(l) { return !l.noQuota }) ? "Limits" : "Balance" }
           Repeater {
             model: popupKeys.lims
             Column {
@@ -695,7 +728,7 @@ Item {
           }
 
           // Today: prompts, sessions, tokens, and the models that used them.
-          Section { visible: popupKeys.localStats && root.num(popupKeys.rec.todayTotalTokens) + root.num(popupKeys.rec.todayPrompts) > 0; text: "TODAY" }
+          Section { visible: popupKeys.localStats && root.num(popupKeys.rec.todayTotalTokens) + root.num(popupKeys.rec.todayPrompts) > 0; text: "Today" }
           Text { renderType: Text.NativeRendering; textFormat: Text.PlainText
             visible: popupKeys.localStats && root.num(popupKeys.rec.todayTotalTokens) + root.num(popupKeys.rec.todayPrompts) > 0
             width: list.width; wrapMode: Text.WordWrap
@@ -721,7 +754,7 @@ Item {
             visible: popupKeys.localStats && popupKeys.days.length > 1
             width: list.width
             height: weekTitle.implicitHeight
-            Section { id: weekTitle; text: "LAST 7 DAYS" }
+            Section { id: weekTitle; text: "Last 7 days" }
             Caption { anchors.right: parent.right; anchors.bottom: parent.bottom
               text: root.tokens(popupKeys.days.reduce(function(a, d) { return a + d.tokens }, 0)) + " tokens" }
           }
@@ -741,6 +774,7 @@ Item {
                   Rectangle {
                     anchors.bottom: parent.bottom
                     width: parent.width; height: Math.max(1, parent.height * modelData.tokens / popupKeys.dayMax)
+                    radius: GlassMath.rounded(Style) ? Math.min(Style.space(4), width / 2, height / 2) : 0
                     color: Util.alpha(popupKeys.ink, index === popupKeys.days.length - 1 ? 0.85 : 0.35)
                   }
                 }
@@ -750,7 +784,7 @@ Item {
           }
 
           // All time.
-          Section { visible: popupKeys.localStats && root.num(popupKeys.rec.totalPrompts) + root.num(popupKeys.rec.activeDays) > 0; text: "ALL TIME" }
+          Section { visible: popupKeys.localStats && root.num(popupKeys.rec.totalPrompts) + root.num(popupKeys.rec.activeDays) > 0; text: "All time" }
           Text { renderType: Text.NativeRendering; textFormat: Text.PlainText
             visible: popupKeys.localStats && root.num(popupKeys.rec.totalPrompts) + root.num(popupKeys.rec.activeDays) > 0
             width: list.width; wrapMode: Text.WordWrap

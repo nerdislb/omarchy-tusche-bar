@@ -1,6 +1,7 @@
 import QtQuick
 import "../bridge" as Bridge
 import ".." as Root
+import "../GlassMath.js" as GlassMath
 import Quickshell
 import Quickshell.Io
 import Quickshell.Bluetooth
@@ -285,14 +286,17 @@ Item {
   implicitWidth: row.implicitWidth + Style.space(4)
 
   // The open group's fill, one for the row, gliding from cell to cell as the
-  // popup switches groups (EdgeSpring); a fresh open puts it in place.
+  // popup switches groups (EdgeSpring); a fresh open puts it in place. Like the
+  // cells' hover, a small, dense shape: concentric with the bar it is inset
+  // from (square), so the 4 px floor.
+  readonly property real cellRadius: GlassMath.concentric(Style, 0, Style.space(3))
   Rectangle {
     x: cellEdges.start
     y: Style.space(3)
     width: Math.max(0, cellEdges.end - cellEdges.start)
     height: root.barSize - 2 * Style.space(3)
     visible: !!cellEdges.target
-    radius: Math.min(Style.cornerRadius, 3)
+    radius: root.cellRadius
     color: Style.selectedFillFor(root.fg, Commons.Color.accent, Commons.Color.urgent)
     Root.EdgeSpring { id: cellEdges }
   }
@@ -366,7 +370,7 @@ Item {
     height: root.barSize
     Rectangle {
       anchors.fill: parent; anchors.topMargin: Style.space(3); anchors.bottomMargin: Style.space(3)
-      radius: Math.min(Style.cornerRadius, 3)
+      radius: root.cellRadius
       color: !cell.active && hover.hovered ? Style.hoverFillFor(root.fg, Commons.Color.accent, Commons.Color.urgent) : "transparent"
     }
     HoverHandler { id: hover }
@@ -467,7 +471,8 @@ Item {
           Rectangle {
             required property string modelData
             width: content.width; height: Style.space(40)
-            radius: Math.min(Style.cornerRadius, 3)
+            // a row on the popup card, concentric with it
+            radius: GlassMath.concentric(Style, GlassMath.popupRadius(Style), popup.padding + 1)
             color: rowHover.hovered ? Style.hoverFillFor(Commons.Color.popups.text, Commons.Color.accent, Commons.Color.urgent) : "transparent"
             Row {
               anchors.fill: parent; anchors.leftMargin: Style.space(8)

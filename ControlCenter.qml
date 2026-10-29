@@ -12,6 +12,7 @@ import "ControlCenter.js" as CC
 import "OmarchySettings.js" as OmarchySettings
 import "vendor/MenuModel.js" as MenuModel
 import "bridge" as Bridge
+import "GlassMath.js" as GlassMath
 
 // Control Center: one window for the Tusche Bar, the Tusche Island, the card
 // picker, Omarchy's own settings and Hyprland overrides, plus Health.
@@ -1041,13 +1042,16 @@ PanelWindow {
     Ui.BorderSurface {
       id: card
       readonly property int pad: Style.spacing.popupPadding
+      // Rows, the area lens, fields, chips and buttons are concentric with the
+      // card: its radius less their inset, at least 4 px.
+      readonly property real innerRadius: GlassMath.concentric(Style, radius, pad + borderLeft)
       width: Math.min(win.width - Style.space(20), Style.space(960))
       height: Math.min(win.height - y - Style.space(12), Style.space(640))
       x: Math.round((win.width - width) / 2)
       y: Style.bar.sizeHorizontal + Style.gapsOut
       color: Commons.Color.popups.background
       borderSpec: Border.surfaceSpec("popups", "border", Commons.Color.popups.border, Math.max(1, Style.space(2)))
-      radius: Style.cornerRadius
+      radius: GlassMath.popupRadius(Style)
 
       MouseArea { anchors.fill: parent; acceptedButtons: Qt.AllButtons }
       Item {
@@ -1078,7 +1082,7 @@ PanelWindow {
           width: Style.space(28); height: width
           Rectangle {
             anchors.fill: parent
-            radius: Math.min(Style.cornerRadius, 3)
+            radius: card.innerRadius
             color: closeMouse.containsMouse ? Style.hoverFillFor(Commons.Color.popups.text, Commons.Color.accent, Commons.Color.urgent) : "transparent"
           }
           Strong { anchors.centerIn: parent; text: "×"; font.pixelSize: Style.font.title; color: Util.alpha(Commons.Color.popups.text, 0.75) }
@@ -1170,6 +1174,7 @@ PanelWindow {
               readonly property color tone: win.health.issues ? Commons.Color.urgent : win.health.unknown ? Util.alpha(Commons.Color.popups.text, 0.6) : Commons.Color.accent
               width: chipText.implicitWidth + Style.space(14)
               height: chipText.implicitHeight + Style.space(6)
+              radius: card.innerRadius
               color: Util.alpha(tone, 0.16)
               border.width: 1; border.color: tone
               Strong { id: chipText; anchors.centerIn: parent; text: win.health.label; color: healthChip.tone; font.bold: true }
@@ -1203,8 +1208,14 @@ PanelWindow {
               width: areaList.width
               height: Math.max(0, areaEdges.end - areaEdges.start)
               visible: !!areaEdges.target
+              radius: card.innerRadius
               color: Util.alpha(Commons.Color.accent, 0.18)
-              Rectangle { width: Style.space(3); height: parent.height; color: Commons.Color.accent }
+              Rectangle {
+                y: Math.min(parent.radius, parent.height / 4)
+                width: Style.space(3); height: Math.max(0, parent.height - 2 * y)
+                radius: GlassMath.capsule(Style, width)
+                color: Commons.Color.accent
+              }
               EdgeSpring {
                 id: areaEdges
                 vertical: true
@@ -1237,10 +1248,11 @@ PanelWindow {
                   id: groupLabel
                   visible: areaRow.isGroup
                   x: Style.space(8); y: parent.height - implicitHeight - Style.space(1)
-                  text: areaRow.modelData.label
+                  text: CC.sectionTitle(areaRow.modelData.label)
                   font.bold: true
                   color: Util.alpha(Commons.Color.popups.text, 0.5)
                 }
+                radius: card.innerRadius
                 color: !current && areaMouse.containsMouse && !isGroup ? Style.hoverFillFor(Commons.Color.popups.text, Commons.Color.accent, Commons.Color.urgent) : "transparent"
                 Rectangle {
                   x: Style.space(8); anchors.verticalCenter: parent.verticalCenter
@@ -1346,15 +1358,15 @@ PanelWindow {
                 visible: win.area === "quick" && !win.changedOnly
                 width: parent.width
                 spacing: Style.space(2)
-                SectionHead { text: "LOOK" }
+                SectionHead { text: "Look" }
                 Repeater { model: CC.QUICK.filter(function(id) { return id.indexOf("bar.") === 0 }); delegate: settingRow }
-                SectionHead { visible: win.islandAvailable; text: "TUSCHE ISLAND" }
+                SectionHead { visible: win.islandAvailable; text: "Tusche Island" }
                 Repeater { model: win.islandAvailable ? CC.QUICK.filter(function(id) { return id.indexOf("island.") === 0 }) : []; delegate: settingRow }
-                SectionHead { visible: win.quickDesktop.length > 0; text: "DESKTOP" }
+                SectionHead { visible: win.quickDesktop.length > 0; text: "Desktop" }
                 Repeater { model: win.quickDesktop.map(function(id) { return { kind: "row", id: id } }); delegate: genericRow }
-                SectionHead { text: "PRESETS" }
+                SectionHead { text: "Presets" }
                 PresetFlow {}
-                SectionHead { text: "FOCUS MODE" }
+                SectionHead { text: "Focus mode" }
                 Repeater { model: ["bar.seal", "bar.sealIdle", "bar.sealShare"]; delegate: settingRow }
                 Flow {
                   width: parent.width; spacing: Style.space(6)
@@ -1410,7 +1422,7 @@ PanelWindow {
                   id: combos
                   width: parent.width
                   spacing: Style.space(6)
-                  SectionHead { text: "MY COMBINATIONS" }
+                  SectionHead { text: "My combinations" }
                   Item {
                     width: parent.width
                     height: Math.max(nameBox.height, saveCombo.height)
@@ -1468,7 +1480,7 @@ PanelWindow {
                   }
                   }
                 }
-                SectionHead { text: "OPTIONS" }
+                SectionHead { text: "Options" }
                 Repeater { model: CC.barIds(); delegate: settingRow }
               }
 
@@ -1516,7 +1528,7 @@ PanelWindow {
                   width: parent.width; wrapMode: Text.WordWrap
                   text: "The Tusche Island (nerdibeard.tusche-island) is not in shell.json, so there is nothing to set here."
                 }
-                SectionHead { visible: win.islandAvailable; text: "NOTIFICATIONS" }
+                SectionHead { visible: win.islandAvailable; text: "Notifications" }
                 Repeater { model: win.islandAvailable ? CC.ISLAND_SETTINGS.map(function(s) { return "island." + s.key }) : []; delegate: settingRow }
                 Caption {
                   visible: win.islandAvailable
@@ -1531,7 +1543,7 @@ PanelWindow {
                 visible: win.area === "cards" && !win.changedOnly
                 width: parent.width
                 spacing: Style.space(2)
-                SectionHead { text: "MENUS" }
+                SectionHead { text: "Menus" }
                 Repeater { model: ["cards.override"]; delegate: settingRow }
                 Caption {
                   visible: text !== ""
@@ -1595,7 +1607,7 @@ PanelWindow {
                 visible: win.area === "input" && !win.changedOnly
                 width: parent.width
                 spacing: Style.space(2)
-                SectionHead { text: "SHORTCUTS" }
+                SectionHead { text: "Shortcuts" }
                 Repeater { model: ["extras.sheet"]; delegate: settingRow }
                 Flow {
                   width: parent.width; spacing: Style.space(6)
@@ -1788,9 +1800,10 @@ PanelWindow {
           y: header.y + searchBox.y + searchBox.height + Style.space(4)
           width: Math.max(searchBox.width, Style.space(420))
           height: resultsColumn.implicitHeight + results.borderTop + results.borderBottom + Style.space(8)
-          color: Commons.Color.popups.background
+          // Solid: it opens over the card's glass, not a second glass layer.
+          color: Qt.rgba(Commons.Color.popups.background.r, Commons.Color.popups.background.g, Commons.Color.popups.background.b, 1)
           borderSpec: Border.surfaceSpec("popups", "border", Commons.Color.popups.border, Math.max(1, Style.space(2)))
-          radius: Style.cornerRadius
+          radius: GlassMath.rounded(Style) ? card.innerRadius + Style.space(4) + results.borderLeft : 0
           MouseArea { anchors.fill: parent; acceptedButtons: Qt.AllButtons }
           Column {
             id: resultsColumn
@@ -1805,6 +1818,7 @@ PanelWindow {
                 required property int index
                 width: resultsColumn.width
                 height: Math.max(Style.space(30), hitLabel.implicitHeight + Style.space(10))
+                radius: card.innerRadius
                 color: win.searchSel === index ? Util.alpha(Commons.Color.accent, 0.22)
                   : hitMouse.containsMouse ? Style.hoverFillFor(Commons.Color.popups.text, Commons.Color.accent, Commons.Color.urgent) : "transparent"
                 Body {
@@ -1873,7 +1887,7 @@ PanelWindow {
       readonly property bool mixed: win.changedOnly || win.area === "quick" || win.area === "windows" || win.area === "input"
       readonly property string tag: !spec ? "" : ["omarchy", "hypr", "idle", "link"].indexOf(spec.domain) !== -1 || gen.mixed ? CC.sourceOf(spec) : ""
       width: editorColumn.width
-      SectionHead { visible: gen.modelData.kind === "head"; text: gen.modelData.text || "" }
+      SectionHead { visible: gen.modelData.kind === "head"; text: CC.sectionTitle(gen.modelData.text) }
       LinkRow {
         visible: !!gen.spec && gen.spec.kind === "link"
         width: parent.width
@@ -1936,8 +1950,9 @@ PanelWindow {
   component Face: Rectangle {
     property bool inset: false
     property color fill: "transparent"
+    property bool capsule: false
     color: fill
-    radius: Math.min(Style.cornerRadius, 3)
+    radius: capsule ? GlassMath.capsule(Style, height) : card.innerRadius
     border.width: 1
     border.color: Util.alpha(Commons.Color.popups.text, inset ? 0.3 : 0.14)
   }
@@ -1945,6 +1960,7 @@ PanelWindow {
   component FlashBg: Rectangle {
     property string forId: ""
     anchors.fill: parent
+    radius: card.innerRadius
     color: win.flashId !== "" && win.flashId === forId ? Util.alpha(Commons.Color.accent, 0.24) : "transparent"
     Behavior on color { ColorAnimation { duration: Style.duration(260) } }
   }
@@ -1963,6 +1979,7 @@ PanelWindow {
     opacity: enabled ? 1 : 0.45
     Face {
       anchors.fill: parent
+      capsule: btn.primary
       inset: btn.selected || btnMouse.pressed
       fill: btn.selected ? Commons.Color.accent
         : btnMouse.pressed ? Util.alpha(Commons.Color.accent, 0.4)

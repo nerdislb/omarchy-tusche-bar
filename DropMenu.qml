@@ -62,7 +62,12 @@ KeyboardPanel {
   readonly property int labelPx: Style.font.body
   readonly property int rowH: Math.max(Style.space(30), labelPx + Style.space(14))
   readonly property int separatorH: Style.space(13)
-  readonly property int rowRadius: Math.min(Style.cornerRadius, 6)
+  // The hot row's fill is concentric with the card: the card's radius less
+  // the row's inset (at least 4 px), the card's own radius being the shell's
+  // popup radius.
+  readonly property int rowRadius: materialCard.card
+    ? GlassMath.concentric(Style, materialCard.card.radius, materialCard.card.contentLeftInset)
+    : GlassMath.concentric(Style, GlassMath.popupRadius(Style), menu.padding + 1)
   // Theme material (edge "theme"): the hovered row inverts (Tusche/Papier) or
   // gets a brush stroke (Lavur: card.brush, a PNG in the theme folder)
   readonly property var src: Bridge.ModuleBus.material ? Bridge.ModuleBus.material.source || null : null
@@ -668,7 +673,7 @@ KeyboardPanel {
       id: body
       width: parent.width
 
-      // header: OMARCHY · ‹ Submenu · search
+      // header: Omarchy · ‹ Submenu · search
       Item {
         id: header
         width: parent.width
@@ -691,8 +696,9 @@ KeyboardPanel {
           elide: Text.ElideRight
           text: menu.searching ? "⌕  " + menu.query + "▏"
             : menu.launcherLine ? "⌕  ▏Search apps and menu"
-            : (menu.level ? menu.level.title : menu.rootTitle).toUpperCase()
-          font.letterSpacing: menu.searching || menu.launcherLine ? 0 : Style.space(2.5)
+            : (menu.level ? menu.level.title : menu.rootTitle)
+          // a title is small and bold in sentence case, not spaced capitals
+          font.bold: !menu.searching && !menu.launcherLine
           font.pixelSize: menu.searching || menu.launcherLine ? menu.labelPx : Math.max(10, Style.font.body - 2)
           color: Util.alpha(menu.ink, menu.searching ? 1 : menu.launcherLine ? 0.5 : 0.72)
         }
