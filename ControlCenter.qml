@@ -1453,7 +1453,7 @@ PanelWindow {
                     material: win.host ? win.host.material : null
                   }
                 }
-                Repeater { model: ["bar.frames", "bar.glass", "bar.glassMotion"]; delegate: settingRow }
+                Repeater { model: ["bar.frames", "bar.glass", "bar.glassMotion", "bar.motion"]; delegate: settingRow }
               }
 
               // ---- Tusche Island

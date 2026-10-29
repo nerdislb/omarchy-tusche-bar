@@ -297,6 +297,7 @@ Item {
   // ---------------------------------------------------------------- modules' shared state
   Binding { target: Bridge.ModuleBus; property: "engine"; value: root }
   Binding { target: Bridge.ModuleBus; property: "material"; value: root.materialOn ? root.presentationMaterial : null }
+  Binding { target: Bridge.ModuleBus; property: "motion"; value: root.options.motion }
   Binding { target: Bridge.ModuleBus; property: "themeDir"; value: root.themeDir }
   Binding { target: Bridge.ModuleBus; property: "themeStamp"; value: root.themeStamp }
   // Metal family: only a workspace switch counts as a change. Focus moves too

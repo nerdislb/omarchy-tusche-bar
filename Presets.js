@@ -97,6 +97,13 @@ var ELEMENTS = {
     label: "Glass motion (Frost / Smoke)",
     variants: [ { id: "on", label: "Soft spring" }, { id: "off", label: "Classic roll" } ]
   },
+  motion: {
+    label: "Popup and notification motion",
+    variants: [
+      { id: "spring", label: "Spring: popups pop out of their icon, notes roll out of the bar" },
+      { id: "calm", label: "Calm: fade in, grow from 98.5 % and settle, as in nbshell" }
+    ]
+  },
   // not a layout option: Super+Space opens the bar's menu (bin/keybinds.py)
   keys: {
     label: "Super+Space",
@@ -109,7 +116,7 @@ var ELEMENTS = {
 
 // Look options that sit on top of any preset: presets keep the current
 // value, and preset matching ignores them.
-var LOOK = ["edge", "keys", "frames", "glass", "glassMotion", "statusHints", "dayline", "seal", "sealIdle", "sealShare"]
+var LOOK = ["edge", "keys", "frames", "glass", "glassMotion", "motion", "statusHints", "dayline", "seal", "sealIdle", "sealShare"]
 
 // Presentation only: these never change the native layout, display geometry,
 // services or their settings. Native widgets ("today") keep their own renderer.

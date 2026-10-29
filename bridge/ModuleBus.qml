@@ -37,6 +37,8 @@ QtObject {
   // the current theme's bar material (bar-material.json) while the edge option
   // is "theme"; null otherwise. MaterialCard styles cards with it.
   property var material: null
+  // the popup and notification motion option: "spring" or "calm" (nbshell's)
+  property string motion: "spring"
   // the metal family (Chrom & Platin): material.metal, null for other themes.
   // pulse(): the workspace changed – the metal shows it once with a glint on
   // the rings and the logo (the bar's edge only with `edgeGlint`).

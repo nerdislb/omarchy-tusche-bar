@@ -1,11 +1,13 @@
 import QtQuick
 import qs.Commons
+import "bridge" as Bridge
 
 // Bar-only variant B: the dry themes opt into a persistent four-sided frame.
 // The shared MaterialCard (also used by the Island) remains unchanged.
 // Override only the painted card; the panel's layout and original spec stay intact.
 MaterialCard {
   id: framed
+  calm: Bridge.ModuleBus.motion === "calm"
   readonly property var frameSpec: matOn && !metalOn && !glassOn && mat.frame ? mat.frame : null
   readonly property alias cardFrame: outline
   // Paint over the native rim without replacing any of its bindings. Keeping

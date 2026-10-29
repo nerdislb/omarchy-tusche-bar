@@ -23,6 +23,21 @@ function omega(response) {
   return 2 * Math.PI / Math.max(0.05, Number(response) || 0.34)
 }
 
+// CSS cubic-bezier(x1, y1, x2, y2) at progress t (0 to 1), for the calm
+// motion's timed steps.
+function ease(x1, y1, x2, y2, t) {
+  if (!(t > 0)) return 0
+  if (t >= 1) return 1
+  function at(a, b, s) { return 3 * a * s * (1 - s) * (1 - s) + 3 * b * s * s * (1 - s) + s * s * s }
+  var low = 0, high = 1, s = t
+  for (var i = 0; i < 24; i++) {
+    s = (low + high) / 2
+    if (at(x1, x2, s) < t) low = s
+    else high = s
+  }
+  return at(y1, y2, s)
+}
+
 // Popup switch handoff (flat motion, see MaterialCard): the card that opens
 // for a switch announces it, the card that closes for it leaves its rect, the
 // opening card takes that rect and springs its plate from there. One store

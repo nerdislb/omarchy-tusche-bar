@@ -235,18 +235,31 @@ Item {
   readonly property real popResponse: 0.34
   readonly property real popDamping: 0.64
   readonly property real popCloseResponse: 0.22
-  readonly property real popFrom: 0.85
+  // Calm (option "motion": calm, nbshell's motion) times the pop instead of
+  // springing it: the card fades in, grows from 98.5 % and settles 5 px away
+  // from the bar in 250 ms on cubic-bezier(0.2, 0, 0, 1), and fades out where
+  // it stands in 120 ms. A switch keeps its plate as in spring.
+  property bool calm: false
+  readonly property real popFrom: calm ? 0.985 : 0.85
   property real pop: 1
   property real popVelocity: 0
   property real popTarget: 1
   property bool popRunning: false
+  // calm: the timed step's start, progress and target, and how far the
+  // opening settle has come (closing keeps it, so the card does not move)
+  property real popStart: 1
+  property real popTween: 1
+  property real popTweenTarget: 1
+  property real popRise: 1
   // (Reduced Motion: always the card's own size and place)
   readonly property real popScale: reduced ? 1 : popFrom + (1 - popFrom) * pop
   readonly property string barSide: panel && panel.barPos ? String(panel.barPos) : "top"
   // unit vector away from the bar (the card drops this way as it opens)
   readonly property real awayX: barSide === "left" ? 1 : barSide === "right" ? -1 : 0
   readonly property real awayY: barSide === "bottom" ? -1 : barSide === "left" || barSide === "right" ? 0 : 1
-  readonly property real popLift: reduced ? 0 : (1 - Math.max(0, Math.min(1, pop))) * Style.space(6)
+  readonly property real popLift: reduced ? 0
+    : calm ? (1 - Math.max(0, Math.min(1, popRise))) * Style.space(5)
+    : (1 - Math.max(0, Math.min(1, pop))) * Style.space(6)
   // the anchor on the card's edge at the bar, in the card's coordinates
   readonly property point popOrigin: {
     if (!card || !panel) return Qt.point(0, 0)
@@ -330,13 +343,29 @@ Item {
   Binding { target: fp.parent; property: "opacity"; value: fp.swapOutK; when: fp.popOn && fp.swapOut }
   // a fresh pop waits (unseen) for the first steady frame, like the roll
   Binding { target: fp.card; property: "opacity"; value: 0; when: fp.popOn && fp.warming }
+  // Calm: the pop alone fades and grows the card; the panel's own fade and
+  // 97 % growth rest, or the card would grow from 95.5 %.
+  Binding { target: fp.card && fp.card.shown !== undefined ? fp.card : null; property: "shown"; value: 1; when: fp.popOn && fp.calm }
+  Binding { target: fp.card; property: "opacity"; value: fp.pop; when: fp.popOn && fp.calm && !fp.warming && !fp.swapIn && !fp.swapOut }
+  onPopRunningChanged: {
+    if (!popRunning || !calm) return
+    popStart = pop; popTween = 0; popTweenTarget = popTarget
+    if (popTarget > 0.5 && pop <= 0.001) popRise = 0
+  }
 
   FrameAnimation {
     running: fp.popOn && (fp.popRunning || fp.swapTicking) && !fp.reduced
     onTriggered: fp.popStep(Math.min(frameTime, 1 / 30))
   }
   function popStep(dt) {
-    if (popRunning) {
+    if (popRunning && calm) {
+      if (popTweenTarget !== popTarget) { popStart = pop; popTween = 0; popTweenTarget = popTarget }
+      var rising = popTarget > 0.5
+      popTween = Math.min(1, popTween + dt / (rising ? 0.25 : 0.12))
+      pop = popStart + (popTarget - popStart) * GlassMath.ease(0.2, 0, 0, 1, popTween)
+      if (rising) popRise = Math.max(popRise, pop)
+      if (popTween >= 1) { pop = popTarget; popRunning = false }
+    } else if (popRunning) {
       var opening = popTarget > 0.5
       var s = GlassMath.step(pop, popVelocity, popTarget, dt, GlassMath.omega(opening ? popResponse : popCloseResponse),
                              opening ? popDamping : 0.99)
@@ -425,7 +454,13 @@ Item {
   onPopOnChanged: {
     stopPop(); warming = false
     pop = popTarget = panel && panel.open ? 1 : 0
+    popRise = 1
     setPopTransform(popOn)
+  }
+  onCalmChanged: {
+    stopPop(); warming = false
+    pop = popTarget = panel && panel.open ? 1 : 0
+    popRise = 1
   }
   Connections {
     target: fp.panel

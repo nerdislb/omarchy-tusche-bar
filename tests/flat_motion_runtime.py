@@ -103,6 +103,7 @@ FloatingWindow {
   CARD_B
  }
  property real maxPop: 0
+ property real springPop: 0
  property real minClose: 1
  property bool closing: false
  Connections {
@@ -220,7 +221,33 @@ FloatingWindow {
     if (ma.swapIn || mb.swapOut) return fail("reduced switch used the plate")
     // A: back from swapOut, its own fill and line restored
     if (String(cardA.color) !== "#334455" || String(cardA.border.color) !== "#445566" || hA.opacity !== 1) return fail("A not restored on reopen")
-    console.log("PASS real Qt: flat pop (overshoot " + root.maxPop.toFixed(3) + "), close without bounce, switch handoff, fresh pop after a switch, fallback pop without a rect, Reduced Motion")
+    root.springPop = root.maxPop
+    Style.reduceMotion = false
+    pa.switchFrom = null; pb.switchFrom = null
+    pa.open = false; pb.open = false
+    step = 6; ticks = 0; return
+   }
+   if (step === 6) {
+    if (ma.popRunning || ma.warming || mb.popRunning || mb.warming) return
+    // Calm (nbshell's motion): timed, from 98.5 %, no overshoot
+    ma.calm = true
+    if (ma.pop !== 0 || cardA.transform[0].xScale !== 0.985) return fail("calm: closed card not at 98.5 %")
+    root.maxPop = 0; root.closing = false
+    pa.open = true; step = 7; ticks = 0; return
+   }
+   if (step === 7) {
+    if (ticks > 10) return fail("calm: open still running after 600 ms")
+    if (!ma.warming && Math.abs(cardA.opacity - ma.pop) > 0.001) return fail("calm: opacity " + cardA.opacity + " does not follow the pop " + ma.pop)
+    if (ma.popRunning || ma.warming) return
+    if (root.maxPop > 1.0001) return fail("calm: overshoot " + root.maxPop)
+    if (ma.pop !== 1 || !identity(cardA) || cardA.opacity !== 1) return fail("calm: open did not rest")
+    root.closing = true; root.minClose = 1; pa.open = false; step = 8; ticks = 0; return
+   }
+   if (step === 8) {
+    if (cardA.transform[1].y !== 0) return fail("calm: closing card moved " + cardA.transform[1].y)
+    if (ma.popRunning) return
+    if (ma.pop !== 0 || cardA.opacity !== 0 || root.minClose < -0.001) return fail("calm: close did not rest at 0")
+    console.log("PASS real Qt: flat pop (overshoot " + root.springPop.toFixed(3) + "), close without bounce, switch handoff, fresh pop after a switch, fallback pop without a rect, Reduced Motion, calm motion")
     Qt.exit(0)
    }
    if (ticks > 60) fail("timeout in step " + step)
