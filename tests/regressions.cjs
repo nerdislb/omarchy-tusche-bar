@@ -1233,6 +1233,10 @@ console.log('PASS: stationary/recreated hover ignored; physical pointer motion a
   assert(q.includes('readonly property var recordIds: ["claude", "codex", "antigravity", "grok", "fireworks"]'));
   assert(q.includes('WheelHandler { onWheel: function(e) { root.step(e.angleDelta.y > 0 ? -1 : 1) } }'), 'scroll switches agents');
   assert(/e\.key === Qt\.Key_Left[\s\S]*root\.step\(-1\)[\s\S]*e\.key === Qt\.Key_Right[\s\S]*root\.step\(1\)/.test(q), 'arrows switch agents');
+  // the glass lens glides between the agents (tests/tab_lens_runtime.py), keyed by agent
+  assert(/Root\.TabLens \{\n\s*id: tabLens\n\s*target: tabs\.currentTab\n\s*live: root\.popupOpen/.test(q), 'a lens marks the shown agent and waits while closed');
+  assert(q.includes('readonly property string key: modelData'), 'the lens glides only when the agent changes, not when a reload rebuilds the tabs');
+  assert(q.includes('readonly property var rec: cardId ? root.providers[cardId] || null : null'), 'the card follows the tabs a beat behind while it slides');
   for (const name of ['Caption', 'Section', 'Meter', 'Ring'])
     assert(new RegExp('^  component ' + name + ': ', 'm').test(q), name + ' is a top-level inline component');
   const qc = {Qt: {locale: () => 'en_US'}, now: Date.parse('2026-10-06T17:40:00Z')};

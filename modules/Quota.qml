@@ -16,7 +16,8 @@ import qs.Ui
 // AI-usage selection (~/.config/omarchy/ai-usage-deepseek.json "tracked").
 // Left click: a card per agent (limits with reset times, today's use, the
 // last seven days, all-time figures); ←/→, the scroll wheel or a click on the
-// row of agents switches between them. Middle click: refresh now.
+// row of agents switches between them, a glass lens (TabLens) gliding along.
+// Middle click: refresh now.
 Item {
   id: root
   Component.onCompleted: Bridge.ModuleBus.register("quota", root)
@@ -220,7 +221,6 @@ Item {
   }
   property string selectedId: ""
   readonly property string shownId: agentIds.indexOf(selectedId) >= 0 ? selectedId : (agentIds.length ? agentIds[0] : "")
-  readonly property var shown: shownId ? providers[shownId] : null
   function select(id) { if (agentIds.indexOf(String(id)) >= 0) { selectedId = String(id); return "ok" } return "agents: " + agentIds.join(" ") }
   function step(d) {
     var n = agentIds.length
@@ -475,7 +475,48 @@ Item {
       anchors.fill: parent
       focus: true
       readonly property color ink: root.popInk
-      readonly property var rec: root.shown
+      // The agent the card shows. It follows the tabs a beat behind while the
+      // card changes: the old card gives way toward where the lens is leaving
+      // (90 ms), the next comes in from the side it is heading for (220 ms).
+      // A burst of switches lands on the last one; closed or Reduced Motion, at once.
+      property string cardId: ""
+      property int swapHeading: 0
+      property bool swapPending: false
+      property real bodyShift: 0
+      property real bodyFade: 1
+      readonly property var rec: cardId ? root.providers[cardId] || null : null
+      function showCard(id, previous) {
+        if (!root.popupOpen || Style.reduceMotion || !cardId) {
+          cardSwap.stop(); swapPending = false
+          cardId = id; bodyShift = 0; bodyFade = 1
+          return
+        }
+        var from = root.agentIds.indexOf(previous), to = root.agentIds.indexOf(id)
+        swapHeading = from < 0 || to < 0 || to === from ? 0 : to > from ? 1 : -1
+        if (cardSwap.running && swapPending) return
+        swapPending = true
+        cardSwap.restart()
+      }
+      property string lastShown: ""
+      Component.onCompleted: { cardId = root.shownId; lastShown = root.shownId }
+      Connections {
+        target: root
+        function onShownIdChanged() { var was = popupKeys.lastShown; popupKeys.lastShown = root.shownId; popupKeys.showCard(root.shownId, was) }
+        function onPopupOpenChanged() { if (!root.popupOpen) popupKeys.showCard(root.shownId, "") }
+      }
+      SequentialAnimation {
+        id: cardSwap
+        ParallelAnimation {
+          NumberAnimation { target: popupKeys; property: "bodyFade"; to: 0; duration: Style.duration(90); easing.type: Easing.OutCubic }
+          NumberAnimation { target: popupKeys; property: "bodyShift"; to: -popupKeys.swapHeading * Style.space(8); duration: Style.duration(90); easing.type: Easing.OutCubic }
+        }
+        ScriptAction { script: { popupKeys.swapPending = false; popupKeys.cardId = root.shownId } }
+        ParallelAnimation {
+          NumberAnimation { target: popupKeys; property: "bodyFade"; from: 0; to: 1; duration: Style.duration(200); easing.type: Easing.OutCubic }
+          NumberAnimation { target: popupKeys; property: "bodyShift"; from: popupKeys.swapHeading * Style.space(12); to: 0; duration: Style.duration(220)
+            easing.type: Easing.Bezier; easing.bezierCurve: Style.easeOut }
+        }
+      }
       readonly property var lims: root.limitsOf(rec)
       readonly property var status: root.statusOf(rec)
       readonly property var today: rec ? root.topModels(rec.todayTokensByModel, 3) : []
@@ -500,184 +541,224 @@ Item {
         spacing: Style.space(8)
 
         // The agents: a ring each (its fullest window), the shown one named.
-        Row {
+        // The lens (TabLens) marks the shown one and glides between them; a
+        // tab keeps the width of its bold name, so nothing shifts as the
+        // weight fades over.
+        Item {
           id: tabs
-          spacing: Style.space(4)
-          Repeater {
-            model: root.agentIds
-            Rectangle {
-              id: tab
-              required property string modelData
-              required property int index
-              readonly property bool current: modelData === root.shownId
-              readonly property var r: root.providers[modelData]
-              width: tabRow.implicitWidth + Style.space(14)
-              height: Style.space(30)
-              radius: Math.min(Style.cornerRadius, 3)
-              color: current ? Util.alpha(popupKeys.ink, 0.1) : tabMouse.containsMouse ? Util.alpha(popupKeys.ink, 0.05) : "transparent"
-              Row {
-                id: tabRow
-                anchors.centerIn: parent
-                spacing: Style.space(6)
-                Ring {
-                  anchors.verticalCenter: parent.verticalCenter
-                  width: Style.space(20); height: width
-                  ink: popupKeys.ink
-                  letterPx: Math.max(8, Style.font.caption - 2)
-                  percent: root.peakOf(tab.r)
-                  letter: root.letters[tab.modelData] || "?"
+          property Item currentTab: null
+          width: tabStrip.width
+          height: tabStrip.height
+          Root.TabLens {
+            id: tabLens
+            target: tabs.currentTab
+            live: root.popupOpen
+            ink: popupKeys.ink
+          }
+          Row {
+            id: tabStrip
+            spacing: Style.space(4)
+            Repeater {
+              model: root.agentIds
+              Rectangle {
+                id: tab
+                required property string modelData
+                required property int index
+                readonly property bool current: modelData === root.shownId
+                readonly property string key: modelData
+                readonly property var r: root.providers[modelData]
+                readonly property string label: root.names[modelData] || (r ? r.name : modelData)
+                // The name lights up as far as the lens covers it: the tab it
+                // leaves dims, the one it lands on brightens, those it passes glance up.
+                readonly property real lit: !tabLens.visible ? (current ? 1 : 0)
+                  : Math.max(0, Math.min(1, (Math.min(tabLens.edgeRight, x + width) - Math.max(tabLens.edgeLeft, x)) / Math.max(1, width)))
+                onCurrentChanged: if (current) tabs.currentTab = tab
+                Component.onCompleted: if (current) tabs.currentTab = tab
+                width: tabRow.implicitWidth + Style.space(14)
+                height: Style.space(30)
+                radius: tabLens.radius
+                color: !current && tabMouse.containsMouse ? Util.alpha(popupKeys.ink, 0.05) : "transparent"
+                Row {
+                  id: tabRow
+                  anchors.centerIn: parent
+                  spacing: Style.space(6)
+                  Ring {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Style.space(20); height: width
+                    ink: popupKeys.ink
+                    letterPx: Math.max(8, Style.font.caption - 2)
+                    percent: root.peakOf(tab.r)
+                    letter: root.letters[tab.modelData] || "?"
+                  }
+                  Item {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: boldName.implicitWidth
+                    height: boldName.implicitHeight
+                    Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; anchors.centerIn: parent
+                      text: tab.label; opacity: 1 - tab.lit
+                      font.family: Style.font.family; font.pixelSize: Style.font.bodySmall
+                      color: Util.alpha(popupKeys.ink, 0.6) }
+                    Text { id: boldName; renderType: Text.NativeRendering; textFormat: Text.PlainText; anchors.centerIn: parent
+                      text: tab.label; opacity: tab.lit
+                      font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.bodySmall
+                      color: popupKeys.ink }
+                  }
                 }
-                Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter
-                  text: root.names[tab.modelData] || (tab.r ? tab.r.name : tab.modelData)
-                  font.family: Style.font.family; font.bold: tab.current; font.pixelSize: Style.font.bodySmall
-                  color: Util.alpha(popupKeys.ink, tab.current ? 1 : 0.6) }
+                MouseArea { id: tabMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.selectedId = tab.modelData }
               }
-              Rectangle { visible: tab.current; anchors.bottom: parent.bottom; x: Style.space(7); width: parent.width - Style.space(14); height: 2; color: popupKeys.ink }
-              MouseArea { id: tabMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.selectedId = tab.modelData }
             }
           }
         }
 
-        Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; visible: !popupKeys.rec; width: list.width; wrapMode: Text.WordWrap
-          text: "No AI usage records yet. They appear in ~/.local/state/omarchy/agents/usage once an agent has run."
-          font.family: Style.font.family; font.pixelSize: Style.font.body; color: popupKeys.ink }
-
-        // Name, plan, freshness.
-        Item {
-          visible: !!popupKeys.rec
-          width: list.width
-          height: Math.max(nameRow.implicitHeight, ago.implicitHeight)
-          Row {
-            id: nameRow
-            spacing: Style.space(8)
-            width: parent.width - ago.implicitWidth - Style.space(8)
-            Text { id: agentName; renderType: Text.NativeRendering; textFormat: Text.PlainText; text: popupKeys.rec ? popupKeys.rec.name : ""; font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.title; color: popupKeys.ink }
-            Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; anchors.baseline: agentName.baseline
-              text: popupKeys.rec ? String(popupKeys.rec.tierLabel || "") : ""; font.family: Style.font.family; font.pixelSize: Style.font.body; color: Util.alpha(popupKeys.ink, 0.6) }
-          }
-          Caption { id: ago; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; text: popupKeys.rec ? root.agoText(popupKeys.rec.updatedAt) : "" }
-        }
-        Text { renderType: Text.NativeRendering; textFormat: Text.PlainText
-          visible: popupKeys.status.text !== ""
-          width: list.width; wrapMode: Text.WordWrap
-          text: popupKeys.status.text
-          font.family: Style.font.family; font.pixelSize: Style.font.bodySmall
-          color: popupKeys.status.urgent ? Commons.Color.urgent : Util.alpha(popupKeys.ink, 0.7) }
-
-        Section { visible: root.creditsEnabled && root.shownId === "codex"; text: "CREDITS · CODEX + WORK" }
+        // The card itself; it slides and fades while it changes agent.
         Column {
-          visible: root.creditsEnabled && root.shownId === "codex"
+          id: body
           width: list.width
-          spacing: Style.space(4)
-          Text {
-            textFormat: Text.PlainText; renderType: Text.NativeRendering
-            text: root.creditView.amount !== undefined
-              ? root.creditView.amount.toLocaleString(Qt.locale("en_US"), "f", 2) + " credits"
-              : root.creditView.label
-            font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.title
-            color: popupKeys.ink
-          }
-          Caption { width: parent.width; wrapMode: Text.WordWrap
-            text: "Total extra balance · separate from included usage."
-              + (root.creditRecord ? " " + root.agoText(root.creditRecord.updatedAt) + "." : "") }
-          Caption { visible: root.creditGrantText !== ""; width: parent.width; wrapMode: Text.WordWrap
-            text: root.creditGrantText + " The grant's remaining share is not itemized." }
-        }
+          spacing: Style.space(8)
+          x: popupKeys.bodyShift
+          opacity: popupKeys.bodyFade
 
-        // Limits: label and reset on one line, the meter and the level under it;
-        // a prepaid balance shows its value and the ledger note instead.
-        Section { visible: popupKeys.lims.length > 0; text: root.shownId === "codex" ? "INCLUDED USAGE · % USED" : popupKeys.lims.some(function(l) { return !l.noQuota }) ? "LIMITS" : "BALANCE" }
-        Repeater {
-          model: popupKeys.lims
-          Column {
-            required property var modelData
+          Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; visible: !popupKeys.rec; width: list.width; wrapMode: Text.WordWrap
+            text: "No AI usage records yet. They appear in ~/.local/state/omarchy/agents/usage once an agent has run."
+            font.family: Style.font.family; font.pixelSize: Style.font.body; color: popupKeys.ink }
+
+          // Name, plan, freshness.
+          Item {
+            visible: !!popupKeys.rec
             width: list.width
-            spacing: Style.space(3)
-            Item {
-              width: parent.width
-              height: Math.max(limLabel.implicitHeight, limReset.implicitHeight)
-              Text { id: limLabel; renderType: Text.NativeRendering; textFormat: Text.PlainText; width: parent.width - limReset.implicitWidth - Style.space(8); elide: Text.ElideRight
-                text: modelData.label; font.family: Style.font.family; font.pixelSize: Style.font.body; color: popupKeys.ink }
-              Caption { id: limReset; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; text: modelData.noQuota ? "" : root.resetLine(modelData) }
-            }
+            height: Math.max(nameRow.implicitHeight, ago.implicitHeight)
             Row {
-              visible: !modelData.noQuota
-              width: parent.width
+              id: nameRow
               spacing: Style.space(8)
-              Meter { anchors.verticalCenter: parent.verticalCenter; width: parent.width - limPct.width - Style.space(8); value: modelData.percent; fill: root.tone(modelData.percent) }
-              Text { id: limPct; renderType: Text.NativeRendering; textFormat: Text.PlainText; width: Style.space(40); horizontalAlignment: Text.AlignRight
-                text: Math.round(modelData.percent * 100) + "%"; font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.body; color: popupKeys.ink }
+              width: parent.width - ago.implicitWidth - Style.space(8)
+              Text { id: agentName; renderType: Text.NativeRendering; textFormat: Text.PlainText; text: popupKeys.rec ? popupKeys.rec.name : ""; font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.title; color: popupKeys.ink }
+              Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; anchors.baseline: agentName.baseline
+                text: popupKeys.rec ? String(popupKeys.rec.tierLabel || "") : ""; font.family: Style.font.family; font.pixelSize: Style.font.body; color: Util.alpha(popupKeys.ink, 0.6) }
             }
-            Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; visible: modelData.noQuota && modelData.value !== ""
-              text: modelData.value.replace(/^USD\s*/, "$"); font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.title; color: popupKeys.ink }
-            Caption { visible: modelData.noQuota && modelData.detail !== ""; width: parent.width; wrapMode: Text.WordWrap; text: modelData.detail }
+            Caption { id: ago; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; text: popupKeys.rec ? root.agoText(popupKeys.rec.updatedAt) : "" }
           }
-        }
+          Text { renderType: Text.NativeRendering; textFormat: Text.PlainText
+            visible: popupKeys.status.text !== ""
+            width: list.width; wrapMode: Text.WordWrap
+            text: popupKeys.status.text
+            font.family: Style.font.family; font.pixelSize: Style.font.bodySmall
+            color: popupKeys.status.urgent ? Commons.Color.urgent : Util.alpha(popupKeys.ink, 0.7) }
 
-        // Today: prompts, sessions, tokens, and the models that used them.
-        Section { visible: popupKeys.localStats && root.num(popupKeys.rec.todayTotalTokens) + root.num(popupKeys.rec.todayPrompts) > 0; text: "TODAY" }
-        Text { renderType: Text.NativeRendering; textFormat: Text.PlainText
-          visible: popupKeys.localStats && root.num(popupKeys.rec.todayTotalTokens) + root.num(popupKeys.rec.todayPrompts) > 0
-          width: list.width; wrapMode: Text.WordWrap
-          text: popupKeys.rec ? [root.count(popupKeys.rec.todayPrompts) + " prompts", root.count(popupKeys.rec.todaySessions) + " sessions",
-                                 root.tokens(popupKeys.rec.todayTotalTokens) + " tokens"].join("  ·  ") : ""
-          font.family: Style.font.family; font.pixelSize: Style.font.body; color: popupKeys.ink }
-        Repeater {
-          model: popupKeys.localStats ? popupKeys.today : []
-          Row {
-            required property var modelData
+          Section { visible: root.creditsEnabled && popupKeys.cardId === "codex"; text: "CREDITS · CODEX + WORK" }
+          Column {
+            visible: root.creditsEnabled && popupKeys.cardId === "codex"
             width: list.width
-            spacing: Style.space(8)
-            Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; width: Style.space(120); elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter
-              text: modelData.name; font.family: Style.font.family; font.pixelSize: Style.font.bodySmall; color: Util.alpha(popupKeys.ink, 0.8) }
-            Meter { anchors.verticalCenter: parent.verticalCenter; height: Style.space(4); width: parent.width - Style.space(120) - todayTok.width - Style.space(16)
-              value: modelData.tokens / Math.max(1, popupKeys.today[0].tokens); fill: Util.alpha(popupKeys.ink, 0.6); alarm: false }
-            Caption { id: todayTok; width: Style.space(48); horizontalAlignment: Text.AlignRight; anchors.verticalCenter: parent.verticalCenter; text: root.tokens(modelData.tokens) }
+            spacing: Style.space(4)
+            Text {
+              textFormat: Text.PlainText; renderType: Text.NativeRendering
+              text: root.creditView.amount !== undefined
+                ? root.creditView.amount.toLocaleString(Qt.locale("en_US"), "f", 2) + " credits"
+                : root.creditView.label
+              font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.title
+              color: popupKeys.ink
+            }
+            Caption { width: parent.width; wrapMode: Text.WordWrap
+              text: "Total extra balance · separate from included usage."
+                + (root.creditRecord ? " " + root.agoText(root.creditRecord.updatedAt) + "." : "") }
+            Caption { visible: root.creditGrantText !== ""; width: parent.width; wrapMode: Text.WordWrap
+              text: root.creditGrantText + " The grant's remaining share is not itemized." }
           }
-        }
 
-        // The last seven days: tokens per day.
-        Item {
-          visible: popupKeys.localStats && popupKeys.days.length > 1
-          width: list.width
-          height: weekTitle.implicitHeight
-          Section { id: weekTitle; text: "LAST 7 DAYS" }
-          Caption { anchors.right: parent.right; anchors.bottom: parent.bottom
-            text: root.tokens(popupKeys.days.reduce(function(a, d) { return a + d.tokens }, 0)) + " tokens" }
-        }
-        Row {
-          visible: popupKeys.localStats && popupKeys.days.length > 1
-          width: list.width
-          spacing: Style.space(6)
+          // Limits: label and reset on one line, the meter and the level under it;
+          // a prepaid balance shows its value and the ledger note instead.
+          Section { visible: popupKeys.lims.length > 0; text: popupKeys.cardId === "codex" ? "INCLUDED USAGE · % USED" : popupKeys.lims.some(function(l) { return !l.noQuota }) ? "LIMITS" : "BALANCE" }
           Repeater {
-            model: popupKeys.localStats ? popupKeys.days : []
+            model: popupKeys.lims
             Column {
               required property var modelData
-              required property int index
-              width: (list.width - Style.space(6) * (popupKeys.days.length - 1)) / Math.max(1, popupKeys.days.length)
+              width: list.width
               spacing: Style.space(3)
               Item {
-                width: parent.width; height: Style.space(30)
-                Rectangle {
-                  anchors.bottom: parent.bottom
-                  width: parent.width; height: Math.max(1, parent.height * modelData.tokens / popupKeys.dayMax)
-                  color: Util.alpha(popupKeys.ink, index === popupKeys.days.length - 1 ? 0.85 : 0.35)
-                }
+                width: parent.width
+                height: Math.max(limLabel.implicitHeight, limReset.implicitHeight)
+                Text { id: limLabel; renderType: Text.NativeRendering; textFormat: Text.PlainText; width: parent.width - limReset.implicitWidth - Style.space(8); elide: Text.ElideRight
+                  text: modelData.label; font.family: Style.font.family; font.pixelSize: Style.font.body; color: popupKeys.ink }
+                Caption { id: limReset; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; text: modelData.noQuota ? "" : root.resetLine(modelData) }
               }
-              Caption { width: parent.width; horizontalAlignment: Text.AlignHCenter; text: modelData.day }
+              Row {
+                visible: !modelData.noQuota
+                width: parent.width
+                spacing: Style.space(8)
+                Meter { anchors.verticalCenter: parent.verticalCenter; width: parent.width - limPct.width - Style.space(8); value: modelData.percent; fill: root.tone(modelData.percent) }
+                Text { id: limPct; renderType: Text.NativeRendering; textFormat: Text.PlainText; width: Style.space(40); horizontalAlignment: Text.AlignRight
+                  text: Math.round(modelData.percent * 100) + "%"; font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.body; color: popupKeys.ink }
+              }
+              Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; visible: modelData.noQuota && modelData.value !== ""
+                text: modelData.value.replace(/^USD\s*/, "$"); font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.title; color: popupKeys.ink }
+              Caption { visible: modelData.noQuota && modelData.detail !== ""; width: parent.width; wrapMode: Text.WordWrap; text: modelData.detail }
             }
           }
-        }
 
-        // All time.
-        Section { visible: popupKeys.localStats && root.num(popupKeys.rec.totalPrompts) + root.num(popupKeys.rec.activeDays) > 0; text: "ALL TIME" }
-        Text { renderType: Text.NativeRendering; textFormat: Text.PlainText
-          visible: popupKeys.localStats && root.num(popupKeys.rec.totalPrompts) + root.num(popupKeys.rec.activeDays) > 0
-          width: list.width; wrapMode: Text.WordWrap
-          text: popupKeys.rec ? [root.count(popupKeys.rec.totalPrompts) + " prompts", root.count(popupKeys.rec.totalSessions) + " sessions",
-                                 root.count(popupKeys.rec.activeDays) + " active days"].join("  ·  ") : ""
-          font.family: Style.font.family; font.pixelSize: Style.font.bodySmall; color: Util.alpha(popupKeys.ink, 0.8) }
-        Caption { visible: popupKeys.localStats && root.favourite(popupKeys.rec) !== ""; text: "Most used model: " + root.favourite(popupKeys.rec) }
+          // Today: prompts, sessions, tokens, and the models that used them.
+          Section { visible: popupKeys.localStats && root.num(popupKeys.rec.todayTotalTokens) + root.num(popupKeys.rec.todayPrompts) > 0; text: "TODAY" }
+          Text { renderType: Text.NativeRendering; textFormat: Text.PlainText
+            visible: popupKeys.localStats && root.num(popupKeys.rec.todayTotalTokens) + root.num(popupKeys.rec.todayPrompts) > 0
+            width: list.width; wrapMode: Text.WordWrap
+            text: popupKeys.rec ? [root.count(popupKeys.rec.todayPrompts) + " prompts", root.count(popupKeys.rec.todaySessions) + " sessions",
+                                   root.tokens(popupKeys.rec.todayTotalTokens) + " tokens"].join("  ·  ") : ""
+            font.family: Style.font.family; font.pixelSize: Style.font.body; color: popupKeys.ink }
+          Repeater {
+            model: popupKeys.localStats ? popupKeys.today : []
+            Row {
+              required property var modelData
+              width: list.width
+              spacing: Style.space(8)
+              Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; width: Style.space(120); elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter
+                text: modelData.name; font.family: Style.font.family; font.pixelSize: Style.font.bodySmall; color: Util.alpha(popupKeys.ink, 0.8) }
+              Meter { anchors.verticalCenter: parent.verticalCenter; height: Style.space(4); width: parent.width - Style.space(120) - todayTok.width - Style.space(16)
+                value: modelData.tokens / Math.max(1, popupKeys.today[0].tokens); fill: Util.alpha(popupKeys.ink, 0.6); alarm: false }
+              Caption { id: todayTok; width: Style.space(48); horizontalAlignment: Text.AlignRight; anchors.verticalCenter: parent.verticalCenter; text: root.tokens(modelData.tokens) }
+            }
+          }
+
+          // The last seven days: tokens per day.
+          Item {
+            visible: popupKeys.localStats && popupKeys.days.length > 1
+            width: list.width
+            height: weekTitle.implicitHeight
+            Section { id: weekTitle; text: "LAST 7 DAYS" }
+            Caption { anchors.right: parent.right; anchors.bottom: parent.bottom
+              text: root.tokens(popupKeys.days.reduce(function(a, d) { return a + d.tokens }, 0)) + " tokens" }
+          }
+          Row {
+            visible: popupKeys.localStats && popupKeys.days.length > 1
+            width: list.width
+            spacing: Style.space(6)
+            Repeater {
+              model: popupKeys.localStats ? popupKeys.days : []
+              Column {
+                required property var modelData
+                required property int index
+                width: (list.width - Style.space(6) * (popupKeys.days.length - 1)) / Math.max(1, popupKeys.days.length)
+                spacing: Style.space(3)
+                Item {
+                  width: parent.width; height: Style.space(30)
+                  Rectangle {
+                    anchors.bottom: parent.bottom
+                    width: parent.width; height: Math.max(1, parent.height * modelData.tokens / popupKeys.dayMax)
+                    color: Util.alpha(popupKeys.ink, index === popupKeys.days.length - 1 ? 0.85 : 0.35)
+                  }
+                }
+                Caption { width: parent.width; horizontalAlignment: Text.AlignHCenter; text: modelData.day }
+              }
+            }
+          }
+
+          // All time.
+          Section { visible: popupKeys.localStats && root.num(popupKeys.rec.totalPrompts) + root.num(popupKeys.rec.activeDays) > 0; text: "ALL TIME" }
+          Text { renderType: Text.NativeRendering; textFormat: Text.PlainText
+            visible: popupKeys.localStats && root.num(popupKeys.rec.totalPrompts) + root.num(popupKeys.rec.activeDays) > 0
+            width: list.width; wrapMode: Text.WordWrap
+            text: popupKeys.rec ? [root.count(popupKeys.rec.totalPrompts) + " prompts", root.count(popupKeys.rec.totalSessions) + " sessions",
+                                   root.count(popupKeys.rec.activeDays) + " active days"].join("  ·  ") : ""
+            font.family: Style.font.family; font.pixelSize: Style.font.bodySmall; color: Util.alpha(popupKeys.ink, 0.8) }
+          Caption { visible: popupKeys.localStats && root.favourite(popupKeys.rec) !== ""; text: "Most used model: " + root.favourite(popupKeys.rec) }
+        }
 
         Caption { topPadding: Style.space(2); width: list.width; wrapMode: Text.WordWrap
           text: (root.agentIds.length > 1 ? "← → or scroll: agents  ·  " : "") + "r: refresh" }
