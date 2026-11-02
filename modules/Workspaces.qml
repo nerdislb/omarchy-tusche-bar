@@ -2,6 +2,7 @@ import QtQuick
 import "../bridge" as Bridge
 import ".." as Root
 import "../WorkspaceGeometry.js" as WorkspaceGeometry
+import "../WorkspaceLayout.js" as WorkspaceLayout
 import Quickshell.Hyprland
 import Quickshell.Io
 import qs.Commons
@@ -150,6 +151,8 @@ Item {
   // On Umbriel the same snapshot comes from the shell's compositor service,
   // which pushes every change, so there is nothing to query.
   readonly property bool umbriel: Bridge.ModuleBus.umbriel
+  readonly property string layoutLabel: umbriel
+    ? WorkspaceLayout.label(Commons.Compositor.workspaceLayout(Commons.Compositor.focusedWorkspaceId)) : ""
   readonly property var compositorSnapshot: umbriel ? WorkspaceGeometry.snapshotFromCompositor(
     Commons.Compositor.outputList(), Commons.Compositor.workspaceList(), Commons.Compositor.windowList(),
     Commons.Compositor.focusedWorkspaceId) : null
@@ -382,7 +385,33 @@ Item {
 
   readonly property real menuWidth: showMenu ? barSize + Style.space(4) : 0
   implicitHeight: barSize
-  implicitWidth: menuWidth + face.implicitWidth + Style.space(6)
+  implicitWidth: menuWidth + face.implicitWidth + layoutStatus.width + Style.space(6)
+
+  // Reserve the longest label's width so cycling layouts does not move the
+  // neighbouring widgets. Unknown/disconnected state has no stale label.
+  TextMetrics { id: layoutMetrics; font: layoutName.font; text: "Scrolling" }
+  Item {
+    id: layoutStatus
+    visible: root.variant !== "none" && root.layoutLabel !== ""
+    x: root.menuWidth + face.implicitWidth
+    width: visible ? Math.ceil(layoutMetrics.advanceWidth) + Style.space(20) : 0
+    height: root.barSize
+    Rectangle {
+      x: Style.space(5); anchors.verticalCenter: parent.verticalCenter
+      width: 1; height: Math.round(root.barSize * 0.4)
+      color: Util.alpha(root.fg, 0.25)
+    }
+    Text {
+      id: layoutName
+      x: Style.space(13); anchors.verticalCenter: parent.verticalCenter
+      text: root.layoutLabel
+      textFormat: Text.PlainText
+      renderType: Text.NativeRendering
+      font.family: Style.font.family
+      font.pixelSize: Style.font.bodySmall
+      color: Util.alpha(root.fg, 0.8)
+    }
+  }
 
   // ---------------------------------------------------------------- menu logo
   Item {

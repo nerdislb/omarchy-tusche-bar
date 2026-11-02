@@ -26,6 +26,10 @@ def run(output=None):
             '\n'.join(l for l in popout_src.splitlines() if not l.strip().startswith('WlrLayershell.')) + '\n'
         )
         shutil.copy2(ROOT / 'WorkspaceGeometry.js', tmp / 'WorkspaceGeometry.js')
+        shutil.copy2(ROOT / 'WorkspaceLayout.js', tmp / 'WorkspaceLayout.js')
+        shutil.copy2(ROOT / 'LayoutFeedback.qml', tmp / 'LayoutFeedback.qml')
+        shutil.copy2(ROOT / 'EdgeSpring.qml', tmp / 'EdgeSpring.qml')
+        shutil.copy2(ROOT / 'GlassMath.js', tmp / 'GlassMath.js')
 
         def write(name, text):
             dest = tmp / name
@@ -38,8 +42,11 @@ def run(output=None):
 import QtQuick
 QtObject {
  property int focusedWorkspaceId: 3
+ property string activeMode: "dwindle"
+ property string outputName: "mock"
+ function workspaceLayout(id) { return activeMode }
  function outputList() { return [{name:"mock",x:0,y:0,width:1200,height:900,reserved:[0,30,0,0],powered:true}] }
- function workspaceList() { return [{id:3,name:"3",output:"mock",shown:true,focused:true,windows:2,urgent:false},{id:5,name:"5",output:"mock",shown:false,focused:false,windows:1,urgent:true}] }
+ function workspaceList() { return [{id:3,name:"3",output:outputName,shown:true,focused:true,windows:2,urgent:false,layout:activeMode},{id:5,name:"5",output:outputName,shown:false,focused:false,windows:1,urgent:true,layout:activeMode}] }
  function windowList() { return [] }
 }''')
         write('imports/qs/Commons/Style.qml', '''pragma Singleton
@@ -186,6 +193,8 @@ Item {
  id: canvas
  width: 600; height: 360
  property var commands: []
+ property var layoutLines: []
+ Component { id: feedback; LayoutFeedback { active:true; emit:function(argv) { canvas.layoutLines=canvas.layoutLines.concat([argv]) } } }
  QtObject { id: fakeBar; property int barSize:30; property color barForeground:"#222222"; function run(command) { canvas.commands=canvas.commands.concat([command]) } }
  Component { id: live; Workspaces { bar: fakeBar; settings: ({variant:"minimap",menu:false}) } }
  Component { id: face; WorkspacesFace { ids:[1,2,3,4,5]; occupiedIds:[1,2]; active:1; windowCounts:({1:3,2:1}); fg:"#222222"; strong:fg; barColor:"#eee9df"; barLight:true } }
@@ -378,7 +387,49 @@ Item {
    compare(module.active,3)
    compare(module.windowCounts[3],2)
    compare(module.urgentIds,[5])
+   compare(module.layoutLabel,"Dwindle")
+   var reserved=module.implicitWidth
+   Compositor.activeMode="scrolling"
+   compare(module.layoutLabel,"Scrolling")
+   compare(module.implicitWidth,reserved)
+   Compositor.activeMode="pages"
+   compare(module.layoutLabel,"Pages")
+   compare(module.implicitWidth,reserved)
+   Compositor.activeMode="<img src='https://example.invalid'>"
+   compare(module.layoutLabel,"")
+   Compositor.activeMode="dwindle"
    Bridge.ModuleBus.umbriel=false
+  }
+  function test_04e_layout_feedback_tracks_changes_without_startup_or_focus_noise() {
+   canvas.layoutLines=[]
+   var watcher=createTemporaryObject(feedback,canvas)
+   verify(watcher)
+   wait(20)
+   compare(canvas.layoutLines.length,0)
+   Compositor.activeMode="scrolling"
+   tryCompare(watcher,"announced",1)
+   compare(canvas.layoutLines[0][4],"Layout: Scrolling")
+   Compositor.focusedWorkspaceId=5
+   Compositor.activeMode="pages"
+   wait(20)
+   compare(canvas.layoutLines.length,1)
+   Compositor.activeMode="dwindle"
+   tryCompare(watcher,"announced",2)
+   compare(canvas.layoutLines[1][4],"Layout: Dwindle")
+   Compositor.outputName="another-output"
+   Compositor.activeMode="pages"
+   wait(20)
+   compare(canvas.layoutLines.length,2)
+   Compositor.activeMode="<img src='https://example.invalid'>"
+   wait(20)
+   compare(canvas.layoutLines.length,2)
+   Compositor.activeMode="pages"
+   wait(20)
+   compare(canvas.layoutLines.length,2)
+   watcher.active=false
+   Compositor.focusedWorkspaceId=3
+   Compositor.activeMode="dwindle"
+   Compositor.outputName="mock"
   }
   function test_05_optional_theme_gallery() {
    if(!OUTPUT) return

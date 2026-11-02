@@ -632,6 +632,8 @@ group may differ) and `state` reports it in `lastResult`.
 
 ## IPC
 
+On Umbriel, the workspace strip keeps the focused workspace's layout name visible (Dwindle, Scrolling, Pages, Master or Floating). Changing that workspace's layout also shows a short native OSD, including changes made with Super+L or directly through compositor IPC. Startup, reconnects and focusing another workspace stay quiet. The shell's existing event subscription supplies the state; no layout polling is added.
+
 - `omarchy-shell tusche-bar options` (Control Center, toggle) · `cc quick|health|cards|windows|motion|bar|island|dock|input|screens|devices|power|apps|system` (`sound`, `network`, `wifi`, `bluetooth` open Sound & network) · `preset today|tidy|focus` · `set <element> <variant>` · `save|load <name>` · `menu` (drop-down) · `search` (drop-down as a launcher) · `apps` (drop-down on the Apps list) · `recaptureBase` · `state`.
 - `omarchy-shell tusche-bar screenProfile <output> inherit|compact|detailed` applies a presentation profile directly; `focus start|show|release|toggle` controls the optional focus seal.
 - Module IPC (tests, keybinds): `tusche-quota toggle|select <agent>|state`, `tusche-status group net|phone|system|all`, `tusche-status member <widget-id>`, `tusche-centre state`.
