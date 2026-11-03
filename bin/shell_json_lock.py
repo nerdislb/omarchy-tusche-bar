@@ -3,7 +3,8 @@
 apply-layout.py (the bar) and idle-times.py (the Control Center's idle times)
 each read shell.json, change their part and replace the file. Without a lock
 two of them running at once both read the old file and the second replace
-drops the first one's change. They take this lock around the whole
+drops the first one's change. The bar's and the island's install-generation.py
+move their module URLs in it too. They take this lock around the whole
 read-modify-write. Omarchy's own writers do not know it; it only orders ours.
 """
 import contextlib

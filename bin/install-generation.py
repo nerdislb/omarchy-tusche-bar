@@ -24,13 +24,13 @@ def payload_files(source):
                   and p.name not in {'dev-install.sh', 'installed-generation.json'})
 
 
-def shell_json_locked(config):
-    # the plugin's shell.json lock (shell_json_lock.py), loaded by path so this
-    # file also works as an imported module
+def shell_json_locked(path):
+    # the plugin's file lock (shell_json_lock.py), loaded by path so this file
+    # also works as an imported module; keyed by the path it guards
     spec = importlib.util.spec_from_file_location('shell_json_lock', Path(__file__).resolve().parent / 'shell_json_lock.py')
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    return module.locked(config)
+    return module.locked(path)
 
 
 def atomic(path, data):
@@ -49,6 +49,13 @@ def atomic(path, data):
 
 
 def install(source, target, config):
+    # One install of a plugin at a time: its generation, module URLs and
+    # manifest are published together, never mixed from two runs.
+    with shell_json_locked(Path(target).resolve()):
+        return publish(source, target, config)
+
+
+def publish(source, target, config):
     source, target = source.resolve(), target.resolve()
     manifest = json.loads((source / 'manifest.json').read_text())
     assert manifest['id'] in {'nerdibeard.tusche-bar', 'nerdibeard.tusche-island'}
@@ -81,7 +88,9 @@ def install(source, target, config):
         # The source manifest is canonical, not an already-generated manifest.
         assert not value.startswith('generations/') and '..' not in value
         published['entryPoints'][key] = 'generations/' + generation + '/' + value
-    if config.exists() and manifest['id'] == 'nerdibeard.tusche-bar':
+    # Each plugin moves only its own tusche.* entries: those whose source lies
+    # in its own folder (the bar's modules, the island's bell).
+    if config.exists():
         with shell_json_locked(config):
             update_sources(config, target, folder)
     atomic(target / 'manifest.json', json.dumps(published, indent=2) + '\n')
@@ -89,7 +98,7 @@ def install(source, target, config):
     return generation
 
 
-# The bar's tusche.* layout entries point at module files of the new generation.
+# This plugin's tusche.* layout entries point at module files of the new generation.
 def update_sources(config, target, folder):
     current = json.loads(config.read_text())
     next_config = json.loads(json.dumps(current))
@@ -104,11 +113,16 @@ def update_sources(config, target, folder):
             if not isinstance(old, str) or not old.startswith(str(target) + '/'):
                 continue
             rel = old[len(str(target)) + 1:]
+            # only plain paths into this plugin's own folder: no "..", no way out
+            if '..' in Path(rel).parts:
+                continue
             if rel.startswith('generations/'):
                 parts = rel.split('/', 2)
                 rel = parts[2] if len(parts) == 3 else ''
-            if rel.startswith('modules/') and (folder / rel).is_file():
-                entry['source'] = str(folder / rel)
+            new = folder / rel
+            if (rel.startswith('modules/') and new.is_file() and not new.is_symlink()
+                    and new.resolve().is_relative_to(folder.resolve())):
+                entry['source'] = str(new)
     if next_config != current:
         atomic(config, json.dumps(next_config, indent=2) + '\n')
 
