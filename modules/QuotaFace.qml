@@ -26,7 +26,9 @@ Item {
   }
   readonly property var balance: { for (var i = 0; i < items.length; i++) if (items[i].percent < 0) return items[i]; return null }
   readonly property bool hidden: variant === "ondemand" && !(tightest && tightest.percent >= 0.75)
-  function tone(p) { return p >= 0.9 ? urgent : p >= 0.75 ? accent : p >= 0.5 ? (pal.yellow || accent) : (pal.green || fg) }
+  // Colour only when a limit runs short: healthy is the bar's own ink, from
+  // 70 % yellow, from 90 % urgent (hybrid rule "colour for state").
+  function tone(p) { return p >= 0.9 ? urgent : p >= 0.7 ? (pal.yellow || accent) : Util.alpha(fg, 0.78) }
   function shortLabel(l) { return /session|5.hour/i.test(l) ? "5h" : /week/i.test(l) ? "week" : l }
   function play() { if (loader.item && typeof loader.item.play === "function") loader.item.play() }
   visible: !hidden

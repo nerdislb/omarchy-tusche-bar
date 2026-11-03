@@ -352,7 +352,8 @@ Item {
     text: "X " + root.creditView.compact
     font.family: Style.font.family
     font.pixelSize: Style.font.caption
-    color: Util.alpha(root.fg, root.creditView.state === "ok" ? 0.9 : 0.5)
+    // secondary: quieter than the values beside it
+    color: Util.alpha(root.fg, root.creditView.state === "ok" ? 0.62 : 0.42)
     MouseArea {
       anchors.fill: parent
       cursorShape: Qt.PointingHandCursor

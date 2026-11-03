@@ -316,7 +316,8 @@ Item {
         key: modelData.id
         onClicked: root.openGroup(modelData.id, groupCell)
         onRightClicked: { root.popupAnchor = groupCell; root.openMember(modelData.members[0]) }
-        width: modelData.id === "phone" ? Style.space(58) : root.barSize + Style.space(2)
+        // the bar's shared cell (icon-slot), like every other bar icon
+        width: modelData.id === "phone" ? Style.space(58) : Style.bar.iconSlot
         StatusFace {
           anchors.fill: parent; group: modelData.id
           ink: root.fg; accent: Commons.Color.accent; urgent: Commons.Color.urgent; linkInk: Commons.Color.popups.border || root.fg
@@ -333,7 +334,7 @@ Item {
         id: devCell
         required property var modelData
         onClicked: { root.popupAnchor = devCell; root.openMember(modelData.member) }
-        width: root.barSize
+        width: Style.bar.iconSlot
         StatusFace {
           anchors.fill: parent; glyph: modelData.glyph || ""; chip: !!modelData.chip
           ink: root.fg; glyphInk: modelData.color; urgent: Commons.Color.urgent
@@ -348,7 +349,7 @@ Item {
       visible: root.variant === "deviations"
       active: root.popupGroup === "all" && root.popupOpen
       key: "all"
-      width: root.barSize + Style.space(2)
+      width: Style.bar.iconSlot
       onClicked: root.openGroup("all", moreCell)
       StatusFace { anchors.fill: parent; glyph: "\u{f01d8}"; ink: root.fg; glyphInk: Util.alpha(root.fg, 0.7); barSize: root.barSize }
     }

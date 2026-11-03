@@ -389,27 +389,23 @@ Item {
 
   // Reserve the longest label's width so cycling layouts does not move the
   // neighbouring widgets. Unknown/disconnected state has no stale label.
-  TextMetrics { id: layoutMetrics; font: layoutName.font; text: "Scrolling" }
+  // A quiet secondary line in lower case, set off by space, not a rule.
+  TextMetrics { id: layoutMetrics; font: layoutName.font; text: "scrolling" }
   Item {
     id: layoutStatus
     visible: root.variant !== "none" && root.layoutLabel !== ""
     x: root.menuWidth + face.implicitWidth
-    width: visible ? Math.ceil(layoutMetrics.advanceWidth) + Style.space(20) : 0
+    width: visible ? Math.ceil(layoutMetrics.advanceWidth) + Style.space(14) : 0
     height: root.barSize
-    Rectangle {
-      x: Style.space(5); anchors.verticalCenter: parent.verticalCenter
-      width: 1; height: Math.round(root.barSize * 0.4)
-      color: Util.alpha(root.fg, 0.25)
-    }
     Text {
       id: layoutName
-      x: Style.space(13); anchors.verticalCenter: parent.verticalCenter
-      text: root.layoutLabel
+      x: Style.space(8); anchors.verticalCenter: parent.verticalCenter
+      text: root.layoutLabel.toLowerCase()
       textFormat: Text.PlainText
       renderType: Text.NativeRendering
       font.family: Style.font.family
-      font.pixelSize: Style.font.bodySmall
-      color: Util.alpha(root.fg, 0.8)
+      font.pixelSize: Style.font.caption
+      color: Util.alpha(root.fg, 0.62)
     }
   }
 

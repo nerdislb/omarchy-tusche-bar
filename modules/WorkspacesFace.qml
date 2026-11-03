@@ -120,7 +120,8 @@ Item {
         }
       }
 
-      // active marker + rule underneath, drawn out while it travels
+      // the active marker, drawn out while it travels; the filled pip alone
+      // says which one is active (no second rule underneath)
       readonly property real markerWidth: root.activeSpan * (pips.cell + pips.gap) - pips.gap + 2
       Rectangle {
         x: root.activeF * (pips.cell + pips.gap) - 1
@@ -136,12 +137,6 @@ Item {
           font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.bodySmall
           color: root.barColor
         }
-      }
-      Rectangle {
-        x: root.activeF * (pips.cell + pips.gap) - 1
-        y: root.barSize - Style.space(5)
-        width: pips.markerWidth; height: Math.max(1, Style.space(2))
-        color: Util.alpha(root.accent, 0.8)
       }
     }
   }
