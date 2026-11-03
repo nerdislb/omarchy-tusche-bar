@@ -88,8 +88,8 @@ def publish(source, target, config):
         # The source manifest is canonical, not an already-generated manifest.
         assert not value.startswith('generations/') and '..' not in value
         published['entryPoints'][key] = 'generations/' + generation + '/' + value
-    # Each plugin moves only its own tusche.* entries: those whose source lies
-    # in its own folder (the bar's modules, the island's bell).
+    # Each plugin moves only its own entries: those whose source lies in its
+    # own folder (the bar's tusche.* modules, the island's bell).
     if config.exists():
         with shell_json_locked(config):
             update_sources(config, target, folder)
@@ -98,7 +98,8 @@ def publish(source, target, config):
     return generation
 
 
-# This plugin's tusche.* layout entries point at module files of the new generation.
+# This plugin's custom-module entries (their source in its own folder) point at
+# module files of the new generation.
 def update_sources(config, target, folder):
     current = json.loads(config.read_text())
     next_config = json.loads(json.dumps(current))
@@ -107,7 +108,7 @@ def update_sources(config, target, folder):
         if not isinstance(entries, list):
             continue
         for entry in entries:
-            if not isinstance(entry, dict) or not str(entry.get('id', '')).startswith('tusche.'):
+            if not isinstance(entry, dict):
                 continue
             old = entry.get('source')
             if not isinstance(old, str) or not old.startswith(str(target) + '/'):
