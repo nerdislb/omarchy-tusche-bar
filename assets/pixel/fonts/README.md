@@ -1,7 +1,7 @@
 # Pixel style fonts
 
-- `TuschePixel-Regular.ttf`, `TuschePixel-Bold.ttf`: the shell's family in the pixel
-  style. Tiny5's letters plus `TuschePixelSymbols.ttf` in one font, so no symbol
+- `TuschePixel-Regular.ttf`, `TuschePixel-Bold.ttf`: the pixel style's alternative
+  family (`bin/pixel-style.py font tiny5`). Tiny5's letters plus `TuschePixelSymbols.ttf` in one font, so no symbol
   depends on Qt's font fallback (its choice for the first text it lays out is not
   reliable). Bold carries the Regular pixels: Tiny5's bold grows them off the grid.
   SIL OFL 1.1 like Tiny5 (`OFL-tiny5.txt`); symbol notes in `LICENSE-symbols.txt`.
@@ -13,8 +13,9 @@
   the shell, Tusche Bar and Island use), compiled from the VectorCraft master
   `../symbols/tusche-pixel-symbols.vectorcraft`; `../symbols/build.sh` rebuilds all.
 
-- `TuscheDeparture-Regular.ttf`, `TuscheDeparture-Bold.ttf`: the second pixel font,
-  chosen with `bin/pixel-style.py font departure`. Departure Mono's letters (11 px
+- `TuscheDeparture-Regular.ttf`, `TuscheDeparture-Bold.ttf`: the pixel style's
+  default font (`bin/pixel-style.py font departure`; `font tiny5` picks Tusche
+  Pixel instead). Departure Mono's letters (11 px
   per em, 8-px caps; outlines converted to TrueType) plus the same symbols on its
   grid (`TuscheDepartureSymbols.ttf`, one symbol cell = one font pixel). Bold
   carries the Regular pixels; Departure Mono has no bold. SIL OFL 1.1 like

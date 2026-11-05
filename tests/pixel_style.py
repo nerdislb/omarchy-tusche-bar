@@ -109,9 +109,11 @@ class PixelStyle(unittest.TestCase):
         self.assertTrue(out['shellBlock'] and out['umbrielInclude'] and out['nativeText'])
         self.assertEqual(out['corners'], 'sharp')
         self.assertIn('pixel-backgrounds', out['background'])
-        self.assertIn('family = "Tusche Pixel"', shell.read_text())
-        # base-size 14: the bar icon token that lands on 16 px
-        self.assertIn('icon-font = 14', shell.read_text())
+        # Departure unless another pixel font was chosen
+        self.assertEqual(out['font'], 'departure')
+        self.assertIn('family = "Tusche Departure"', shell.read_text())
+        # base-size 14: the bar icon token that lands on 22 px
+        self.assertIn('icon-font = 19', shell.read_text())
         self.assertEqual(json.loads((self.home / '.config/omarchy/shell.json').read_text())['bar']['background'], 'opaque')
         self.assertIn('"tusche-pixel.toml"', (self.home / '.config/umbriel/config.toml').read_text())
         self.assertTrue((self.home / '.config/omarchy/hooks/theme-set.d/80-tusche-pixel').exists())
@@ -140,36 +142,36 @@ class PixelStyle(unittest.TestCase):
         shell = self.home / '.config/omarchy/shell.toml'
         before = sha(shell)
         # the Tusche style is on: the choice is only recorded
-        out = self.run_script('font', 'departure')
-        self.assertEqual(out['font'], 'departure')
+        out = self.run_script('font', 'tiny5')
+        self.assertEqual(out['font'], 'tiny5')
         self.assertEqual(sha(shell), before)
         self.assertNotIn('restart', self.calls())
         self.run_script('set', 'pixel')
         text = shell.read_text()
-        self.assertIn('family = "Tusche Departure"', text)
-        self.assertIn('pixel-em = 11', text)
-        self.assertIn('heading = 22', text)
-        # base-size 14: the bar icon token that lands on 22 px
-        self.assertIn('icon-font = 19', text)
+        self.assertIn('family = "Tusche Pixel"', text)
+        self.assertIn('pixel-em = 8', text)
+        # base-size 14: the bar icon token that lands on 16 px
+        self.assertIn('icon-font = 14', text)
         fonts = self.home / '.local/share/fonts'
         self.assertTrue((fonts / 'tusche-departure/TuscheDeparture-Regular.ttf').exists())
         self.assertTrue((fonts / 'tusche-departure/OFL-departure-mono.txt').exists())
         restarts = self.calls().count('restart')
-        self.run_script('font', 'tiny5')
+        self.run_script('font', 'departure')
         text = shell.read_text()
-        self.assertIn('family = "Tusche Pixel"', text)
-        self.assertIn('pixel-em = 8', text)
-        self.assertIn('icon-font = 14', text)
+        self.assertIn('family = "Tusche Departure"', text)
+        self.assertIn('pixel-em = 11', text)
+        self.assertIn('heading = 22', text)
+        self.assertIn('icon-font = 19', text)
         self.assertEqual(text.count('>>> tusche pixel style'), 1)
         self.assertEqual(self.calls().count('restart'), restarts + 1)
         # the same font again: nothing to restart
-        self.run_script('font', 'tiny5')
-        self.assertEqual(self.calls().count('restart'), restarts + 1)
         self.run_script('font', 'departure')
+        self.assertEqual(self.calls().count('restart'), restarts + 1)
+        self.run_script('font', 'tiny5')
         out = self.run_script('set', 'tusche')
         self.assertEqual(sha(shell), before)
-        self.assertEqual(out['font'], 'departure')
-        self.assertEqual(self.run_script('status')['font'], 'departure')
+        self.assertEqual(out['font'], 'tiny5')
+        self.assertEqual(self.run_script('status')['font'], 'tiny5')
 
     def test_previous_corner_choice_returns(self):
         subprocess.run([str(self.bin / 'omarchy-hyprland-corners'), 'rounded'], env={'HOME': str(self.home)}, check=True)

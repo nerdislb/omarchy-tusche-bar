@@ -3,7 +3,7 @@
 
     pixel-style.py status                 prints the state as JSON
     pixel-style.py set pixel|tusche [--no-restart] [--no-background]
-    pixel-style.py font tiny5|departure [--no-restart]   the pixel style's font
+    pixel-style.py font departure|tiny5 [--no-restart]   the pixel style's font
     pixel-style.py ensure-include         adds this style's file to Umbriel's includes
     pixel-style.py ensure-fonts           installs Tusche Pixel (Tiny5 + the pixel symbols)
     pixel-style.py retheme                after a theme switch: a new dot grid (theme-set hook)
@@ -12,8 +12,8 @@ The pixel style is a layer over the theme: its palette stays. Switching to it
 records what it replaces (Omarchy's corner choice, the current background) and
 then:
 
-  * appends a managed block to ~/.config/omarchy/shell.toml (Tusche Pixel for the shell
-    alone, font sizes on the pixel grid, opaque plates), which the shell reads
+  * appends a managed block to ~/.config/omarchy/shell.toml (the pixel family for the
+    shell alone, font sizes on the pixel grid, opaque plates), which the shell reads
     live;
   * squares the corners with Omarchy's own toggle (`omarchy-hyprland-corners`),
     which shell and Umbriel both follow;
@@ -25,7 +25,7 @@ then:
     Nerd Font codepoints in one family, so no symbol depends on Qt's font
     fallback (it stays installed; nothing else asks for it), and Tusche
     Departure, the same symbols with Departure Mono's letters: `font` picks
-    which one the pixel style uses (Tiny5 unless chosen otherwise), and the
+    which one the pixel style uses (Departure unless chosen otherwise), and the
     choice outlives a return to the Tusche style;
   * turns on native text for the shell (Qt's default text blurs a pixel face)
     and restarts the shell, the one step that cannot happen live.
@@ -73,7 +73,7 @@ PIXEL_FONTS = {
                   ('icon-large', 33)],
     },
 }
-DEFAULT_FONT = 'tiny5'
+DEFAULT_FONT = 'departure'
 
 
 def pixel_font(state):
