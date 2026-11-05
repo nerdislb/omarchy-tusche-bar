@@ -93,6 +93,27 @@ var DEVICE_LINKS = [
   { key: "brightness", area: "screens", section: "ARRANGEMENT", label: "Brightness", widgets: ["nerdibeard.monitor", "omarchy.monitor"],
     note: "Brightness and the laptop display" }
 ]
+// The desktop's style: the Tusche look or the pixel style over the same theme
+// (bin/pixel-style.py). A switch restarts the shell, this window with it, so
+// it is a link run in a session of its own rather than a staged value.
+var STYLE_SCRIPT = 'p="$HOME/.config/omarchy/plugins/nerdibeard.tusche-bar"; '
+  + 'python3 "$p/generations/$(jq -r .generation "$p/installed-generation.json")/bin/pixel-style.py"'
+var STYLE_LINKS = [
+  { key: "style-pixel", area: "cards", section: "STYLE", label: "Pixel style",
+    command: STYLE_SCRIPT + " set pixel",
+    note: "Tiny5, square flat plates, segments, a dot grid; the theme's colours stay. The shell restarts once." },
+  { key: "style-tusche", area: "cards", section: "STYLE", label: "Tusche style",
+    command: STYLE_SCRIPT + " set tusche",
+    note: "Back to materials, rounded corners and the theme's background, exactly as before." }
+]
+function styleLinks() {
+  return STYLE_LINKS.map(function(l) {
+    return { id: "link." + l.key, domain: "link", kind: "link", source: "tusche", key: l.key,
+             area: l.area, section: l.section, label: l.label, note: l.note, opens: "action",
+             widget: "", route: "", action: l.command, hint: "bin/pixel-style.py", available: true, why: "",
+             values: [], terms: ["style", "pixel", "tusche", "look", l.note] }
+  })
+}
 // Where this bar widget can open from: "bar" (an entry of the bar's layout;
 // the shell summons it), "group" (embedded in a Tusche status group, which
 // mounts it: tusche-status member) or "" (nowhere).
@@ -457,7 +478,7 @@ function liveState(options, config, cardsStatus, extrasFacts, omarchy, hypr, plu
            idle: idle ? idle.values : null,
            idleRaw: idle ? idle.raw : {},
            link: {},
-           linkSpecs: deviceLinks(config, plugins).concat(omarchy && Array.isArray(omarchy.links) ? omarchy.links : []) }
+           linkSpecs: deviceLinks(config, plugins).concat(styleLinks(), omarchy && Array.isArray(omarchy.links) ? omarchy.links : []) }
 }
 // Can this setting be changed now? An extra only while its live value is one
 // of its choices (not while unknown, failed or not installed); an Omarchy row

@@ -1,0 +1,9 @@
+# Written by the Tusche Bar's pixel style (bin/pixel-style.py). Included last by
+# ~/.config/umbriel/config.toml ([include.optional]); the Tusche style leaves only
+# this comment here. Settings in config.toml itself still win.
+
+# Flat, opaque shell plates: no blur behind the bar's surfaces and Omarchy's own.
+[[layer_rule]]
+match.namespace = "^(omarchy-.*|tusche-.*|nerdibeard-.*|nb-gaming|lacquer)$"
+blur = false
+blur_popups = false

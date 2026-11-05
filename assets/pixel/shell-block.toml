@@ -1,0 +1,24 @@
+# >>> tusche pixel style (written by the Tusche Bar; switch back in its Control Center) >>>
+# Tiny5 for the shell alone; pixel faces want whole multiples of their grid.
+[font]
+family = "Tiny5"
+caption = 16
+body-small = 16
+body = 16
+subtitle = 16
+title = 16
+heading = 16
+display = 32
+display-large = 48
+# Flat, opaque plates: nothing to blur behind them.
+[popups]
+background-alpha = 1.0
+[tooltip]
+background-alpha = 1.0
+[notifications]
+background-alpha = 1.0
+[menu]
+background-alpha = 1.0
+[launcher]
+background-alpha = 1.0
+# <<< tusche pixel style <<<
