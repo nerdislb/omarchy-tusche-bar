@@ -103,6 +103,7 @@ class PixelStyle(unittest.TestCase):
         self.assertEqual(json.loads((self.home / '.config/omarchy/shell.json').read_text())['bar']['background'], 'opaque')
         self.assertIn('"tusche-pixel.toml"', (self.home / '.config/umbriel/config.toml').read_text())
         self.assertTrue((self.home / '.config/omarchy/hooks/theme-set.d/80-tusche-pixel').exists())
+        self.assertTrue((self.home / '.config/umbriel/tusche-pixel-dither.glsl').exists())
         umbriel_with_include = sha(self.home / '.config/umbriel/config.toml')
         # repeating repairs nothing and restarts nothing
         restarts = self.calls().count('restart')
@@ -117,6 +118,7 @@ class PixelStyle(unittest.TestCase):
         self.assertEqual(out['background'], original_bg)
         self.assertFalse(out['nativeText'] or out['umbrielInclude'])
         self.assertFalse((self.home / '.config/omarchy/hooks/theme-set.d/80-tusche-pixel').exists())
+        self.assertFalse((self.home / '.config/umbriel/tusche-pixel-dither.glsl').exists())
         # the include stays (an empty file), Umbriel's config is not rewritten again
         self.assertEqual(sha(self.home / '.config/umbriel/config.toml'), umbriel_with_include)
         self.assertEqual(self.calls().count('restart'), 2)

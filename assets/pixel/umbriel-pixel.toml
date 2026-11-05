@@ -7,3 +7,15 @@
 match.namespace = "^(omarchy-.*|tusche-.*|nerdibeard-.*|nb-gaming|lacquer)$"
 blur = false
 blur_popups = false
+
+# Windows dissolve in and out on a Bayer grid (tusche-pixel-dither.glsl, next
+# to this file). The events keep their own durations and curves.
+[effects.preset.tusche-dither]
+kind = "animation"
+shader = "tusche-pixel-dither.glsl"
+
+[animation.windows_in]
+effect = "tusche-dither"
+
+[animation.windows_out]
+effect = "tusche-dither"

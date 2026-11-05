@@ -15,8 +15,8 @@ then:
     live;
   * squares the corners with Omarchy's own toggle (`omarchy-hyprland-corners`),
     which shell and Umbriel both follow;
-  * writes ~/.config/umbriel/tusche-pixel.toml (no blur behind shell surfaces),
-    which Umbriel includes last;
+  * writes ~/.config/umbriel/tusche-pixel.toml (no blur behind shell surfaces,
+    windows dissolving in and out on a Bayer grid), which Umbriel includes last;
   * sets a dot-grid background drawn from the theme's colours;
   * turns on native text for the shell (Qt's default text blurs a pixel face)
     and restarts the shell, the one step that cannot happen live.
@@ -217,12 +217,24 @@ def ensure_include(p):
     return 'added'
 
 
+SHADER = 'tusche-pixel-dither.glsl'
+
+
 def write_umbriel(p, style):
+    """The include and, for the pixel style, its window dissolve shader.
+    The shader goes first, so Umbriel never reads a preset without its file."""
+    shader = p['umbriel_dir'] / SHADER
+    if style == 'pixel':
+        data = (ASSETS / SHADER).read_bytes()
+        if not shader.exists() or shader.read_bytes() != data:
+            atomic_write(shader, data)
     src = ASSETS / ('umbriel-pixel.toml' if style == 'pixel' else 'umbriel-tusche.toml')
     data = src.read_bytes()
     dst = p['umbriel_include']
     if not dst.exists() or dst.read_bytes() != data:
         atomic_write(dst, data)
+    if style != 'pixel' and shader.exists():
+        shader.unlink()
 
 
 # ---------------------------------------------------------------- corners

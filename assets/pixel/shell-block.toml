@@ -13,6 +13,9 @@ display-large = 48
 # The Tusche Bar and Island draw their pixel faces while this says so.
 [tusche]
 style = "pixel"
+# Sliders as whole-pixel segments.
+[controls]
+slider = "segments"
 # Flat, opaque plates: nothing to blur behind them.
 [bar]
 background-alpha = 1.0
