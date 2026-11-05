@@ -199,6 +199,10 @@ def check_pixel():
     hook = (CONFIG / 'omarchy' / 'hooks' / 'theme-set.d' / '80-tusche-pixel').exists()
     want = style == 'pixel'
     parts = {'shell.toml block': block, 'Umbriel include': include_on, 'native text': flag, 'theme hook': hook}
+    # `font normal` keeps the shell's own font: native text is not needed then,
+    # and may still be on when it was before the pixel style
+    if want and (state or {}).get('font') == 'normal':
+        parts.pop('native text')
     wrong = [k for k, v in parts.items() if v != want]
     if wrong:
         fail('pixel style', f'recorded {style}, but ' + ', '.join(f'{k} {"missing" if want else "left over"}' for k in wrong)

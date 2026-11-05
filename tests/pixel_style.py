@@ -173,6 +173,36 @@ class PixelStyle(unittest.TestCase):
         self.assertEqual(out['font'], 'tiny5')
         self.assertEqual(self.run_script('status')['font'], 'tiny5')
 
+    def test_normal_font_keeps_the_look_without_a_pixel_face(self):
+        shell = self.home / '.config/omarchy/shell.toml'
+        before = sha(shell)
+        self.run_script('font', 'normal')
+        out = self.run_script('set', 'pixel')
+        text = shell.read_text()
+        # the look stays: block, segments, opaque plates, Umbriel's dither, corners
+        self.assertEqual(out['font'], 'normal')
+        self.assertIn('pixel-face = false', text)
+        self.assertIn('slider = "segments"', text)
+        self.assertTrue(out['umbrielInclude'])
+        self.assertEqual(out['corners'], 'sharp')
+        # no pixel face: no family, no grid, no sizes, no icon token, no native text
+        for absent in ('family =', 'pixel-grid', 'pixel-em', 'icon-font', 'heading ='):
+            self.assertNotIn(absent, text)
+        self.assertFalse(out['nativeText'])
+        restarts = self.calls().count('restart')
+        out = self.run_script('font', 'departure')
+        self.assertIn('family = "Tusche Departure"', shell.read_text())
+        self.assertTrue(out['nativeText'])
+        self.assertEqual(self.calls().count('restart'), restarts + 1)
+        out = self.run_script('font', 'normal')
+        self.assertNotIn('family =', shell.read_text())
+        self.assertFalse(out['nativeText'])
+        self.assertEqual(self.calls().count('restart'), restarts + 2)
+        out = self.run_script('set', 'tusche')
+        self.assertEqual(sha(shell), before)
+        self.assertFalse(out['nativeText'])
+        self.assertEqual(out['font'], 'normal')
+
     def test_previous_corner_choice_returns(self):
         subprocess.run([str(self.bin / 'omarchy-hyprland-corners'), 'rounded'], env={'HOME': str(self.home)}, check=True)
         self.run_script('set', 'pixel')

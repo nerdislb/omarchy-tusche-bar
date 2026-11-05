@@ -3,7 +3,7 @@
 
     pixel-style.py status                 prints the state as JSON
     pixel-style.py set pixel|tusche [--no-restart] [--no-background]
-    pixel-style.py font departure|tiny5 [--no-restart]   the pixel style's font
+    pixel-style.py font departure|tiny5|normal [--no-restart]   the pixel style's font
     pixel-style.py ensure-include         adds this style's file to Umbriel's includes
     pixel-style.py ensure-fonts           installs Tusche Pixel (Tiny5 + the pixel symbols)
     pixel-style.py retheme                after a theme switch: a new dot grid (theme-set hook)
@@ -26,9 +26,12 @@ then:
     fallback (it stays installed; nothing else asks for it), and Tusche
     Departure, the same symbols with Departure Mono's letters: `font` picks
     which one the pixel style uses (Departure unless chosen otherwise), and the
-    choice outlives a return to the Tusche style;
-  * turns on native text for the shell (Qt's default text blurs a pixel face)
-    and restarts the shell, the one step that cannot happen live.
+    choice outlives a return to the Tusche style. `font normal` keeps the
+    shell's own font and text sizes: the pixel look (plates, segments, grid,
+    dithered windows, pointer) without a pixel face;
+  * turns on native text for the shell (Qt's default text blurs a pixel face;
+    not with `font normal`) and restarts the shell, the one step that cannot
+    happen live.
 
 Switching back removes exactly what was added and restores what was recorded,
 so ~/.config/omarchy/shell.toml returns byte for byte when nobody edited it in
@@ -58,6 +61,8 @@ INCLUDE = 'tusche-pixel.toml'
 #   tiny5      Tiny5, 8 px per em, 5-px caps: everything at twice its grid
 #   departure  Departure Mono, 11 px per em, 8-px caps: text at its own grid,
 #              headings, icons and the clock at twice and three times
+#   normal     no pixel face: the shell's own font and sizes, everything else
+#              of the pixel style stays (family None: no [font] section)
 PIXEL_FONTS = {
     'tiny5': {
         'family': 'Tusche Pixel', 'note': 'Tusche Pixel (Tiny5 letters + the pixel symbols)',
@@ -72,8 +77,18 @@ PIXEL_FONTS = {
                   ('heading', 22), ('display', 33), ('display-large', 44), ('icon-small', 22), ('icon', 22),
                   ('icon-large', 33)],
     },
+    'normal': {
+        'family': None, 'note': "The shell's own font",
+        'em': None, 'text': None, 'icon': None, 'sizes': [],
+    },
 }
 DEFAULT_FONT = 'departure'
+FONT_NAMES = {'tiny5': 'Tiny5', 'departure': 'Departure Mono', 'normal': "the shell's own font"}
+
+
+def pixel_face(font):
+    """Whether the font is a pixel face (native text, sizes on its grid)."""
+    return bool(PIXEL_FONTS[font]['family'])
 
 
 def pixel_font(state):
@@ -171,14 +186,39 @@ def base_size(p):
 
 def block_text(p, font=DEFAULT_FONT):
     f = PIXEL_FONTS[font]
-    # the shell scales [bar] icon-font by base-size / 12 and rounds: pick the
-    # whole number that lands on the font's grid size for icons
-    icon_font = round(f['icon'] * 12 / base_size(p))
+    if pixel_face(font):
+        font_section = (f"# {f['note']} for the shell alone; pixel\n"
+                        "# faces want whole multiples of their grid.\n"
+                        "[font]\n"
+                        f"family = \"{f['family']}\"\n"
+                        "# icons at their own size on whole pixels, never scaled or smoothed\n"
+                        "pixel-grid = true\n"
+                        + ''.join(f'{k} = {v}\n' for k, v in f['sizes']))
+        tusche_section = ("# The Tusche Bar and Island draw their pixel faces while this says so; the\n"
+                          "# island and desk clock keep their sizes on the font's grid (pixels per em)\n"
+                          "# and never go below the smallest text size.\n"
+                          "[tusche]\n"
+                          'style = "pixel"\n'
+                          f"pixel-em = {f['em']}\n"
+                          f"pixel-text = {f['text']}\n")
+        # the shell scales [bar] icon-font by base-size / 12 and rounds: pick the
+        # whole number that lands on the font's grid size for icons
+        icon_font = round(f['icon'] * 12 / base_size(p))
+        icon_section = (f"# Bar icons at {f['icon']} px: the shell scales this token by base-size / 12, so the\n"
+                        f"# switch writes the value that lands on {f['icon']} for the base size in use.\n"
+                        f"icon-font = {icon_font}\n")
+    else:
+        font_section = ("# The shell keeps its own font and text sizes: the pixel look without a\n"
+                        "# pixel face (pixel-style.py font normal).\n")
+        tusche_section = ("# The Tusche Bar and Island draw their pixel look while this says so;\n"
+                          "# without a pixel face nothing snaps to a font grid.\n"
+                          "[tusche]\n"
+                          'style = "pixel"\n'
+                          "pixel-face = false\n")
+        icon_section = ''
     text = (ASSETS / 'shell-block.toml').read_text()
-    for key, value in (('@FONT_NOTE@', f['note']), ('@FAMILY@', f['family']),
-                       ('@SIZES@', ''.join(f'{k} = {v}\n' for k, v in f['sizes'])),
-                       ('@PIXEL_EM@', str(f['em'])), ('@PIXEL_TEXT@', str(f['text'])),
-                       ('@ICON_PX@', str(f['icon'])), ('@ICON_FONT@', str(icon_font))):
+    for key, value in (('@FONT_SECTION@', font_section), ('@TUSCHE_SECTION@', tusche_section),
+                       ('@ICON_SECTION@', icon_section)):
         text = text.replace(key, value)
     return text.encode()
 
@@ -604,7 +644,8 @@ def set_style(p, style, restart=True, background=True):
         except (OSError, RuntimeError, subprocess.SubprocessError) as error:
             print('warning: fonts: ' + str(error), file=sys.stderr)
             fonts_changed = False
-        changed_text = native_text(p, True) or fonts_changed
+        native = pixel_face(pixel_font(state)) or bool(state.get('previous', {}).get('nativeText'))
+        changed_text = native_text(p, native) or fonts_changed
     else:
         previous = state.get('previous', {})
         remove_block(p, state)
@@ -651,8 +692,12 @@ def set_font(p, font, restart=True):
         fonts_changed = False
     add_block(p, state)
     save_state(p, state)
-    if restart and (fonts_changed or font != before):
-        notify('Pixel font: ' + {'tiny5': 'Tiny5', 'departure': 'Departure Mono'}[font])
+    # a pixel face needs native text; the shell's own font draws as in the
+    # Tusche style (native text that was on before the pixel style stays on)
+    native = pixel_face(font) or bool(state.get('previous', {}).get('nativeText'))
+    native_changed = native_text(p, native)
+    if restart and (fonts_changed or font != before or native_changed):
+        notify('Pixel font: ' + FONT_NAMES[font])
         restart_shell()
     return status(p)
 

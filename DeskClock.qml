@@ -35,15 +35,18 @@ Scope {
 
     readonly property color ink: Commons.Color.foreground
     // sizes on the pixel font's grid ([tusche] pixel-em/pixel-text from the
-    // pixel style; Tiny5: 8 and 16, so 64 and 16 stay as they are)
+    // pixel style; Tiny5: 8 and 16, so 64 and 16 stay as they are). With the
+    // shell's own font (`pixel-face = false`) the sizes stay as asked and the
+    // text is smoothed like the rest of the shell.
     readonly property var shellValues: Commons.Color.shellValues || {}
+    readonly property bool pixelFace: String(shellValues["tusche.pixel-face"]) !== "false"
     readonly property int em: Math.max(1, Math.round(Number(shellValues["tusche.pixel-em"])) || 8)
     readonly property int minText: Math.max(1, Math.round(Number(shellValues["tusche.pixel-text"])) || 16)
-    function onGrid(px) { return Math.max(minText, Math.round(px / em) * em) }
+    function onGrid(px) { return pixelFace ? Math.max(minText, Math.round(px / em) * em) : px }
     Text {
       id: time
-      renderType: Text.NativeRendering
-      antialiasing: false
+      renderType: desk.pixelFace ? Text.NativeRendering : Text.QtRendering
+      antialiasing: !desk.pixelFace
       textFormat: Text.PlainText
       text: Qt.formatTime(clock.date, "hh:mm")
       font.family: Style.font.family
@@ -53,8 +56,8 @@ Scope {
     Text {
       id: day
       y: time.height + 2
-      renderType: Text.NativeRendering
-      antialiasing: false
+      renderType: desk.pixelFace ? Text.NativeRendering : Text.QtRendering
+      antialiasing: !desk.pixelFace
       textFormat: Text.PlainText
       text: root.weekdays[clock.date.getDay()] + ", " + clock.date.getDate() + " " + root.months[clock.date.getMonth()]
       font.family: Style.font.family

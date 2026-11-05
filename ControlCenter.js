@@ -110,7 +110,10 @@ var STYLE_LINKS = [
     note: "The pixel style's face: 8-px caps at their own grid, headings at twice. The shell restarts once when the pixel style is on." },
   { key: "pixel-font-tiny5", area: "cards", section: "STYLE", label: "Pixel font: Tiny5",
     command: STYLE_SCRIPT + " font tiny5",
-    note: "A chunkier, less legible pixel face: 5-px caps at twice their grid. The shell restarts once when the pixel style is on." }
+    note: "A chunkier, less legible pixel face: 5-px caps at twice their grid. The shell restarts once when the pixel style is on." },
+  { key: "pixel-font-normal", area: "cards", section: "STYLE", label: "Pixel font: normal",
+    command: STYLE_SCRIPT + " font normal",
+    note: "The pixel look with the shell's own font and text sizes: plates, segments, the dot grid and the dithered windows stay. The shell restarts once when the pixel style is on." }
 ]
 // The configuration check (bin/doctor.py), in a floating terminal.
 STYLE_LINKS.push({ key: "doctor", area: "system", section: "TUSCHE", label: "Check the configuration",
