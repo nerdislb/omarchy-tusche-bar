@@ -224,6 +224,7 @@ Item {
   // The privacy curtain (bin/curtain.py) is on while its Umbriel file holds the
   // capture rule. Watched, not polled: the script rewrites it atomically.
   property bool curtainOn: false
+  readonly property string curtainTip: "Privacy curtain on: captures show the wallpaper · click to lift it"
   FileView {
     id: curtainFile
     path: root.home + "/.config/umbriel/tusche-curtain.toml"
@@ -290,8 +291,7 @@ Item {
   // Deviations: what is worth showing right now.
   readonly property var deviations: {
     var out = []
-    if (curtainOn) out.push({ glyph: "\u{f0209}", color: Commons.Color.accent, member: "tusche.curtain",
-      tip: "Privacy curtain on: captures show the wallpaper · click to lift it" })
+    if (curtainOn) out.push({ glyph: "\u{f0209}", color: Commons.Color.accent, member: "tusche.curtain", tip: curtainTip })
     if (!wifiUp) out.push({ glyph: "\u{f05aa}", color: Commons.Color.urgent, member: "omarchy.network" })
     if (vpnUp) out.push({ glyph: "\u{f099d}", color: Commons.Color.accent, member: "io.github.iamfitsum.omarchy-proton-vpn" })
     if (!tailscaleUp) out.push({ glyph: "\u{f0570}", color: Util.alpha(fg, 0.5), member: "omarchy.tailscale" })
@@ -325,6 +325,16 @@ Item {
     id: row
     height: root.barSize
     spacing: 0
+
+    // the privacy curtain in the groups variant; deviations list it themselves
+    Cell {
+      id: curtainCell
+      visible: root.variant === "groups" && root.curtainOn
+      width: Style.bar.iconSlot
+      tooltipText: root.curtainTip
+      onClicked: { root.popupAnchor = curtainCell; root.openMember("tusche.curtain") }
+      StatusFace { anchors.fill: parent; glyph: "\u{f0209}"; ink: root.fg; glyphInk: Commons.Color.accent; barSize: root.barSize }
+    }
 
     // groups
     Repeater {
