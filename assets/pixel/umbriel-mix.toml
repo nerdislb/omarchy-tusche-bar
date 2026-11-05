@@ -1,0 +1,16 @@
+# Written by the Tusche Bar's pixel style (bin/pixel-style.py), style "mix".
+# Included last by ~/.config/umbriel/config.toml ([include.optional]). The
+# Tusche style's shell keeps its blur; only windows take the pixel style's
+# dissolve. Settings in config.toml itself still win.
+
+# Windows dissolve in and out on a Bayer grid (tusche-pixel-dither.glsl, next
+# to this file). The events keep their own durations and curves.
+[effects.preset.tusche-dither]
+kind = "animation"
+shader = "tusche-pixel-dither.glsl"
+
+[animation.windows_in]
+effect = "tusche-dither"
+
+[animation.windows_out]
+effect = "tusche-dither"

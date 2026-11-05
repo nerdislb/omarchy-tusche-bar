@@ -203,6 +203,45 @@ class PixelStyle(unittest.TestCase):
         self.assertFalse(out['nativeText'])
         self.assertEqual(out['font'], 'normal')
 
+    def test_mix_keeps_the_windows_and_grid_with_the_tusche_shell(self):
+        shell = self.home / '.config/omarchy/shell.toml'
+        shell_json = self.home / '.config/omarchy/shell.json'
+        shader = self.home / '.config/umbriel/tusche-pixel-dither.glsl'
+        hook = self.home / '.config/omarchy/hooks/theme-set.d/80-tusche-pixel'
+        before = sha(shell)
+        original_bg = os.path.realpath(self.home / '.local/state/omarchy/current/background')
+        out = self.run_script('set', 'mix')
+        # the shell stays the Tusche style's: no block, no native text, no restart
+        self.assertEqual(out['style'], 'mix')
+        self.assertFalse(out['shellBlock'] or out['nativeText'])
+        self.assertEqual(sha(shell), before)
+        self.assertEqual(json.loads(shell_json.read_text())['bar']['background'], 'none')
+        self.assertNotIn('restart', self.calls())
+        self.assertEqual([c for c in self.calls() if c.startswith('cursor')], [])
+        # the pixel style's windows: dissolve (blur stays), square corners, dot grid
+        self.assertTrue(out['windowDither'])
+        self.assertFalse(out['umbrielInclude'])
+        self.assertTrue(shader.exists())
+        self.assertEqual(out['corners'], 'sharp')
+        self.assertIn('pixel-backgrounds', out['background'])
+        self.assertTrue(hook.exists())
+        # through the pixel style and back
+        self.run_script('set', 'pixel')
+        restarts = self.calls().count('restart')
+        out = self.run_script('set', 'mix')
+        self.assertFalse(out['shellBlock'] or out['nativeText'])
+        self.assertEqual(sha(shell), before)
+        self.assertEqual(json.loads(shell_json.read_text())['bar']['background'], 'none')
+        self.assertEqual(self.calls().count('restart'), restarts + 1)
+        self.assertEqual([c for c in self.calls() if c.startswith('cursor')], ['cursor pixel', 'cursor auto'])
+        self.assertTrue(out['windowDither'] and shader.exists())
+        # and to the Tusche style: everything as found
+        out = self.run_script('set', 'tusche')
+        self.assertEqual(out['corners'], 'theme')
+        self.assertEqual(out['background'], original_bg)
+        self.assertFalse(out['windowDither'] or shader.exists() or hook.exists())
+        self.assertEqual(sha(shell), before)
+
     def test_previous_corner_choice_returns(self):
         subprocess.run([str(self.bin / 'omarchy-hyprland-corners'), 'rounded'], env={'HOME': str(self.home)}, check=True)
         self.run_script('set', 'pixel')

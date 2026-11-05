@@ -2,7 +2,7 @@
 """Switch the desktop between the Tusche style and the pixel style.
 
     pixel-style.py status                 prints the state as JSON
-    pixel-style.py set pixel|tusche [--no-restart] [--no-background]
+    pixel-style.py set pixel|mix|tusche [--no-restart] [--no-background]
     pixel-style.py font departure|tiny5|normal [--no-restart]   the pixel style's font
     pixel-style.py ensure-include         adds this style's file to Umbriel's includes
     pixel-style.py ensure-fonts           installs Tusche Pixel (Tiny5 + the pixel symbols)
@@ -32,6 +32,12 @@ then:
   * turns on native text for the shell (Qt's default text blurs a pixel face;
     not with `font normal`) and restarts the shell, the one step that cannot
     happen live.
+
+`set mix` keeps the Tusche style's shell (bar, island, popups, font, materials:
+no block, no native text, the bar's background and pointer as before) and
+takes the pixel style's windows: the Bayer dissolve (a window-only Umbriel
+include, blur stays on), square corners and the theme's dot grid with its
+hook. It needs no shell restart unless it comes from the pixel style.
 
 Switching back removes exactly what was added and restores what was recorded,
 so ~/.config/omarchy/shell.toml returns byte for byte when nobody edited it in
@@ -328,19 +334,20 @@ SHADER = 'tusche-pixel-dither.glsl'
 
 
 def write_umbriel(p, style):
-    """The include and, for the pixel style, its window dissolve shader.
+    """The include and, for the pixel and mix styles, the window dissolve shader.
     The shader goes first, so Umbriel never reads a preset without its file."""
     shader = p['umbriel_dir'] / SHADER
-    if style == 'pixel':
+    dither = style in ('pixel', 'mix')
+    if dither:
         data = (ASSETS / SHADER).read_bytes()
         if not shader.exists() or shader.read_bytes() != data:
             atomic_write(shader, data)
-    src = ASSETS / ('umbriel-pixel.toml' if style == 'pixel' else 'umbriel-tusche.toml')
+    src = ASSETS / {'pixel': 'umbriel-pixel.toml', 'mix': 'umbriel-mix.toml'}.get(style, 'umbriel-tusche.toml')
     data = src.read_bytes()
     dst = p['umbriel_include']
     if not dst.exists() or dst.read_bytes() != data:
         atomic_write(dst, data)
-    if style != 'pixel' and shader.exists():
+    if not dither and shader.exists():
         shader.unlink()
 
 
@@ -605,24 +612,58 @@ def status(p):
         'shellBlock': has_block(data),
         'umbrielInclude': p['umbriel_include'].exists() and b'layer_rule' in p['umbriel_include'].read_bytes(),
         'nativeText': p['native_flag'].exists(),
+        'windowDither': p['umbriel_include'].exists() and b'tusche-dither' in p['umbriel_include'].read_bytes(),
         'corners': corners_now(),
         'background': background_now(p),
         'previous': state.get('previous', {}),
     }
 
 
+STYLES = ('pixel', 'mix', 'tusche')
+STYLE_NAMES = {'pixel': 'Pixel style', 'mix': 'Tusche style, pixel windows', 'tusche': 'Tusche style'}
+
+
+def grid_on(p, background):
+    """The theme's dot grid as the background, kept current by the theme hook."""
+    if background:
+        grid = grid_background(p)
+        if background_now(p) != os.path.realpath(grid):
+            set_background(grid)
+    install_hook(p, True)
+
+
+def shell_back_to_tusche(p, state, previous):
+    """The shell's half of the Tusche style: no block, the bar's background, the
+    pointer and native text as they were. Returns whether native text changed."""
+    remove_block(p, state)
+    if 'barBackground' in previous and bar_background_now(p) == 'opaque':
+        set_bar_background(p, previous['barBackground'])
+    if 'cursorFamily' in previous and cursor_family() == 'pixel':
+        try:
+            # no Tusche Cursor config before: its default family
+            set_cursor_family(previous['cursorFamily'] or 'auto')
+        except (OSError, RuntimeError, subprocess.SubprocessError) as error:
+            print('warning: cursor: ' + str(error), file=sys.stderr)
+    # native text that was on before the pixel style stays on
+    return native_text(p, False) if not previous.get('nativeText') else False
+
+
 def set_style(p, style, restart=True, background=True):
-    if style not in ('pixel', 'tusche'):
-        raise RuntimeError('style must be pixel or tusche')
+    """pixel: the whole pixel look. mix: the Tusche style's shell (bar, island,
+    popups, font, materials) with the pixel style's windows (Bayer dissolve,
+    square corners) over the theme's dot grid. tusche: everything as before."""
+    if style not in STYLES:
+        raise RuntimeError('style must be pixel, mix or tusche')
     state = load_state(p)
     ensure_include(p)
     changed_text = False
+    if style != 'tusche' and state.get('style', 'tusche') == 'tusche':
+        # barBackground as found: None (no key in shell.json) is restored as no key
+        state['previous'] = {'corners': corners_now() or 'theme', 'background': background_now(p),
+                             'barBackground': bar_background_now(p), 'cursorFamily': cursor_family(),
+                             'nativeText': p['native_flag'].exists()}
+    previous = state.get('previous', {})
     if style == 'pixel':
-        if state.get('style') != 'pixel':
-            # barBackground as found: None (no key in shell.json) is restored as no key
-            state['previous'] = {'corners': corners_now() or 'theme', 'background': background_now(p),
-                                 'barBackground': bar_background_now(p), 'cursorFamily': cursor_family(),
-                                 'nativeText': p['native_flag'].exists()}
         state['style'] = 'pixel'
         save_state(p, state)
         add_block(p, state)
@@ -630,11 +671,7 @@ def set_style(p, style, restart=True, background=True):
         write_umbriel(p, 'pixel')
         set_bar_background(p, 'opaque')
         set_corners('sharp')
-        if background:
-            grid = grid_background(p)
-            if background_now(p) != os.path.realpath(grid):
-                set_background(grid)
-        install_hook(p, True)
+        grid_on(p, background)
         try:
             set_cursor_family('pixel')
         except (OSError, RuntimeError, subprocess.SubprocessError) as error:
@@ -644,32 +681,31 @@ def set_style(p, style, restart=True, background=True):
         except (OSError, RuntimeError, subprocess.SubprocessError) as error:
             print('warning: fonts: ' + str(error), file=sys.stderr)
             fonts_changed = False
-        native = pixel_face(pixel_font(state)) or bool(state.get('previous', {}).get('nativeText'))
+        native = pixel_face(pixel_font(state)) or bool(previous.get('nativeText'))
         changed_text = native_text(p, native) or fonts_changed
+    elif style == 'mix':
+        state['style'] = 'mix'
+        save_state(p, state)
+        changed_text = shell_back_to_tusche(p, state, previous)
+        save_state(p, state)
+        write_umbriel(p, 'mix')
+        set_corners('sharp')
+        grid_on(p, background)
     else:
-        previous = state.get('previous', {})
-        remove_block(p, state)
+        changed_text = shell_back_to_tusche(p, state, previous)
         write_umbriel(p, 'tusche')
-        if 'barBackground' in previous and bar_background_now(p) == 'opaque':
-            set_bar_background(p, previous['barBackground'])
         set_corners(previous.get('corners') or 'theme')
         # only a grid of ours goes back; a background chosen meanwhile stays
         if background and previous.get('background') and in_grid_dir(p, background_now(p)):
             set_background(previous['background'])
         install_hook(p, False)
-        if 'cursorFamily' in previous and cursor_family() == 'pixel':
-            try:
-                # no Tusche Cursor config before: its default family
-                set_cursor_family(previous['cursorFamily'] or 'auto')
-            except (OSError, RuntimeError, subprocess.SubprocessError) as error:
-                print('warning: cursor: ' + str(error), file=sys.stderr)
-        # native text that was on before the pixel style stays on
-        changed_text = native_text(p, False) if not previous.get('nativeText') else False
         state = {'style': 'tusche', **({'font': state['font']} if state.get('font') else {})}
         save_state(p, state)
     if restart and changed_text:
-        notify('Pixel style' if style == 'pixel' else 'Tusche style')
+        notify(STYLE_NAMES[style])
         restart_shell()
+    elif restart and style == 'mix':
+        notify(STYLE_NAMES[style])
     return status(p)
 
 
@@ -705,7 +741,7 @@ def set_font(p, font, restart=True):
 def retheme(p):
     """A theme switch set the new theme's background: remember it, show the grid."""
     state = load_state(p)
-    if state.get('style') != 'pixel':
+    if state.get('style') not in ('pixel', 'mix'):
         return status(p)
     current = background_now(p)
     if current and not in_grid_dir(p, current):

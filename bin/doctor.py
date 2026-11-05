@@ -197,15 +197,20 @@ def check_pixel():
     include_on = include.exists() and 'layer_rule' in include.read_text()
     flag = (STATE / 'omarchy' / 'toggles' / 'shell-native-text').exists()
     hook = (CONFIG / 'omarchy' / 'hooks' / 'theme-set.d' / '80-tusche-pixel').exists()
+    dither = include.exists() and 'tusche-dither' in include.read_text()
     want = style == 'pixel'
-    parts = {'shell.toml block': block, 'Umbriel include': include_on, 'native text': flag, 'theme hook': hook}
-    # `font normal` keeps the shell's own font: native text is not needed then,
-    # and may still be on when it was before the pixel style
-    if want and (state or {}).get('font') == 'normal':
+    # what each style should have: (found, expected); mix = the Tusche style's
+    # shell with the pixel style's windows and dot grid
+    parts = {'shell.toml block': (block, want), 'Umbriel include': (include_on, want),
+             'window dissolve': (dither, style in ('pixel', 'mix')), 'native text': (flag, want),
+             'theme hook': (hook, style in ('pixel', 'mix'))}
+    # `font normal` and mix keep the shell's own font: native text is not
+    # needed then, and may still be on when it was before the pixel style
+    if style == 'mix' or (want and (state or {}).get('font') == 'normal'):
         parts.pop('native text')
-    wrong = [k for k, v in parts.items() if v != want]
+    wrong = [(k, e) for k, (v, e) in parts.items() if v != e]
     if wrong:
-        fail('pixel style', f'recorded {style}, but ' + ', '.join(f'{k} {"missing" if want else "left over"}' for k in wrong)
+        fail('pixel style', f'recorded {style}, but ' + ', '.join(f'{k} {"missing" if e else "left over"}' for k, e in wrong)
              + ' (pixel-style.py set ' + style + ' repairs it)')
     else:
         ok('pixel style', f'{style}, consistent')
