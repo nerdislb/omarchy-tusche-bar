@@ -201,7 +201,13 @@ def corners_now():
 
 def set_corners(value):
     if value and corners_now() != value:
-        run(['omarchy-hyprland-corners', value], timeout=60)
+        try:
+            run(['omarchy-hyprland-corners', value], timeout=60)
+        except RuntimeError:
+            # it saves the choice first and then reloads and notifies: a failed
+            # notification (no notification server yet) still switched it
+            if corners_now() != value:
+                raise
 
 
 # ---------------------------------------------------------------- background

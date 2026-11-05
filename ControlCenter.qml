@@ -2219,7 +2219,8 @@ PanelWindow {
     readonly property bool available: !!spec && spec.available !== false
     readonly property string status: spec ? win.linkStatus(spec) : ""
     readonly property string opens: !spec ? "" : spec.opens === "terminal" ? "Opens a terminal"
-      : spec.opens === "editor" ? "Opens your editor" : spec.opens === "panel" ? "Opens the panel" : "Opens Omarchy's picker"
+      : spec.opens === "editor" ? "Opens your editor" : spec.opens === "panel" ? "Opens the panel"
+      : spec.opens === "action" ? "Switches at once" : "Opens Omarchy's picker"
     readonly property int labelWidth: Math.min(Style.space(200), Math.round(width * 0.32))
     height: Math.max(llabel.implicitHeight, ltext.implicitHeight, openButton.height) + Style.space(10)
     FlashBg { forId: lrow.settingId }
