@@ -34,6 +34,12 @@ Scope {
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 
     readonly property color ink: Commons.Color.foreground
+    // sizes on the pixel font's grid ([tusche] pixel-em/pixel-text from the
+    // pixel style; Tiny5: 8 and 16, so 64 and 16 stay as they are)
+    readonly property var shellValues: Commons.Color.shellValues || {}
+    readonly property int em: Math.max(1, Math.round(Number(shellValues["tusche.pixel-em"])) || 8)
+    readonly property int minText: Math.max(1, Math.round(Number(shellValues["tusche.pixel-text"])) || 16)
+    function onGrid(px) { return Math.max(minText, Math.round(px / em) * em) }
     Text {
       id: time
       renderType: Text.NativeRendering
@@ -41,7 +47,7 @@ Scope {
       textFormat: Text.PlainText
       text: Qt.formatTime(clock.date, "hh:mm")
       font.family: Style.font.family
-      font.pixelSize: 64
+      font.pixelSize: desk.onGrid(64)
       color: Util.alpha(desk.ink, 0.92)
     }
     Text {
@@ -52,7 +58,7 @@ Scope {
       textFormat: Text.PlainText
       text: root.weekdays[clock.date.getDay()] + ", " + clock.date.getDate() + " " + root.months[clock.date.getMonth()]
       font.family: Style.font.family
-      font.pixelSize: 16
+      font.pixelSize: desk.onGrid(16)
       color: Util.alpha(desk.ink, 0.55)
     }
     Row {

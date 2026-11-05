@@ -3,6 +3,7 @@
 
     pixel-style.py status                 prints the state as JSON
     pixel-style.py set pixel|tusche [--no-restart] [--no-background]
+    pixel-style.py font tiny5|departure [--no-restart]   the pixel style's font
     pixel-style.py ensure-include         adds this style's file to Umbriel's includes
     pixel-style.py ensure-fonts           installs Tusche Pixel (Tiny5 + the pixel symbols)
     pixel-style.py retheme                after a theme switch: a new dot grid (theme-set hook)
@@ -22,7 +23,10 @@ then:
   * switches Tusche Cursor, when installed, to its pixel family;
   * installs Tusche Pixel: Tiny5's letters and 7x7 pixel symbols for the
     Nerd Font codepoints in one family, so no symbol depends on Qt's font
-    fallback (it stays installed; nothing else asks for it);
+    fallback (it stays installed; nothing else asks for it), and Tusche
+    Departure, the same symbols with Departure Mono's letters: `font` picks
+    which one the pixel style uses (Tiny5 unless chosen otherwise), and the
+    choice outlives a return to the Tusche style;
   * turns on native text for the shell (Qt's default text blurs a pixel face)
     and restarts the shell, the one step that cannot happen live.
 
@@ -48,6 +52,33 @@ ASSETS = HERE / 'assets' / 'pixel'
 BEGIN = '# >>> tusche pixel style'
 END = '# <<< tusche pixel style <<<'
 INCLUDE = 'tusche-pixel.toml'
+
+# The pixel style's fonts. Sizes are whole multiples of the font's pixels per
+# em (em), so every font pixel is the same whole number of screen pixels.
+#   tiny5      Tiny5, 8 px per em, 5-px caps: everything at twice its grid
+#   departure  Departure Mono, 11 px per em, 8-px caps: text at its own grid,
+#              headings, icons and the clock at twice and three times
+PIXEL_FONTS = {
+    'tiny5': {
+        'family': 'Tusche Pixel', 'note': 'Tusche Pixel (Tiny5 letters + the pixel symbols)',
+        'em': 8, 'text': 16, 'icon': 16,
+        'sizes': [('caption', 16), ('body-small', 16), ('body', 16), ('subtitle', 16), ('title', 16),
+                  ('heading', 16), ('display', 32), ('display-large', 48), ('icon-large', 24)],
+    },
+    'departure': {
+        'family': 'Tusche Departure', 'note': 'Tusche Departure (Departure Mono letters + the pixel symbols)',
+        'em': 11, 'text': 11, 'icon': 22,
+        'sizes': [('caption', 11), ('body-small', 11), ('body', 11), ('subtitle', 11), ('title', 11),
+                  ('heading', 22), ('display', 33), ('display-large', 44), ('icon-small', 22), ('icon', 22),
+                  ('icon-large', 33)],
+    },
+}
+DEFAULT_FONT = 'tiny5'
+
+
+def pixel_font(state):
+    name = (state or {}).get('font') or DEFAULT_FONT
+    return name if name in PIXEL_FONTS else DEFAULT_FONT
 
 
 def home():
@@ -138,11 +169,18 @@ def base_size(p):
     return max(1, size)
 
 
-def block_text(p):
+def block_text(p, font=DEFAULT_FONT):
+    f = PIXEL_FONTS[font]
     # the shell scales [bar] icon-font by base-size / 12 and rounds: pick the
-    # whole number that lands on Tiny5's 16-px grid size
-    icon_font = round(16 * 12 / base_size(p))
-    return (ASSETS / 'shell-block.toml').read_bytes().replace(b'@ICON_FONT@', str(icon_font).encode())
+    # whole number that lands on the font's grid size for icons
+    icon_font = round(f['icon'] * 12 / base_size(p))
+    text = (ASSETS / 'shell-block.toml').read_text()
+    for key, value in (('@FONT_NOTE@', f['note']), ('@FAMILY@', f['family']),
+                       ('@SIZES@', ''.join(f'{k} = {v}\n' for k, v in f['sizes'])),
+                       ('@PIXEL_EM@', str(f['em'])), ('@PIXEL_TEXT@', str(f['text'])),
+                       ('@ICON_PX@', str(f['icon'])), ('@ICON_FONT@', str(icon_font))):
+        text = text.replace(key, value)
+    return text.encode()
 
 
 def has_block(data):
@@ -156,7 +194,7 @@ def add_block(p, state):
         refresh_block(p, state, data)
         return
     sep = b'' if not data or data.endswith(b'\n') else b'\n'
-    added = sep + block_text(p)
+    added = sep + block_text(p, pixel_font(state))
     state['shell_toml'] = {'before': sha(data), 'added': added.decode(), 'existed': path.exists()}
     atomic_write(path, data + added, 0o600 if not path.exists() else None)
 
@@ -168,7 +206,7 @@ def refresh_block(p, state, data):
     if not added or not data.endswith(added):
         return
     sep = b'\n' if added.startswith(b'\n') else b''
-    fresh = sep + block_text(p)
+    fresh = sep + block_text(p, pixel_font(state))
     if fresh == added:
         return
     record['added'] = fresh.decode()
@@ -387,6 +425,7 @@ def font_paths():
     return {
         'tiny5': data / 'fonts' / 'tiny5',
         'pixel': data / 'fonts' / 'tusche-pixel',
+        'departure': data / 'fonts' / 'tusche-departure',
         'old_symbols': data / 'fonts' / 'tusche-pixel-symbols',
         'old_conf': config_home() / 'fontconfig' / 'conf.d' / OUR_CONF,
         'replaced': state_home() / 'tusche-bar' / 'replaced-fonts',
@@ -419,6 +458,9 @@ def ensure_fonts():
     wanted = [(src / name, fp['tiny5'] / name) for name in ('Tiny5-Regular.ttf', 'Tiny5-Bold.ttf', 'OFL-tiny5.txt')]
     wanted += [(src / name, fp['pixel'] / name)
                for name in ('TuschePixel-Regular.ttf', 'TuschePixel-Bold.ttf', 'OFL-tiny5.txt', 'LICENSE-symbols.txt')]
+    wanted += [(src / name, fp['departure'] / name)
+               for name in ('TuscheDeparture-Regular.ttf', 'TuscheDeparture-Bold.ttf', 'OFL-departure-mono.txt',
+                            'LICENSE-symbols.txt')]
     for source, target in wanted:
         if not source.exists():
             continue
@@ -428,7 +470,7 @@ def ensure_fonts():
         atomic_write(target, data, 0o644)
         changed = True
     if changed and shutil.which('fc-cache'):
-        run(['fc-cache', '-f', str(fp['tiny5']), str(fp['pixel'])], timeout=120, check=False)
+        run(['fc-cache', '-f', str(fp['tiny5']), str(fp['pixel']), str(fp['departure'])], timeout=120, check=False)
     return changed
 
 
@@ -519,6 +561,7 @@ def status(p):
     data = p['shell_toml'].read_bytes() if p['shell_toml'].exists() else b''
     return {
         'style': state.get('style', 'tusche'),
+        'font': pixel_font(state),
         'shellBlock': has_block(data),
         'umbrielInclude': p['umbriel_include'].exists() and b'layer_rule' in p['umbriel_include'].read_bytes(),
         'nativeText': p['native_flag'].exists(),
@@ -581,10 +624,35 @@ def set_style(p, style, restart=True, background=True):
                 print('warning: cursor: ' + str(error), file=sys.stderr)
         # native text that was on before the pixel style stays on
         changed_text = native_text(p, False) if not previous.get('nativeText') else False
-        state = {'style': 'tusche'}
+        state = {'style': 'tusche', **({'font': state['font']} if state.get('font') else {})}
         save_state(p, state)
     if restart and changed_text:
         notify('Pixel style' if style == 'pixel' else 'Tusche style')
+        restart_shell()
+    return status(p)
+
+
+def set_font(p, font, restart=True):
+    """The pixel style's font. Recorded either way; while the pixel style is
+    on, its block in shell.toml follows and the shell restarts once (it reads
+    its fonts at start)."""
+    if font not in PIXEL_FONTS:
+        raise RuntimeError('font must be one of ' + ', '.join(PIXEL_FONTS))
+    state = load_state(p)
+    before = pixel_font(state)
+    state['font'] = font
+    save_state(p, state)
+    if state.get('style') != 'pixel':
+        return status(p)
+    try:
+        fonts_changed = ensure_fonts()
+    except (OSError, RuntimeError, subprocess.SubprocessError) as error:
+        print('warning: fonts: ' + str(error), file=sys.stderr)
+        fonts_changed = False
+    add_block(p, state)
+    save_state(p, state)
+    if restart and (fonts_changed or font != before):
+        notify('Pixel font: ' + {'tiny5': 'Tiny5', 'departure': 'Departure Mono'}[font])
         restart_shell()
     return status(p)
 
@@ -619,6 +687,14 @@ def main(argv):
         return 0
     if len(argv) >= 2 and argv[1] == 'ensure-include':
         print(ensure_include(p))
+        return 0
+    if len(argv) >= 3 and argv[1] == 'font':
+        try:
+            out = set_font(p, argv[2], restart='--no-restart' not in argv)
+        except (OSError, RuntimeError, subprocess.SubprocessError) as error:
+            print('error: ' + str(error), file=sys.stderr)
+            return 1
+        print(json.dumps(out, indent=2))
         return 0
     if len(argv) >= 3 and argv[1] == 'set':
         try:

@@ -12,12 +12,22 @@ symbols, so Qt never has to pick a fallback for a symbol (its fallback choice
 for the first text it lays out is not reliable). Both inputs use 1024 units
 per em and the same 8-px grid. The result is under the SIL OFL 1.1 like Tiny5
 (no Reserved Font Name); the symbols are our own drawings, some after YAMI (MIT).
+
+With FONTS_DIR/DepartureMono-Regular.otf and FONTS_DIR/TuscheDepartureSymbols.ttf
+(the same symbols on Departure Mono's 11-px grid) it also writes
+FONTS_DIR/TuscheDeparture-{Regular,Bold}.ttf, "Tusche Departure": Departure Mono's
+letters (outlines converted to TrueType, exact for its square pixels) plus the
+symbols. SIL OFL 1.1 like Departure Mono (no Reserved Font Name). Departure Mono
+has no bold, so Bold carries the Regular glyphs here as well.
 """
 import os
 import sys
 
 from fontTools.merge import Merger
-from fontTools.ttLib import TTFont
+from fontTools.pens.cu2quPen import Cu2QuPen
+from fontTools.pens.ttGlyphPen import TTGlyphPen
+from fontTools.ttLib import TTFont, newTable
+from fontTools.ttLib.tables._c_m_a_p import CmapSubtable
 
 fonts = sys.argv[1]
 symbols = os.path.join(fonts, "TuschePixelSymbols.ttf")
@@ -56,3 +66,95 @@ for style in ("Regular", "Bold"):
     merged.save(out)
     cm = merged.getBestCmap()
     print(out, len(cm), "codepoints", "symbols" if 0xF009A in cm else "NO SYMBOLS")
+
+
+# ------------------------------------------------------------ Tusche Departure
+
+def to_truetype(font):
+    """CFF outlines to glyf, as fontTools' otf2ttf snippet does. Departure Mono
+    draws only straight edges on its pixel grid, so nothing is approximated."""
+    order = font.getGlyphOrder()
+    glyph_set = font.getGlyphSet()
+    glyphs = {}
+    for name in order:
+        pen = TTGlyphPen(glyph_set)
+        glyph_set[name].draw(Cu2QuPen(pen, 1.0, reverse_direction=True))
+        glyphs[name] = pen.glyph()
+    font["loca"] = newTable("loca")
+    font["glyf"] = glyf = newTable("glyf")
+    glyf.glyphOrder = order
+    glyf.glyphs = glyphs
+    del font["CFF "]
+    glyf.compile(font)
+    for name in order:
+        width = font["hmtx"][name][0]
+        font["hmtx"][name] = (width, getattr(glyphs[name], "xMin", 0) or 0)
+    maxp = newTable("maxp")
+    maxp.tableVersion = 0x00010000
+    for key in ("maxZones",):
+        setattr(maxp, key, 1)
+    for key in ("maxTwilightPoints", "maxStorage", "maxFunctionDefs", "maxInstructionDefs",
+                "maxStackElements", "maxSizeOfInstructions", "maxComponentElements"):
+        setattr(maxp, key, 0)
+    font["maxp"] = maxp
+    maxp.compile(font)
+    post = font["post"]
+    post.formatType = 2.0
+    post.extraNames, post.mapping, post.glyphOrder = [], {}, order
+    font.sfntVersion = "\000\001\000\000"
+    font["head"].flags |= 1 << 3  # integer ppem scaling
+
+
+def add_symbols(font, symbols_font):
+    """The symbols' glyphs and codepoints into the letters' font; a codepoint
+    the letters already draw keeps the letters' glyph."""
+    have = font.getBestCmap()
+    order = list(font.getGlyphOrder())
+    glyf, hmtx = font["glyf"], font["hmtx"]
+    added = {}
+    for cp, name in sorted(symbols_font.getBestCmap().items()):
+        if cp in have:
+            continue
+        new = "tusche." + name
+        glyf.glyphs[new] = symbols_font["glyf"][name]
+        hmtx.metrics[new] = symbols_font["hmtx"][name]
+        order.append(new)
+        added[cp] = new
+    glyf.glyphOrder = order
+    font.setGlyphOrder(order)
+    mapping = {**have, **added}
+    cmap = font["cmap"]
+    for table in cmap.tables:
+        if table.isUnicode() and table.format == 4:
+            table.cmap.update({cp: n for cp, n in added.items() if cp <= 0xFFFF})
+    for platform, encoding in ((3, 10), (0, 4)):
+        if not any(t.platformID == platform and t.platEncID == encoding for t in cmap.tables):
+            table = CmapSubtable.newSubtable(12)
+            table.platformID, table.platEncID, table.language = platform, encoding, 0
+            table.cmap = dict(mapping)
+            cmap.tables.append(table)
+        else:
+            for t in cmap.tables:
+                if t.platformID == platform and t.platEncID == encoding:
+                    t.cmap.update(added)
+    font["OS/2"].recalcUnicodeRanges(font)
+    return len(added)
+
+
+departure = os.path.join(fonts, "DepartureMono-Regular.otf")
+departure_symbols = os.path.join(fonts, "TuscheDepartureSymbols.ttf")
+if os.path.exists(departure) and os.path.exists(departure_symbols):
+    font = TTFont(departure)
+    to_truetype(font)
+    count = add_symbols(font, TTFont(departure_symbols))
+    font["name"].setName("Departure Mono copyright 2022-2024 Helena Zhang (helenazhang.com); "
+                         "symbols drawn for the Tusche pixel style, some after YAMI (MIT).", 0, 3, 1, 0x409)
+    font["name"].setName("SIL Open Font License 1.1", 13, 3, 1, 0x409)
+    font["name"].setName("https://openfontlicense.org", 14, 3, 1, 0x409)
+    for style in ("Regular", "Bold"):
+        set_style(font, "Tusche Departure", style, ";Departure Mono + Tusche Pixel Symbols")
+        out = os.path.join(fonts, f"TuscheDeparture-{style}.ttf")
+        font.save(out)
+        font = TTFont(out)
+        cm = font.getBestCmap()
+        print(out, len(cm), "codepoints,", count, "symbols", "" if 0xF009A in cm else "NO SYMBOLS")

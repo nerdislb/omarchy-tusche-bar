@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 """Compile the VectorCraft master export into the "Tusche Pixel Symbols" font.
 
-Usage: venv/bin/python -I make_font.py MASTER.svg LAYOUT.json OUT.ttf
+Usage: venv/bin/python -I make_font.py MASTER.svg LAYOUT.json OUT.ttf [--grid tiny5|departure]
 
 Every SVG element named "U+XXXX <name>" (VectorCraft keeps object names as
 data-name) becomes the glyph for codepoint XXXX. Its geometry is sampled at
 cell centres of the 7x7 slot it sits in, so the font is exactly what the
-master shows, cell for cell. Metrics follow Tiny5 (1024 units per em, 8 font
-pixels per em): a symbol is 7x7 font pixels from one pixel below the
-baseline to one above the caps, with one pixel of space on the right.
+master shows, cell for cell. One symbol cell is one font pixel of the letters
+it joins, with one pixel of space on the right:
+
+  tiny5      Tiny5's grid (1024 units per em, 8 font pixels per em): from one
+             pixel below the baseline to one above the 5-px caps.
+  departure  Departure Mono's grid (550 units per em, 11 font pixels per em):
+             from the baseline to one pixel below the 8-px caps.
 """
 import json
+import os
 import re
 import sys
 import xml.etree.ElementTree as ET
@@ -19,14 +24,28 @@ from fontTools.fontBuilder import FontBuilder
 from fontTools.pens.ttGlyphPen import TTGlyphPen
 from fontTools.ttLib import TTFont
 
-svg_path, layout_path, out_path = sys.argv[1:4]
+args = sys.argv[1:]
+grid_name = "tiny5"
+if "--grid" in args:
+    at = args.index("--grid")
+    grid_name = args[at + 1]
+    del args[at:at + 2]
+svg_path, layout_path, out_path = args[:3]
 layout = json.load(open(layout_path))
 CELL, GRID, PITCH = layout["cell"], layout["grid"], layout["pitch"]
-UPM, PX = 1024, 128
-import os
 _HERE = os.path.dirname(os.path.abspath(__file__))
-TINY5 = next(p for p in (os.path.join(_HERE, "..", "fonts", "Tiny5-Regular.ttf"),
-                         os.path.expanduser("~/.local/share/fonts/tiny5/Tiny5-Regular.ttf")) if os.path.exists(p))
+# upm, units per font pixel, upper edge of the top row in font pixels, cap and
+# x height in font pixels, the letters' font (for line metrics), family name
+GRIDS = {
+    "tiny5": (1024, 128, 6, 5, 4, ("Tiny5-Regular.ttf", "~/.local/share/fonts/tiny5/Tiny5-Regular.ttf"),
+              "Tusche Pixel Symbols"),
+    "departure": (550, 50, 7, 8, 6, ("DepartureMono-Regular.otf",), "Tusche Departure Symbols"),
+}
+if grid_name not in GRIDS:
+    raise SystemExit("--grid must be one of " + ", ".join(GRIDS))
+UPM, PX, TOP, CAP, XH, _letters, FAMILY = GRIDS[grid_name]
+LETTERS = next(p for p in ([os.path.join(_HERE, "..", "fonts", _letters[0])]
+                           + [os.path.expanduser(q) for q in _letters[1:]]) if os.path.exists(p))
 
 NUM = re.compile(r"[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?")
 
@@ -138,7 +157,7 @@ walk(root, [1, 0, 0, 1, 0, 0])
 if not glyph_cells:
     raise SystemExit("no named symbols found in the SVG")
 
-tiny = TTFont(TINY5)
+letters = TTFont(LETTERS)
 order = [".notdef", "space"] + [f"u{cp:04X}" for cp in sorted(glyph_cells)]
 glyphs, metrics = {}, {}
 
@@ -157,8 +176,9 @@ for cp in sorted(glyph_cells):
                 while c < GRID and cells[r][c]:
                     c += 1
                 x0, x1 = s * PX, c * PX
-                # row 0 spans 5..6 font px, row 6 spans -1..0: centred on the 5-px caps
-                y1 = (6 - r) * PX
+                # Tiny5: row 0 spans 5..6 font px, row 6 spans -1..0, centred on
+                # the 5-px caps; Departure Mono: rows 6..7 down to 0..1
+                y1 = (TOP - r) * PX
                 y0 = y1 - PX
                 pen.moveTo((x0, y0)); pen.lineTo((x0, y1)); pen.lineTo((x1, y1)); pen.lineTo((x1, y0))
                 pen.closePath()
@@ -174,21 +194,21 @@ fb.setupGlyphOrder(order)
 fb.setupCharacterMap({32: "space", **{cp: f"u{cp:04X}" for cp in glyph_cells}})
 fb.setupGlyf(glyphs)
 fb.setupHorizontalMetrics(metrics)
-hh = tiny["hhea"]
+hh = letters["hhea"]
 fb.setupHorizontalHeader(ascent=hh.ascent, descent=hh.descent)
 fb.setupNameTable({
-    "familyName": "Tusche Pixel Symbols", "styleName": "Regular",
-    "uniqueFontIdentifier": "Tusche Pixel Symbols Regular 1.0",
-    "fullName": "Tusche Pixel Symbols", "psName": "TuschePixelSymbols-Regular",
+    "familyName": FAMILY, "styleName": "Regular",
+    "uniqueFontIdentifier": f"{FAMILY} Regular 1.0",
+    "fullName": FAMILY, "psName": FAMILY.replace(" ", "") + "-Regular",
     "version": "Version 1.000",
     "copyright": "Tusche pixel symbols, drawn in VectorCraft for the Tusche pixel style (2026). "
                  "Some bitmaps adapted from YAMI (MIT, YAMI contributors).",
     "licenseDescription": "Private use with the Tusche Bar and Island.",
 })
-os2 = tiny["OS/2"]
+os2 = letters["OS/2"]
 fb.setupOS2(sTypoAscender=os2.sTypoAscender, sTypoDescender=os2.sTypoDescender,
             sTypoLineGap=os2.sTypoLineGap, usWinAscent=os2.usWinAscent, usWinDescent=os2.usWinDescent,
-            sCapHeight=5 * PX, sxHeight=4 * PX, fsType=0, usWeightClass=400)
+            sCapHeight=CAP * PX, sxHeight=XH * PX, fsType=0, usWeightClass=400)
 fb.setupPost()
 fb.font["head"].flags |= 1 << 3  # integer ppem scaling
 fb.save(out_path)

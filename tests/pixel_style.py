@@ -136,6 +136,41 @@ class PixelStyle(unittest.TestCase):
         self.assertEqual(self.calls().count('restart'), 2)
         self.assertEqual([c for c in self.calls() if c.startswith('cursor')], ['cursor pixel', 'cursor auto'])
 
+    def test_font_choice_switches_the_block_and_outlives_the_tusche_style(self):
+        shell = self.home / '.config/omarchy/shell.toml'
+        before = sha(shell)
+        # the Tusche style is on: the choice is only recorded
+        out = self.run_script('font', 'departure')
+        self.assertEqual(out['font'], 'departure')
+        self.assertEqual(sha(shell), before)
+        self.assertNotIn('restart', self.calls())
+        self.run_script('set', 'pixel')
+        text = shell.read_text()
+        self.assertIn('family = "Tusche Departure"', text)
+        self.assertIn('pixel-em = 11', text)
+        self.assertIn('heading = 22', text)
+        # base-size 14: the bar icon token that lands on 22 px
+        self.assertIn('icon-font = 19', text)
+        fonts = self.home / '.local/share/fonts'
+        self.assertTrue((fonts / 'tusche-departure/TuscheDeparture-Regular.ttf').exists())
+        self.assertTrue((fonts / 'tusche-departure/OFL-departure-mono.txt').exists())
+        restarts = self.calls().count('restart')
+        self.run_script('font', 'tiny5')
+        text = shell.read_text()
+        self.assertIn('family = "Tusche Pixel"', text)
+        self.assertIn('pixel-em = 8', text)
+        self.assertIn('icon-font = 14', text)
+        self.assertEqual(text.count('>>> tusche pixel style'), 1)
+        self.assertEqual(self.calls().count('restart'), restarts + 1)
+        # the same font again: nothing to restart
+        self.run_script('font', 'tiny5')
+        self.assertEqual(self.calls().count('restart'), restarts + 1)
+        self.run_script('font', 'departure')
+        out = self.run_script('set', 'tusche')
+        self.assertEqual(sha(shell), before)
+        self.assertEqual(out['font'], 'departure')
+        self.assertEqual(self.run_script('status')['font'], 'departure')
+
     def test_previous_corner_choice_returns(self):
         subprocess.run([str(self.bin / 'omarchy-hyprland-corners'), 'rounded'], env={'HOME': str(self.home)}, check=True)
         self.run_script('set', 'pixel')

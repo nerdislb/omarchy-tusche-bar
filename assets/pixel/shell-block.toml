@@ -1,30 +1,25 @@
 # >>> tusche pixel style (written by the Tusche Bar; switch back in its Control Center) >>>
-# Tusche Pixel (Tiny5 letters + the pixel symbols) for the shell alone; pixel
+# @FONT_NOTE@ for the shell alone; pixel
 # faces want whole multiples of their grid.
 [font]
-family = "Tusche Pixel"
+family = "@FAMILY@"
 # icons at their own size on whole pixels, never scaled or smoothed
 pixel-grid = true
-caption = 16
-body-small = 16
-body = 16
-subtitle = 16
-title = 16
-heading = 16
-display = 32
-display-large = 48
-icon-large = 24
-# The Tusche Bar and Island draw their pixel faces while this says so.
+@SIZES@# The Tusche Bar and Island draw their pixel faces while this says so; the
+# island and desk clock keep their sizes on the font's grid (pixels per em)
+# and never go below the smallest text size.
 [tusche]
 style = "pixel"
+pixel-em = @PIXEL_EM@
+pixel-text = @PIXEL_TEXT@
 # Sliders as whole-pixel segments.
 [controls]
 slider = "segments"
 # Flat, opaque plates: nothing to blur behind them.
 [bar]
 background-alpha = 1.0
-# Bar icons at 16 px: the shell scales this token by base-size / 12, so the
-# switch writes the value that lands on 16 for the base size in use.
+# Bar icons at @ICON_PX@ px: the shell scales this token by base-size / 12, so the
+# switch writes the value that lands on @ICON_PX@ for the base size in use.
 icon-font = @ICON_FONT@
 [popups]
 background-alpha = 1.0

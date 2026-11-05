@@ -13,5 +13,16 @@
   the shell, Tusche Bar and Island use), compiled from the VectorCraft master
   `../symbols/tusche-pixel-symbols.vectorcraft`; `../symbols/build.sh` rebuilds all.
 
+- `TuscheDeparture-Regular.ttf`, `TuscheDeparture-Bold.ttf`: the second pixel font,
+  chosen with `bin/pixel-style.py font departure`. Departure Mono's letters (11 px
+  per em, 8-px caps; outlines converted to TrueType) plus the same symbols on its
+  grid (`TuscheDepartureSymbols.ttf`, one symbol cell = one font pixel). Bold
+  carries the Regular pixels; Departure Mono has no bold. SIL OFL 1.1 like
+  Departure Mono (`OFL-departure-mono.txt`, no Reserved Font Name).
+- `DepartureMono-Regular.otf`: Departure Mono 1.500 by Helena Zhang, from the official
+  release github.com/rektdeckard/departure-mono (v1.500, `DepartureMono-1.500.zip`,
+  sha256 bf3e4805…5c3a; the file matches the repository's
+  `public/assets/DepartureMono-Regular.otf` at that tag, git blob e0b25021).
+
 `bin/pixel-style.py set pixel` (or `ensure-fonts`) installs them into
-`~/.local/share/fonts/{tusche-pixel,tiny5}`.
+`~/.local/share/fonts/{tusche-pixel,tusche-departure,tiny5}`.

@@ -1,5 +1,6 @@
 #!/bin/bash
-# Rebuild ../fonts/TuschePixelSymbols.ttf and Tusche Pixel (Tiny5 + symbols)
+# Rebuild ../fonts/TuschePixelSymbols.ttf, Tusche Pixel (Tiny5 + symbols) and
+# Tusche Departure (Departure Mono + the same symbols on its grid)
 # from the VectorCraft master.
 #
 #   build.sh            master (edited in VectorCraft) -> SVG -> font
@@ -20,5 +21,7 @@ if [[ ${1:-} == --redraw ]]; then
 fi
 vectorcraft-cli convert "$here/tusche-pixel-symbols.vectorcraft" "$work/master.svg" >/dev/null
 "$py" -I "$here/make_font.py" "$work/master.svg" "$here/layout.json" "$here/../fonts/TuschePixelSymbols.ttf"
-# one family with Tiny5: no symbol depends on Qt's font fallback
+# the same cells on Departure Mono's 11-px grid
+"$py" -I "$here/make_font.py" "$work/master.svg" "$here/layout.json" "$here/../fonts/TuscheDepartureSymbols.ttf" --grid departure
+# one family with the letters each: no symbol depends on Qt's font fallback
 "$py" -I "$here/merge_font.py" "$here/../fonts"

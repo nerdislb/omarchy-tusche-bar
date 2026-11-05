@@ -101,10 +101,16 @@ var STYLE_SCRIPT = 'p="$HOME/.config/omarchy/plugins/nerdibeard.tusche-bar"; '
 var STYLE_LINKS = [
   { key: "style-pixel", area: "cards", section: "STYLE", label: "Pixel style",
     command: STYLE_SCRIPT + " set pixel",
-    note: "Tiny5, square flat plates, segments, a dot grid; the theme's colours stay. The shell restarts once." },
+    note: "A pixel font, square flat plates, segments, a dot grid; the theme's colours stay. The shell restarts once." },
   { key: "style-tusche", area: "cards", section: "STYLE", label: "Tusche style",
     command: STYLE_SCRIPT + " set tusche",
-    note: "Back to materials, rounded corners and the theme's background, exactly as before." }
+    note: "Back to materials, rounded corners and the theme's background, exactly as before." },
+  { key: "pixel-font-tiny5", area: "cards", section: "STYLE", label: "Pixel font: Tiny5",
+    command: STYLE_SCRIPT + " font tiny5",
+    note: "The pixel style's chunky face: 5-px caps at twice their grid. The shell restarts once when the pixel style is on." },
+  { key: "pixel-font-departure", area: "cards", section: "STYLE", label: "Pixel font: Departure Mono",
+    command: STYLE_SCRIPT + " font departure",
+    note: "A finer, more legible pixel face: 8-px caps at their own grid, headings at twice. The shell restarts once when the pixel style is on." }
 ]
 // The configuration check (bin/doctor.py), in a floating terminal.
 STYLE_LINKS.push({ key: "doctor", area: "system", section: "TUSCHE", label: "Check the configuration",
