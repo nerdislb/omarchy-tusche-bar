@@ -3,6 +3,8 @@
 # faces want whole multiples of their grid.
 [font]
 family = "Tusche Pixel"
+# icons at their own size on whole pixels, never scaled or smoothed
+pixel-grid = true
 caption = 16
 body-small = 16
 body = 16
