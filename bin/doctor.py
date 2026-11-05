@@ -24,6 +24,9 @@ import shutil
 import subprocess
 import sys
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import umbriel_include  # noqa: E402
+
 HERE = Path(__file__).resolve().parent.parent
 HOME = Path(os.environ.get('HOME') or Path.home())
 CONFIG = Path(os.environ.get('XDG_CONFIG_HOME') or HOME / '.config')
@@ -203,8 +206,28 @@ def check_pixel():
     else:
         ok('pixel style', f'{style}, consistent')
     umbriel_cfg = CONFIG / 'umbriel' / 'config.toml'
-    if umbriel_cfg.exists() and 'tusche-pixel.toml' not in umbriel_cfg.read_text():
+    if umbriel_cfg.exists() and not umbriel_include.is_included(umbriel_cfg, 'tusche-pixel.toml'):
         warn('pixel style', 'Umbriel does not include tusche-pixel.toml yet (the first switch adds it)')
+    if want:
+        check_fonts()
+
+
+def check_fonts():
+    data = Path(os.environ.get('XDG_DATA_HOME') or Path.home() / '.local' / 'share') / 'fonts'
+    problems = []
+    if (data / 'tiny5' / 'Tiny5.ttf').exists():
+        problems.append('the variable Tiny5.ttf is still installed (smeared bold)')
+    for name in ('Tiny5-Regular.ttf', 'Tiny5-Bold.ttf'):
+        if not (data / 'tiny5' / name).exists():
+            problems.append(name + ' missing')
+    if not (data / 'tusche-pixel-symbols' / 'TuschePixelSymbols.ttf').exists():
+        problems.append('Tusche Pixel Symbols missing')
+    if not (CONFIG / 'fontconfig' / 'conf.d' / '60-tusche-pixel-symbols.conf').exists():
+        problems.append('fontconfig rule for the symbols missing')
+    if problems:
+        fail('pixel fonts', '; '.join(problems) + ' (pixel-style.py ensure-fonts repairs it)')
+    else:
+        ok('pixel fonts', 'static Tiny5 and Tusche Pixel Symbols installed')
 
 
 def check_umbriel():
@@ -212,14 +235,7 @@ def check_umbriel():
     if not cfg.exists():
         ok('umbriel', 'no Umbriel configuration')
         return
-    text = cfg.read_text()
-    names = []
-    section = re.search(r'^\[include\.optional\]\s*$', text, re.M)
-    if section:
-        rest = text[section.end():]
-        end = re.search(r'^\[', rest, re.M)
-        m = re.search(r'^files\s*=\s*\[(.*?)\]', rest[:end.start()] if end else rest, re.M | re.S)
-        names = re.findall(r'"([^"]+)"', m.group(1)) if m else []
+    names = umbriel_include.files_list(cfg.read_text())[1]
     missing = [n for n in names if not n.startswith('$') and not (cfg.parent / n).exists()]
     if missing:
         warn('umbriel', 'optional includes not there: ' + ', '.join(missing))
@@ -232,7 +248,10 @@ def check_umbriel():
         return
     lines = [l for l in out.splitlines() if 'config' in l.lower()]
     last = lines[-1] if lines else ''
-    if '[ERR]' in last or 'error' in last.lower() or 'rejected' in last.lower():
+    lowered = last.lower()
+    # "0 errors" is a clean load, not a failure
+    errors = re.search(r'\b(?!0 )(\d+ )?errors?\b', lowered) and not re.search(r'\b0 errors?\b', lowered)
+    if '[ERR]' in last or errors or 'rejected' in lowered:
         fail('umbriel', 'last config message: ' + last.strip()[-160:])
     elif last:
         ok('umbriel', 'last config message: ' + last.strip()[-100:])

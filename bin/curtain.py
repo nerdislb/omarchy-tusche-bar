@@ -19,6 +19,9 @@ import subprocess
 import sys
 import tempfile
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import umbriel_include  # noqa: E402
+
 HOME = Path(os.environ.get('HOME') or Path.home())
 CONFIG = Path(os.environ.get('XDG_CONFIG_HOME') or HOME / '.config')
 UMBRIEL = CONFIG / 'umbriel'
@@ -57,23 +60,15 @@ def atomic(path, data):
 
 
 def ensure_include():
-    cfg = UMBRIEL / 'config.toml'
-    if not cfg.exists():
-        raise SystemExit('no Umbriel configuration')
-    data = cfg.read_text()
-    if FILE.name in data:
-        return
-    section = re.search(r'^\[include\.optional\]\s*$', data, re.M)
-    m = re.compile(r'^(files\s*=\s*\[)(.*?)(\]\s*)$', re.M).search(data, section.end()) if section else None
-    if not m:
-        raise SystemExit('no [include.optional] files list in ' + str(cfg))
-    inner = m.group(2).rstrip()
-    shutil.copy2(cfg, cfg.with_name(cfg.name + '.bak-tusche-curtain'))
-    atomic(cfg, data[:m.start()] + m.group(1) + (inner + ', ' if inner.strip() else '') + f'"{FILE.name}"' + m.group(3) + data[m.end():])
+    result = umbriel_include.ensure(UMBRIEL / 'config.toml', FILE.name, '.bak-tusche-curtain', atomic)
+    if result not in ('present', 'added'):
+        raise SystemExit(result + ' in ' + str(UMBRIEL / 'config.toml'))
 
 
 def state():
-    return FILE.exists() and 'block_capture = true' in FILE.read_text()
+    # on only when the rule is written AND Umbriel's config really includes it
+    return (FILE.exists() and 'block_capture = true' in FILE.read_text()
+            and umbriel_include.is_included(UMBRIEL / 'config.toml', FILE.name))
 
 
 def notify(on):
