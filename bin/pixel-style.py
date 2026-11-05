@@ -18,6 +18,7 @@ then:
   * writes ~/.config/umbriel/tusche-pixel.toml (no blur behind shell surfaces,
     windows dissolving in and out on a Bayer grid), which Umbriel includes last;
   * sets a dot-grid background drawn from the theme's colours;
+  * switches Tusche Cursor, when installed, to its pixel family;
   * turns on native text for the shell (Qt's default text blurs a pixel face)
     and restarts the shell, the one step that cannot happen live.
 
@@ -326,6 +327,28 @@ def set_background(path):
         run(['omarchy-theme-bg-set', str(path)], timeout=60)
 
 
+# ---------------------------------------------------------------- cursor
+
+def cursor_bin():
+    path = home() / '.local' / 'bin' / 'tusche-cursor'
+    return path if path.exists() else None
+
+
+def cursor_family():
+    try:
+        return json.loads((config_home() / 'tusche-cursor' / 'config.json').read_text()).get('family', 'auto')
+    except (OSError, ValueError):
+        return None
+
+
+def set_cursor_family(family):
+    """Tusche Cursor's material (auto, ink, glass, pixel), when it is installed."""
+    tool = cursor_bin()
+    if not tool or not family or cursor_family() == family:
+        return
+    run([str(tool), '--family', family, '--save', '--apply', '--quiet'], timeout=300)
+
+
 # ---------------------------------------------------------------- shell
 
 def native_text(p, on):
@@ -402,7 +425,7 @@ def set_style(p, style, restart=True, background=True):
     if style == 'pixel':
         if state.get('style') != 'pixel':
             state['previous'] = {'corners': corners_now() or 'theme', 'background': background_now(p),
-                                 'barBackground': bar_background_now(p) or 'opaque'}
+                                 'barBackground': bar_background_now(p) or 'opaque', 'cursorFamily': cursor_family()}
         state['style'] = 'pixel'
         save_state(p, state)
         add_block(p, state)
@@ -415,6 +438,10 @@ def set_style(p, style, restart=True, background=True):
             if background_now(p) != os.path.realpath(grid):
                 set_background(grid)
         install_hook(p, True)
+        try:
+            set_cursor_family('pixel')
+        except (OSError, RuntimeError, subprocess.SubprocessError) as error:
+            print('warning: cursor: ' + str(error), file=sys.stderr)
         changed_text = native_text(p, True)
     else:
         previous = state.get('previous', {})
@@ -427,6 +454,11 @@ def set_style(p, style, restart=True, background=True):
         if background and previous.get('background') and in_grid_dir(p, background_now(p)):
             set_background(previous['background'])
         install_hook(p, False)
+        if previous.get('cursorFamily') and cursor_family() == 'pixel':
+            try:
+                set_cursor_family(previous['cursorFamily'])
+            except (OSError, RuntimeError, subprocess.SubprocessError) as error:
+                print('warning: cursor: ' + str(error), file=sys.stderr)
         changed_text = native_text(p, False)
         state = {'style': 'tusche'}
         save_state(p, state)

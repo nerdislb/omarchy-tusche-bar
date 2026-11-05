@@ -89,6 +89,11 @@ Item {
     model: root.options.dayline === "on" ? Quickshell.screens : []
     delegate: DayLine { bar: root.edgeBar }
   }
+  // The pixel style's desktop clock, on the wallpaper of every screen.
+  Variants {
+    model: Bridge.ModuleBus.pixel ? Quickshell.screens : []
+    delegate: DeskClock { bar: root.edgeBar }
+  }
   // Option statusHints: moves of the audio output and Bluetooth connections
   // go to Omarchy's OSD (the island's HUD when it owns the OSD).
   Announcer {

@@ -35,6 +35,11 @@ echo "bg $(basename "$1")" >> $HOME/calls.log
     'umbriel': '#!/bin/bash\necho "    2560x1600 @ 60.000 Hz (preferred, current)"\n',
     'vectorcraft-cli': '#!/bin/bash\nexit 1\n',  # forces the PIL fallback: no app needed in tests
 }
+CURSOR = '''#!/bin/bash
+cfg=$HOME/.config/tusche-cursor/config.json
+fam=$(python3 -c "import json,sys; a=sys.argv; print(a[a.index('--family')+1])" "$@")
+mkdir -p "$(dirname "$cfg")"; printf '{"family": "%s"}' "$fam" > "$cfg"; echo "cursor $fam" >> $HOME/calls.log
+'''
 
 USER_SHELL = '[font]\nbase-size = 14\n\n[bar]\nicon-slot = 24\n'
 UMBRIEL = '[include]\nfiles = []\n\n[include.optional]\nfiles = ["omarchy-look.toml", "apple-motion.toml"]\n\n[general]\nmod_key = "Super"\n'
@@ -62,6 +67,11 @@ class PixelStyle(unittest.TestCase):
             (h / d).mkdir(parents=True)
         (h / '.config/omarchy/shell.toml').write_text(USER_SHELL)
         (h / '.config/umbriel/config.toml').write_text(UMBRIEL)
+        (h / '.local/bin').mkdir(parents=True)
+        (h / '.local/bin/tusche-cursor').write_text(CURSOR)
+        (h / '.local/bin/tusche-cursor').chmod(0o755)
+        (h / '.config/tusche-cursor').mkdir(parents=True)
+        (h / '.config/tusche-cursor/config.json').write_text('{"family": "auto"}')
         (h / '.config/omarchy/shell.json').write_text(json.dumps({'bar': {'background': 'none', 'position': 'top'}, 'plugins': []}, indent=2) + '\n')
         self.theme('abendrot')
 
@@ -122,6 +132,7 @@ class PixelStyle(unittest.TestCase):
         # the include stays (an empty file), Umbriel's config is not rewritten again
         self.assertEqual(sha(self.home / '.config/umbriel/config.toml'), umbriel_with_include)
         self.assertEqual(self.calls().count('restart'), 2)
+        self.assertEqual([c for c in self.calls() if c.startswith('cursor')], ['cursor pixel', 'cursor auto'])
 
     def test_previous_corner_choice_returns(self):
         subprocess.run([str(self.bin / 'omarchy-hyprland-corners'), 'rounded'], env={'HOME': str(self.home)}, check=True)
