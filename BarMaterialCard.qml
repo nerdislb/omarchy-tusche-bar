@@ -9,6 +9,7 @@ MaterialCard {
   id: framed
   calm: Bridge.ModuleBus.motion === "calm"
   apple: Bridge.ModuleBus.motion === "apple"
+  pixel: Bridge.ModuleBus.pixel
   readonly property var frameSpec: matOn && !metalOn && !glassOn && mat.frame ? mat.frame : null
   readonly property alias cardFrame: outline
   // Paint over the native rim without replacing any of its bindings. Keeping

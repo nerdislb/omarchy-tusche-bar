@@ -243,8 +243,11 @@ Item {
   // first frame. A switch keeps its plate as in spring.
   property bool calm: false
   property bool apple: false
-  readonly property bool popFades: calm || apple
-  readonly property real popFrom: apple ? 0.94 : calm ? 0.985 : 0.85
+  // The pixel style: no scale and no drift, only a stepped fade in five
+  // whole steps (0.2 s in, 0.12 s out), as the shell draws on whole pixels.
+  property bool pixel: false
+  readonly property bool popFades: calm || apple || pixel
+  readonly property real popFrom: pixel ? 1 : apple ? 0.94 : calm ? 0.985 : 0.85
   property real pop: 1
   property real popVelocity: 0
   property real popTarget: 1
@@ -261,7 +264,7 @@ Item {
   // unit vector away from the bar (the card drops this way as it opens)
   readonly property real awayX: barSide === "left" ? 1 : barSide === "right" ? -1 : 0
   readonly property real awayY: barSide === "bottom" ? -1 : barSide === "left" || barSide === "right" ? 0 : 1
-  readonly property real popLift: reduced ? 0
+  readonly property real popLift: reduced || pixel ? 0
     : popFades ? (1 - Math.max(0, Math.min(1, popRise))) * Style.space(apple ? 4 : 5)
     : (1 - Math.max(0, Math.min(1, pop))) * Style.space(6)
   // the anchor on the card's edge at the bar, in the card's coordinates
@@ -360,6 +363,7 @@ Item {
     if (!popOn) return undefined
     if (swapIn) return swapInK
     if (swapOut) return swapOutK > 0.001 ? 1 : 0
+    if (popFades && pixel) return warming ? 0 : pop >= 1 ? 1 : Math.floor(Math.max(0, pop) * 5) / 5
     if (popFades) return warming ? 0 : Math.max(0, Math.min(1, pop))
     // a fresh pop waits (unseen) for the first steady frame, like the roll
     if (warming) return 0
@@ -377,11 +381,11 @@ Item {
     onTriggered: fp.popStep(Math.min(frameTime, 1 / 30))
   }
   function popStep(dt) {
-    if (popRunning && calm) {
+    if (popRunning && (calm || pixel)) {
       if (popTweenTarget !== popTarget) { popStart = pop; popTween = 0; popTweenTarget = popTarget }
       var rising = popTarget > 0.5
-      popTween = Math.min(1, popTween + dt / (rising ? 0.25 : 0.12))
-      pop = popStart + (popTarget - popStart) * GlassMath.ease(0.2, 0, 0, 1, popTween)
+      popTween = Math.min(1, popTween + dt / (rising ? (pixel ? 0.2 : 0.25) : 0.12))
+      pop = popStart + (popTarget - popStart) * (pixel ? popTween : GlassMath.ease(0.2, 0, 0, 1, popTween))
       if (rising) popRise = Math.max(popRise, pop)
       if (popTween >= 1) { pop = popTarget; popRunning = false }
     } else if (popRunning) {

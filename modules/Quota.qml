@@ -324,6 +324,7 @@ Item {
     metal: Bridge.ModuleBus.metal
     items: root.items
     ringItems: root.ringItems
+    pixel: Bridge.ModuleBus.pixel
     hoverBoost: area.containsMouse ? 0.35 : 0
     Connections { target: Bridge.ModuleBus; function onMetalPulse() { quotaFace.play() } }
   }

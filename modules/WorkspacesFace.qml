@@ -23,6 +23,8 @@ Item {
   property bool barLight: false
   property bool interactive: false
   property bool holdExpand: false
+  // the pixel style: numbered boxes on whole pixels instead of pips or dots
+  property bool pixel: false
   readonly property bool hovered: faceHover.hovered || (loader.item && loader.item.childHovered === true)
   readonly property color dim: Util.alpha(fg, 0.45)
   signal workspacePicked(int id)
@@ -60,6 +62,7 @@ Item {
     id: loader
     height: root.barSize
     sourceComponent: {
+      if (root.pixel && root.variant !== "minimap" && root.variant !== "none") return boxesView
       switch (root.variant) {
       case "stack": return stackView
       case "logo": return dotsView
@@ -136,6 +139,53 @@ Item {
           text: root.active === 10 ? "0" : String(root.active)
           font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.bodySmall
           color: root.barColor
+        }
+      }
+    }
+  }
+
+  // Boxes (pixel style): a numbered square per workspace, the active one
+  // filled with the text colour, occupied ones lightly filled, all on whole
+  // pixels with a 1-px hairline and no rounding.
+  Component {
+    id: boxesView
+    Item {
+      id: boxes
+      readonly property bool childHovered: hover.hovered
+      readonly property int cell: Math.max(14, Math.round(root.barSize * 0.62))
+      readonly property int gap: 3
+      implicitWidth: root.ids.length * cell + (root.ids.length - 1) * gap
+      height: root.barSize
+      HoverHandler { id: hover; enabled: root.interactive }
+      Repeater {
+        model: root.ids
+        Item {
+          required property int modelData
+          required property int index
+          readonly property bool on: modelData === root.active
+          readonly property bool occ: root.occupied(modelData)
+          readonly property bool urg: root.urgent(modelData)
+          x: index * (boxes.cell + boxes.gap)
+          y: Math.round((root.barSize - boxes.cell) / 2)
+          width: boxes.cell
+          height: boxes.cell
+          Rectangle {
+            anchors.fill: parent
+            antialiasing: false
+            color: parent.on ? root.strong : parent.urg ? root.urgentColor : parent.occ ? Util.alpha(root.fg, 0.14) : "transparent"
+            border.width: parent.on || parent.urg ? 0 : 1
+            border.color: Util.alpha(root.fg, parent.occ ? 0.0 : 0.28)
+          }
+          Text {
+            anchors.centerIn: parent
+            renderType: Text.NativeRendering
+            antialiasing: false
+            text: root.label(parent.modelData)
+            font.family: Style.font.family
+            font.pixelSize: Style.font.body
+            color: parent.on || parent.urg ? root.barColor : Util.alpha(root.fg, parent.occ ? 0.9 : 0.45)
+          }
+          MouseArea { enabled: root.interactive; anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.workspacePicked(parent.modelData) }
         }
       }
     }

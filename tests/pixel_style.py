@@ -62,6 +62,7 @@ class PixelStyle(unittest.TestCase):
             (h / d).mkdir(parents=True)
         (h / '.config/omarchy/shell.toml').write_text(USER_SHELL)
         (h / '.config/umbriel/config.toml').write_text(UMBRIEL)
+        (h / '.config/omarchy/shell.json').write_text(json.dumps({'bar': {'background': 'none', 'position': 'top'}, 'plugins': []}, indent=2) + '\n')
         self.theme('abendrot')
 
     def tearDown(self):
@@ -99,6 +100,7 @@ class PixelStyle(unittest.TestCase):
         self.assertEqual(out['corners'], 'sharp')
         self.assertIn('pixel-backgrounds', out['background'])
         self.assertIn('family = "Tiny5"', shell.read_text())
+        self.assertEqual(json.loads((self.home / '.config/omarchy/shell.json').read_text())['bar']['background'], 'opaque')
         self.assertIn('"tusche-pixel.toml"', (self.home / '.config/umbriel/config.toml').read_text())
         self.assertTrue((self.home / '.config/omarchy/hooks/theme-set.d/80-tusche-pixel').exists())
         umbriel_with_include = sha(self.home / '.config/umbriel/config.toml')
@@ -110,6 +112,7 @@ class PixelStyle(unittest.TestCase):
         out = self.run_script('set', 'tusche')
         self.assertEqual(out['style'], 'tusche')
         self.assertEqual(sha(shell), before)
+        self.assertEqual(json.loads((self.home / '.config/omarchy/shell.json').read_text())['bar']['background'], 'none')
         self.assertEqual(out['corners'], 'theme')
         self.assertEqual(out['background'], original_bg)
         self.assertFalse(out['nativeText'] or out['umbrielInclude'])

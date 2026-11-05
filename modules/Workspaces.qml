@@ -586,6 +586,7 @@ Item {
     barLight: Bridge.ModuleBus.barLight
     interactive: true
     holdExpand: root.hoverPopoutOpen || root.popoutVisible
+    pixel: Bridge.ModuleBus.pixel
     onHoveredChanged: {
       if (hovered) {
         root.popoutRequested = true

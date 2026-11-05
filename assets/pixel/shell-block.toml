@@ -10,7 +10,12 @@ title = 16
 heading = 16
 display = 32
 display-large = 48
+# The Tusche Bar and Island draw their pixel faces while this says so.
+[tusche]
+style = "pixel"
 # Flat, opaque plates: nothing to blur behind them.
+[bar]
+background-alpha = 1.0
 [popups]
 background-alpha = 1.0
 [tooltip]

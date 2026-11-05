@@ -67,6 +67,7 @@ def paths():
         'colors': s / 'omarchy' / 'current' / 'theme' / 'colors.toml',
         'theme_name': s / 'omarchy' / 'current' / 'theme.name',
         'hook': c / 'omarchy' / 'hooks' / 'theme-set.d' / '80-tusche-pixel',
+        'shell_json': c / 'omarchy' / 'shell.json',
     }
 
 
@@ -154,6 +155,41 @@ def remove_block(p, state):
     else:
         atomic_write(path, rest)
     state.pop('shell_toml', None)
+
+
+# ---------------------------------------------------------------- shell.json
+
+def json_locked(path):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('shell_json_lock', HERE / 'bin' / 'shell_json_lock.py')
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.locked(path)
+
+
+def bar_background_now(p):
+    try:
+        bar = json.loads(p['shell_json'].read_text()).get('bar', {})
+    except (OSError, ValueError):
+        return None
+    return bar.get('background')
+
+
+def set_bar_background(p, value):
+    """Omarchy's bar look (opaque, glassy, none); None removes the key."""
+    path = p['shell_json']
+    if not path.exists():
+        return
+    with json_locked(path):
+        config = json.loads(path.read_text())
+        bar = config.setdefault('bar', {})
+        if bar.get('background') == value or (value is None and 'background' not in bar):
+            return
+        if value is None:
+            bar.pop('background', None)
+        else:
+            bar['background'] = value
+        atomic_write(path, (json.dumps(config, indent=2) + '\n').encode())
 
 
 # ---------------------------------------------------------------- Umbriel
@@ -353,12 +389,14 @@ def set_style(p, style, restart=True, background=True):
     changed_text = False
     if style == 'pixel':
         if state.get('style') != 'pixel':
-            state['previous'] = {'corners': corners_now() or 'theme', 'background': background_now(p)}
+            state['previous'] = {'corners': corners_now() or 'theme', 'background': background_now(p),
+                                 'barBackground': bar_background_now(p) or 'opaque'}
         state['style'] = 'pixel'
         save_state(p, state)
         add_block(p, state)
         save_state(p, state)
         write_umbriel(p, 'pixel')
+        set_bar_background(p, 'opaque')
         set_corners('sharp')
         if background:
             grid = grid_background(p)
@@ -370,6 +408,8 @@ def set_style(p, style, restart=True, background=True):
         previous = state.get('previous', {})
         remove_block(p, state)
         write_umbriel(p, 'tusche')
+        if previous.get('barBackground') and bar_background_now(p) == 'opaque':
+            set_bar_background(p, previous['barBackground'])
         set_corners(previous.get('corners') or 'theme')
         # only a grid of ours goes back; a background chosen meanwhile stays
         if background and previous.get('background') and in_grid_dir(p, background_now(p)):

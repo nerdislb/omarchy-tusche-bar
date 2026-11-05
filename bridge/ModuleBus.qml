@@ -24,6 +24,10 @@ QtObject {
   // and sunken parts are drawn the other way round.
   function isLight(c) { return 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b > 0.55 }
   readonly property bool barLight: isLight(barColor)
+  // The pixel style (bin/pixel-style.py writes [tusche] style = "pixel" into
+  // ~/.config/omarchy/shell.toml, which the shell reads live): modules draw
+  // their pixel faces, whatever their variant. The theme's colours stay.
+  readonly property bool pixel: String((Commons.Color.shellValues || {})["tusche.style"] || "") === "pixel"
   // The engine, for modules that show its menus (set by the engine).
   property var engine: null
   function optionFor(item, key, fallback) {

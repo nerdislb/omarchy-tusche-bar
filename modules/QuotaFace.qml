@@ -17,6 +17,8 @@ Item {
   property var items: []
   property var ringItems: []
   property real hoverBoost: 0
+  // the pixel style: each agent as a letter and six segments, whatever the variant
+  property bool pixel: false
   readonly property var letters: ({claude:"C", codex:"X", deepseek:"D", antigravity:"G", grok:"K", fireworks:"F"})
   readonly property var quotaItems: items.filter(function(x) { return x.percent >= 0 })
   readonly property var tightest: {
@@ -37,7 +39,8 @@ Item {
   Loader {
     id: loader
     height: root.barSize
-    sourceComponent: root.variant === "vu" ? vuView : root.variant === "rings" ? ringsView : root.variant === "ondemand" ? chipView : gaugeView
+    sourceComponent: root.pixel && root.variant !== "ondemand" ? segmentsView
+      : root.variant === "vu" ? vuView : root.variant === "rings" ? ringsView : root.variant === "ondemand" ? chipView : gaugeView
   }
 
   // Gauge: the tightest limit, coloured by level.
@@ -180,6 +183,53 @@ Item {
           percent: modelData.missing ? -1 : modelData.percent
           letter: root.letters[modelData.provider] || "?"
           boost: root.hoverBoost
+        }
+      }
+    }
+  }
+
+  // Segments (pixel style): letter, six whole-pixel cells, the percentage.
+  // Colour only for state, as the other faces.
+  Component {
+    id: segmentsView
+    Row {
+      spacing: Style.space(10)
+      height: root.barSize
+      function play() {}
+      Repeater {
+        model: root.ringItems
+        Row {
+          required property var modelData
+          readonly property real p: modelData.missing ? -1 : modelData.percent
+          anchors.verticalCenter: parent.verticalCenter
+          spacing: 4
+          Text {
+            anchors.verticalCenter: parent.verticalCenter
+            textFormat: Text.PlainText; renderType: Text.NativeRendering; antialiasing: false
+            text: (root.letters[modelData.provider] || "?").toLowerCase()
+            font.family: Style.font.family; font.pixelSize: Style.font.body
+            color: Util.alpha(root.fg, 0.6)
+          }
+          Row {
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 1
+            Repeater {
+              model: 6
+              Rectangle {
+                required property int index
+                width: 4; height: Math.max(8, Math.round(root.barSize * 0.32))
+                antialiasing: false
+                color: parent.parent.p >= 0 && (index + 0.5) / 6 <= parent.parent.p ? root.tone(parent.parent.p) : Util.alpha(root.fg, 0.16)
+              }
+            }
+          }
+          Text {
+            anchors.verticalCenter: parent.verticalCenter
+            textFormat: Text.PlainText; renderType: Text.NativeRendering; antialiasing: false
+            text: parent.p >= 0 ? Math.round(parent.p * 100) + "%" : "–"
+            font.family: Style.font.family; font.pixelSize: Style.font.body
+            color: parent.p >= 0 ? root.tone(parent.p) : Util.alpha(root.fg, 0.45)
+          }
         }
       }
     }
