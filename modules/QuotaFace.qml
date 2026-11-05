@@ -52,7 +52,7 @@ Item {
       Text { textFormat: Text.PlainText; renderType: Text.NativeRendering;
         anchors.verticalCenter: parent.verticalCenter
         text: "\u{f04c5}"
-        font.family: Style.font.family; font.pixelSize: Style.font.icon + 2
+        font.family: Style.font.family; font.pixelSize: Style.font.icon + (Style.fontPixelGrid ? 0 : 2)
         color: root.tightest ? root.tone(root.tightest.percent) : root.fg
       }
       Column {

@@ -139,7 +139,7 @@ Item {
         anchors.centerIn: parent
         text: ""
         font.family: "omarchy"
-        font.pixelSize: Style.font.icon + 2
+        font.pixelSize: Style.font.icon + (Style.fontPixelGrid ? 0 : 2)
         color: root.strong
       }
       Loader {

@@ -483,7 +483,7 @@ Item {
       visible: root.variant !== "logo" && ["arch", "nerdibeard"].indexOf(root.logo) === -1
       text: ""
       font.family: "omarchy"
-      font.pixelSize: Style.font.icon + 2
+      font.pixelSize: Style.font.icon + (Style.fontPixelGrid ? 0 : 2)
       color: menuSlot.inverted ? menuSlot.source.text : root.strong
     }
 

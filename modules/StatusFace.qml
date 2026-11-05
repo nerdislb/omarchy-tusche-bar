@@ -27,11 +27,13 @@ Item {
     return l > 0.02 ? Math.max(1, Math.ceil(l * 6 - 1e-4)) : 0
   }
 
+  // On the pixel grid the icon size is already a whole multiple of the pixel
+  // font's em; two more pixels would split its pixels (24 px of an 11-px face).
   component Glyph: Text {
     renderType: Text.NativeRendering
     textFormat: Text.PlainText
     font.family: Style.font.family
-    font.pixelSize: Style.font.icon + 2
+    font.pixelSize: Style.font.icon + (Style.fontPixelGrid ? 0 : 2)
     color: root.ink
   }
 

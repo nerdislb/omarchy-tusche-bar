@@ -71,6 +71,8 @@ TRIANGLE = g('...#... ..###.. ..###.. .#####. .#####. ####### #######')
 BELL = g('...#... ..###.. .#####. .#####. .#####. ####### ...#...')
 BELL_O = g('...#... ..#.#.. .#...#. .#...#. .#...#. ####### ...#...')
 BELL_SLEEP = g('...#... ..#.#.. .#...#. .#####. .#...#. ####### ...#...')
+# a filled bell cut by the stroke: slash() over the outline bell ran together
+BELL_OFF = g('#..#... ..###.. .#.###. .##.##. .###.#. #####.# ...#..#')
 
 CLOCK = g('..###.. .#.#.#. #..#..# #..##.# #.....# .#...#. ..###..')
 ALARM = g('##...## #.###.# .#.#.#. .#.###. .#...#. ..###.. .#...#.')
@@ -118,6 +120,8 @@ FINGERPRINT = g('..###.. .#...#. #..#..# #.#.#.# #.#.#.# #.#.#.# ..#.#..')
 VPN = g('..###.. .#...#. ####### ##.#.## ##.#.## ####### .......')
 
 EYE = g('....... ..###.. .#...#. #..#..# .#...#. ..###.. .......')
+# the slash() template crowds the pupil; a stroke the other way, clear of it
+EYE_OFF = g('......# ..###.. .#..##. #..#..# .##..#. ..###.. #......')
 DOTS_V = g('...#... ....... ....... ...#... ....... ....... ...#...')
 DOTS_H = g('....... ....... ....... #..#..# ....... ....... .......')
 DOWNLOAD = g('...#... ...#... #..#..# .#.#.#. ..###.. ....... #######')
@@ -244,10 +248,12 @@ def battery(level, charging=False):
 
 
 WIFI_A = [(1, c) for c in range(1, 6)] + [(2, 0), (2, 6)]
-WIFI_A_ENDS = [(2, 0), (2, 6)]
 WIFI_B = [(3, 2), (3, 3), (3, 4), (4, 1), (4, 5)]
-WIFI_B_ENDS = [(4, 1), (4, 5)]
 WIFI_C = [(6, 3)]
+# an arc not reached, dotted: the whole fan stays readable at every strength
+WIFI_A_DOT = [(1, 1), (1, 3), (1, 5), (2, 0), (2, 6)]
+WIFI_B_DOT = [(3, 3), (4, 1), (4, 5)]
+WIFI_A_INNER = [(1, c) for c in range(1, 6)]
 EMPTY = ['.......'] * 7
 
 
@@ -269,7 +275,7 @@ BY_NAME = {
     'fa-clock_o': CLOCK, 'md-clock_outline': CLOCK, 'md-alarm': ALARM, 'md-reminder': ALARM,
     'md-timer': TIMER, 'md-timer_outline': TIMER_O, 'md-timer_sand': HOURGLASS,
     'md-progress_clock': PROGRESS_CLOCK, 'md-watch': WATCH,
-    'fa-eye': EYE, 'md-eye_outline': EYE, 'md-eye_off': slash(EYE),
+    'fa-eye': EYE, 'md-eye_outline': EYE, 'md-eye_off': EYE_OFF,
     'fa-flash': BOLT, 'md-lightning_bolt': BOLT,
     'fa-heart': HEART, 'fa-star': STAR, 'md-star': STAR,
     'fa-linux': TUX, 'md-linux': TUX,
@@ -289,8 +295,8 @@ BY_NAME = {
     'md-arrow_down': DOWN, 'md-arrow_left': LEFT, 'md-arrow_right': RIGHT,
     'md-arrow_expand_all': EXPAND, 'md-fullscreen': FULLSCREEN, 'md-fullscreen_exit': FULLSCREEN_EXIT,
     'md-backburger': HAMBURGER, 'md-forwardburger': HAMBURGER,
-    'md-bell': BELL, 'md-bell_outline': BELL_O, 'md-bell_off': slash(BELL_O),
-    'md-bell_off_outline': slash(BELL_O), 'md-bell_sleep': BELL_SLEEP,
+    'md-bell': BELL, 'md-bell_outline': BELL_O, 'md-bell_off': BELL_OFF,
+    'md-bell_off_outline': BELL_OFF, 'md-bell_sleep': BELL_SLEEP,
     'md-bluetooth': BLUETOOTH, 'md-bluetooth_connect': over(BLUETOOTH, (3, 0), (3, 6)),
     'md-bluetooth_off': slash(BLUETOOTH),
     'md-brightness_5': SUN_SMALL, 'md-brightness_6': SUN_HOLLOW, 'md-brightness_7': SUN,
@@ -337,11 +343,11 @@ BY_NAME = {
     'md-video_input_hdmi': HDMI, 'md-view_dashboard': DASHBOARD, 'md-view_grid': WINDOWS,
     'md-whatsapp': WHATSAPP,
     'md-wifi': WIFI_FULL, 'md-wifi_strength_4': WIFI_FULL, 'md-wifi_off': slash(WIFI_FULL),
-    'md-wifi_strength_3': wifi(WIFI_A_ENDS, WIFI_B, WIFI_C),
-    'md-wifi_strength_2': wifi(WIFI_A_ENDS, WIFI_B_ENDS, WIFI_C, [(3, 3)]),
-    'md-wifi_strength_1': wifi(WIFI_A_ENDS, WIFI_B_ENDS, WIFI_C),
-    'md-wifi_strength_outline': wifi(WIFI_A_ENDS, WIFI_B_ENDS),
-    'md-wifi_strength_off_outline': slash(wifi(WIFI_A_ENDS, WIFI_B_ENDS)),
+    'md-wifi_strength_3': wifi(WIFI_A_INNER, WIFI_B, WIFI_C),
+    'md-wifi_strength_2': wifi(WIFI_A_DOT, WIFI_B, WIFI_C),
+    'md-wifi_strength_1': wifi(WIFI_A_DOT, WIFI_B_DOT, WIFI_C),
+    'md-wifi_strength_outline': wifi(WIFI_A_DOT, WIFI_B_DOT),
+    'md-wifi_strength_off_outline': slash(wifi(WIFI_A_DOT, WIFI_B_DOT)),
     'md-wifi_strength_4_alert': over(WIFI_FULL, (4, 3), off=[(3, 3)]),
     'md-battery': battery(100), 'md-battery_outline': battery(0),
     'md-battery_charging': battery(100, True), 'md-battery_charging_outline': battery(0, True),

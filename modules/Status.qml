@@ -499,7 +499,7 @@ Item {
             Row {
               anchors.fill: parent; anchors.leftMargin: Style.space(8)
               spacing: Style.space(10)
-              Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter; width: Style.space(20); text: root.catalogue[modelData].glyph; font.family: Style.font.family; font.pixelSize: Style.font.icon + 2; color: root.memberAlert(modelData) ? Commons.Color.urgent : Commons.Color.popups.text }
+              Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter; width: Style.space(20); text: root.catalogue[modelData].glyph; font.family: Style.font.family; font.pixelSize: Style.font.icon + (Style.fontPixelGrid ? 0 : 2); color: root.memberAlert(modelData) ? Commons.Color.urgent : Commons.Color.popups.text }
               Column {
                 anchors.verticalCenter: parent.verticalCenter
                 Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; text: root.catalogue[modelData].name; font.family: Style.font.family; font.pixelSize: Style.font.body; color: Commons.Color.popups.text }
