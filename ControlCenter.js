@@ -106,11 +106,17 @@ var STYLE_LINKS = [
     command: STYLE_SCRIPT + " set tusche",
     note: "Back to materials, rounded corners and the theme's background, exactly as before." }
 ]
+// The configuration check (bin/doctor.py), in a floating terminal.
+STYLE_LINKS.push({ key: "doctor", area: "system", section: "TUSCHE", label: "Check the configuration",
+  command: 'p="$HOME/.config/omarchy/plugins/nerdibeard.tusche-bar"; omarchy-launch-floating-terminal-with-presentation '
+    + '"python3 $p/generations/$(jq -r .generation $p/installed-generation.json)/bin/doctor.py"',
+  note: "shell.json, plugins, bar options, generations, shell.toml, the pixel style and Umbriel's includes, read-only" })
 function styleLinks() {
   return STYLE_LINKS.map(function(l) {
     return { id: "link." + l.key, domain: "link", kind: "link", source: "tusche", key: l.key,
-             area: l.area, section: l.section, label: l.label, note: l.note, opens: "action",
-             widget: "", route: "", action: l.command, hint: "bin/pixel-style.py", available: true, why: "",
+             area: l.area, section: l.section, label: l.label, note: l.note, opens: l.key === "doctor" ? "terminal" : "action",
+             widget: "", route: "", action: l.command, hint: l.key === "doctor" ? "bin/doctor.py" : "bin/pixel-style.py",
+             available: true, why: "",
              values: [], terms: ["style", "pixel", "tusche", "look", l.note] }
   })
 }
@@ -265,7 +271,13 @@ var ISLAND_SETTINGS = [
   { key: "notifications", label: "Notifications", fallback: "false",
     values: [{ id: "true", label: "Island, in the bar" }, { id: "false", label: "Omarchy popups" }] },
   { key: "noteStyle", label: "Note style (themes without material)", fallback: "window",
-    values: [{ id: "window", label: "Window" }, { id: "bubble", label: "Bubble" }, { id: "float", label: "Float" }] }
+    values: [{ id: "window", label: "Window" }, { id: "bubble", label: "Bubble" }, { id: "float", label: "Float" }] },
+  { key: "captureQuiet", label: "While the screen is recorded or shared", fallback: "true",
+    hint: "Banners wait in the inbox, so nothing private reaches a recording",
+    values: [{ id: "true", label: "Hold notifications" }, { id: "false", label: "Show them" }] },
+  { key: "gameQuiet", label: "While a fullscreen game is in front", fallback: "true",
+    hint: "Banners wait in the inbox until the game leaves the front",
+    values: [{ id: "true", label: "Hold notifications" }, { id: "false", label: "Show them" }] }
 ]
 
 var CARDS_SETTING = { key: "override", label: "Theme & wallpaper menus",
@@ -441,7 +453,9 @@ function islandEntry(config) {
 function islandValues(entry) {
   if (!entry) return null
   return { notifications: entry.notifications === true ? "true" : "false",
-           noteStyle: entry.noteStyle === "bubble" || entry.noteStyle === "float" ? entry.noteStyle : "window" }
+           noteStyle: entry.noteStyle === "bubble" || entry.noteStyle === "float" ? entry.noteStyle : "window",
+           captureQuiet: entry.captureQuiet === false ? "false" : "true",
+           gameQuiet: entry.gameQuiet === false ? "false" : "true" }
 }
 function listed(config, id) {
   var plugins = config && Array.isArray(config.plugins) ? config.plugins : []
