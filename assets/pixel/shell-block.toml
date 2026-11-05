@@ -10,6 +10,7 @@ title = 16
 heading = 16
 display = 32
 display-large = 48
+icon-large = 24
 # The Tusche Bar and Island draw their pixel faces while this says so.
 [tusche]
 style = "pixel"
@@ -19,6 +20,9 @@ slider = "segments"
 # Flat, opaque plates: nothing to blur behind them.
 [bar]
 background-alpha = 1.0
+# Bar icons at 16 px: the shell scales this token by base-size / 12, so the
+# switch writes the value that lands on 16 for the base size in use.
+icon-font = @ICON_FONT@
 [popups]
 background-alpha = 1.0
 [tooltip]

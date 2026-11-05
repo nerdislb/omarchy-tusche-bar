@@ -1,0 +1,1514 @@
+[
+{
+"cp": "0xf0e7",
+"name": "fa-flash",
+"files": 20,
+"areas": "tesla"
+},
+{
+"cp": "0xf0156",
+"name": "md-close",
+"files": 16,
+"areas": "island,omawhatsapp,shell/plugins"
+},
+{
+"cp": "0xf009a",
+"name": "md-bell",
+"files": 15,
+"areas": "island,omawhatsapp,shell/plugins"
+},
+{
+"cp": "0xf012c",
+"name": "md-check",
+"files": 15,
+"areas": "island,omawhatsapp,shell/plugins"
+},
+{
+"cp": "0xf036c",
+"name": "md-microphone",
+"files": 12,
+"areas": "island,omawhatsapp,shell/plugins"
+},
+{
+"cp": "0xf021",
+"name": "fa-refresh",
+"files": 11,
+"areas": "shell/plugins,tesla"
+},
+{
+"cp": "0xf017",
+"name": "fa-clock_o",
+"files": 10,
+"areas": "tesla"
+},
+{
+"cp": "0xf03e4",
+"name": "md-pause",
+"files": 9,
+"areas": "island,omawhatsapp,shell/plugins"
+},
+{
+"cp": "0xf00ed",
+"name": "md-calendar",
+"files": 8,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf040a",
+"name": "md-play",
+"files": 7,
+"areas": "island,omawhatsapp,shell/plugins"
+},
+{
+"cp": "0xf0026",
+"name": "md-alert",
+"files": 6,
+"areas": "island,omawhatsapp"
+},
+{
+"cp": "0xf0100",
+"name": "md-camera",
+"files": 6,
+"areas": "island,omawhatsapp,shell/plugins"
+},
+{
+"cp": "0xf075a",
+"name": "md-music",
+"files": 6,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf004d",
+"name": "md-arrow_left",
+"files": 5,
+"areas": "island,omawhatsapp"
+},
+{
+"cp": "0xf009b",
+"name": "md-bell_off",
+"files": 5,
+"areas": "island,omawhatsapp,shell/plugins"
+},
+{
+"cp": "0xf011c",
+"name": "md-cellphone",
+"files": 5,
+"areas": "bar,island"
+},
+{
+"cp": "0xf02cb",
+"name": "md-headphones",
+"files": 5,
+"areas": "bar,island,shell/plugins"
+},
+{
+"cp": "0xf0415",
+"name": "md-plus",
+"files": 5,
+"areas": "island,omawhatsapp,shell/plugins"
+},
+{
+"cp": "0xf051b",
+"name": "md-timer_outline",
+"files": 5,
+"areas": "island"
+},
+{
+"cp": "0xf05a3",
+"name": "md-whatsapp",
+"files": 5,
+"areas": "island,omawhatsapp"
+},
+{
+"cp": "0xf13ab",
+"name": "md-timer",
+"files": 5,
+"areas": "island"
+},
+{
+"cp": "0xf007a",
+"name": "md-battery_10",
+"files": 4,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf00af",
+"name": "md-bluetooth",
+"files": 4,
+"areas": "bar,shell/plugins"
+},
+{
+"cp": "0xf0141",
+"name": "md-chevron_left",
+"files": 4,
+"areas": "island,omawhatsapp,shell/plugins"
+},
+{
+"cp": "0xf0219",
+"name": "md-file_document",
+"files": 4,
+"areas": "omawhatsapp,shell/plugins"
+},
+{
+"cp": "0xf02e9",
+"name": "md-image",
+"files": 4,
+"areas": "omawhatsapp,shell/plugins"
+},
+{
+"cp": "0xf0349",
+"name": "md-magnify",
+"files": 4,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf036d",
+"name": "md-microphone_off",
+"files": 4,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf0379",
+"name": "md-monitor",
+"files": 4,
+"areas": "bar,shell/plugins"
+},
+{
+"cp": "0xf048a",
+"name": "md-send",
+"files": 4,
+"areas": "omawhatsapp,shell/plugins"
+},
+{
+"cp": "0xf04ad",
+"name": "md-skip_next",
+"files": 4,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf04ae",
+"name": "md-skip_previous",
+"files": 4,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf06a9",
+"name": "md-robot",
+"files": 4,
+"areas": "bar,island"
+},
+{
+"cp": "0xf0ecc",
+"name": "md-shield_alert",
+"files": 4,
+"areas": "island"
+},
+{
+"cp": "0xf028",
+"name": "fa-volume_up",
+"files": 3,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf0079",
+"name": "md-battery",
+"files": 3,
+"areas": "bar,island,shell/plugins"
+},
+{
+"cp": "0xf012d",
+"name": "md-check_all",
+"files": 3,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf0140",
+"name": "md-chevron_down",
+"files": 3,
+"areas": "shell/Ui"
+},
+{
+"cp": "0xf0159",
+"name": "md-close_circle",
+"files": 3,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf01d9",
+"name": "md-dots_vertical",
+"files": 3,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf01da",
+"name": "md-download",
+"files": 3,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf01f5",
+"name": "md-emoticon_happy_outline",
+"files": 3,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf0214",
+"name": "md-file",
+"files": 3,
+"areas": "omawhatsapp,shell/plugins"
+},
+{
+"cp": "0xf02fd",
+"name": "md-information_outline",
+"files": 3,
+"areas": "omawhatsapp,shell/plugins"
+},
+{
+"cp": "0xf0337",
+"name": "md-link",
+"files": 3,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf03cc",
+"name": "md-open_in_new",
+"files": 3,
+"areas": "island,omawhatsapp,shell/plugins"
+},
+{
+"cp": "0xf04c3",
+"name": "md-speaker",
+"files": 3,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf04c5",
+"name": "md-speedometer",
+"files": 3,
+"areas": "bar,shell/plugins"
+},
+{
+"cp": "0xf057e",
+"name": "md-volume_high",
+"files": 3,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf0a91",
+"name": "md-bell_off_outline",
+"files": 3,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf140b",
+"name": "md-lightning_bolt",
+"files": 3,
+"areas": "tesla"
+},
+{
+"cp": "0xf1942",
+"name": "md-message_badge_outline",
+"files": 3,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xe659",
+"name": "seti-font",
+"files": 2,
+"areas": "bar,shell/plugins"
+},
+{
+"cp": "0xe900",
+"name": "dev-cobol",
+"files": 2,
+"areas": "bar,shell/plugins"
+},
+{
+"cp": "0xeee8",
+"name": "fa-volume_xmark",
+"files": 2,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf026",
+"name": "fa-volume_off",
+"files": 2,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf027",
+"name": "fa-volume_low",
+"files": 2,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf0020",
+"name": "md-alarm",
+"files": 2,
+"areas": "island"
+},
+{
+"cp": "0xf0045",
+"name": "md-arrow_down",
+"files": 2,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf007b",
+"name": "md-battery_20",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf007c",
+"name": "md-battery_30",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf007d",
+"name": "md-battery_40",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf007e",
+"name": "md-battery_50",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf007f",
+"name": "md-battery_60",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf0080",
+"name": "md-battery_70",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf0081",
+"name": "md-battery_80",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf0082",
+"name": "md-battery_90",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf0084",
+"name": "md-battery_charging",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf0085",
+"name": "md-battery_charging_100",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf0086",
+"name": "md-battery_charging_20",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf0087",
+"name": "md-battery_charging_30",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf0088",
+"name": "md-battery_charging_40",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf0089",
+"name": "md-battery_charging_60",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf008a",
+"name": "md-battery_charging_80",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf008b",
+"name": "md-battery_charging_90",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf009c",
+"name": "md-bell_outline",
+"files": 2,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf00a0",
+"name": "md-bell_sleep",
+"files": 2,
+"areas": "island"
+},
+{
+"cp": "0xf00b1",
+"name": "md-bluetooth_connect",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf00b2",
+"name": "md-bluetooth_off",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf0131",
+"name": "md-checkbox_blank_outline",
+"files": 2,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf0132",
+"name": "md-checkbox_marked",
+"files": 2,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf0142",
+"name": "md-chevron_right",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf014c",
+"name": "md-clipboard_outline",
+"files": 2,
+"areas": "omawhatsapp,shell/plugins"
+},
+{
+"cp": "0xf0150",
+"name": "md-clock_outline",
+"files": 2,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf01d8",
+"name": "md-dots_horizontal",
+"files": 2,
+"areas": "bar"
+},
+{
+"cp": "0xf0209",
+"name": "md-eye_off",
+"files": 2,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf02fc",
+"name": "md-information",
+"files": 2,
+"areas": "island"
+},
+{
+"cp": "0xf030c",
+"name": "md-keyboard",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf0322",
+"name": "md-laptop",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf0343",
+"name": "md-logout",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf034e",
+"name": "md-map_marker",
+"files": 2,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf03d7",
+"name": "md-package_variant_closed",
+"files": 2,
+"areas": "bar,island"
+},
+{
+"cp": "0xf03d8",
+"name": "md-palette",
+"files": 2,
+"areas": "omawhatsapp,shell/plugins"
+},
+{
+"cp": "0xf03e2",
+"name": "md-paperclip",
+"files": 2,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf0403",
+"name": "md-pin",
+"files": 2,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf0425",
+"name": "md-power",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf044a",
+"name": "md-record",
+"files": 2,
+"areas": "island"
+},
+{
+"cp": "0xf0450",
+"name": "md-refresh",
+"files": 2,
+"areas": "shell/Ui,shell/plugins"
+},
+{
+"cp": "0xf045a",
+"name": "md-reply",
+"files": 2,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf04ce",
+"name": "md-star",
+"files": 2,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf051f",
+"name": "md-timer_sand",
+"files": 2,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf0567",
+"name": "md-video",
+"files": 2,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf0582",
+"name": "md-vpn",
+"files": 2,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf05a9",
+"name": "md-wifi",
+"files": 2,
+"areas": "bar,shell/plugins"
+},
+{
+"cp": "0xf06b0",
+"name": "md-update",
+"files": 2,
+"areas": "island,omawhatsapp"
+},
+{
+"cp": "0xf0709",
+"name": "md-restart",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf0741",
+"name": "md-gesture_tap",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf075f",
+"name": "md-volume_mute",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf07f8",
+"name": "md-trackpad",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf089c",
+"name": "md-battery_charging_10",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf089d",
+"name": "md-battery_charging_50",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf089e",
+"name": "md-battery_charging_70",
+"files": 2,
+"areas": "island,shell/plugins"
+},
+{
+"cp": "0xf0928",
+"name": "md-wifi_strength_4",
+"files": 2,
+"areas": "bar,shell/plugins"
+},
+{
+"cp": "0xf0996",
+"name": "md-progress_clock",
+"files": 2,
+"areas": "shell/Ui,shell/plugins"
+},
+{
+"cp": "0xf0dfc",
+"name": "md-signature_freehand",
+"files": 2,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf1412",
+"name": "md-chat_plus_outline",
+"files": 2,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xe302",
+"name": "weather-day_cloudy",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xe308",
+"name": "weather-day_rain",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xe30a",
+"name": "weather-day_snow",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xe30d",
+"name": "weather-day_sunny",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xe313",
+"name": "weather-fog",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xe318",
+"name": "weather-rain",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xe31a",
+"name": "weather-snow",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xe31d",
+"name": "weather-thunderstorm",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xe327",
+"name": "weather-night_alt_snow",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xe32b",
+"name": "weather-night_clear",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xe32e",
+"name": "weather-night_cloudy",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xe333",
+"name": "weather-night_rain",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xe33d",
+"name": "weather-cloud",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xe346",
+"name": "weather-night_fog",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xe3ad",
+"name": "weather-sleet",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xe707",
+"name": "dev-dropbox",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xeb01",
+"name": "cod-globe",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xef59",
+"name": "fa-mug_hot",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf004",
+"name": "fa-heart",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf005",
+"name": "fa-star",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf00c",
+"name": "fa-check",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf023",
+"name": "fa-lock",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf02d",
+"name": "fa-book",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf041",
+"name": "fa-map_marker",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf053",
+"name": "fa-chevron_left",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf054",
+"name": "fa-chevron_right",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf06e",
+"name": "fa-eye",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf08d",
+"name": "fa-thumbtack",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf17c",
+"name": "fa-linux",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf1ab",
+"name": "fa-language",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf000f",
+"name": "md-account_multiple_outline",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf0013",
+"name": "md-account_outline",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf0032",
+"name": "md-android",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf0035",
+"name": "md-apple",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf003b",
+"name": "md-apps",
+"files": 1,
+"areas": "bar"
+},
+{
+"cp": "0xf004c",
+"name": "md-arrow_expand_all",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf0054",
+"name": "md-arrow_right",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf006d",
+"name": "md-backburger",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf008e",
+"name": "md-battery_outline",
+"files": 1,
+"areas": "island"
+},
+{
+"cp": "0xf00de",
+"name": "md-brightness_5",
+"files": 1,
+"areas": "island"
+},
+{
+"cp": "0xf00df",
+"name": "md-brightness_6",
+"files": 1,
+"areas": "island"
+},
+{
+"cp": "0xf00e0",
+"name": "md-brightness_7",
+"files": 1,
+"areas": "island"
+},
+{
+"cp": "0xf00e4",
+"name": "md-bug",
+"files": 1,
+"areas": "island"
+},
+{
+"cp": "0xf00ee",
+"name": "md-calendar_blank",
+"files": 1,
+"areas": "island"
+},
+{
+"cp": "0xf0130",
+"name": "md-checkbox_blank_circle_outline",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf0134",
+"name": "md-checkbox_marked_circle_outline",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf018f",
+"name": "md-content_copy",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf0192",
+"name": "md-content_paste",
+"files": 1,
+"areas": "island"
+},
+{
+"cp": "0xf01a3",
+"name": "md-crosshairs",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf01b4",
+"name": "md-delete",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf01e7",
+"name": "md-earth",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf01ee",
+"name": "md-email",
+"files": 1,
+"areas": "island"
+},
+{
+"cp": "0xf0200",
+"name": "md-ethernet",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf0202",
+"name": "md-ethernet_cable_off",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf0207",
+"name": "md-export",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf022b",
+"name": "md-file_video",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf0237",
+"name": "md-fingerprint",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf024f",
+"name": "md-folder_image",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf0293",
+"name": "md-fullscreen",
+"files": 1,
+"areas": "island"
+},
+{
+"cp": "0xf0294",
+"name": "md-fullscreen_exit",
+"files": 1,
+"areas": "island"
+},
+{
+"cp": "0xf029a",
+"name": "md-gauge",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf02b4",
+"name": "md-google_controller",
+"files": 1,
+"areas": "island"
+},
+{
+"cp": "0xf02b6",
+"name": "md-google_drive",
+"files": 1,
+"areas": "bar"
+},
+{
+"cp": "0xf02ca",
+"name": "md-harddisk",
+"files": 1,
+"areas": "bar"
+},
+{
+"cp": "0xf02eb",
+"name": "md-image_area",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf0306",
+"name": "md-key",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf030b",
+"name": "md-key_variant",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf032a",
+"name": "md-leaf",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf0339",
+"name": "md-link_variant",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf033d",
+"name": "md-linux",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf033e",
+"name": "md-lock",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf0369",
+"name": "md-message_text",
+"files": 1,
+"areas": "island"
+},
+{
+"cp": "0xf036a",
+"name": "md-message_text_outline",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf0372",
+"name": "md-microsoft",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf037a",
+"name": "md-monitor_multiple",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf037d",
+"name": "md-mouse",
+"files": 1,
+"areas": "island"
+},
+{
+"cp": "0xf0386",
+"name": "md-music_circle",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf0388",
+"name": "md-music_note_2",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf03eb",
+"name": "md-pencil",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf03f2",
+"name": "md-phone",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf0431",
+"name": "md-puzzle",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf0432",
+"name": "md-qrcode",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf0453",
+"name": "md-reload",
+"files": 1,
+"areas": "island"
+},
+{
+"cp": "0xf0483",
+"name": "md-security",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf0493",
+"name": "md-cog",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf04db",
+"name": "md-stop",
+"files": 1,
+"areas": "island"
+},
+{
+"cp": "0xf04e6",
+"name": "md-sync",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf050e",
+"name": "md-theme_light_dark",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf0536",
+"name": "md-triangle",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf056e",
+"name": "md-view_dashboard",
+"files": 1,
+"areas": "bar"
+},
+{
+"cp": "0xf0570",
+"name": "md-view_grid",
+"files": 1,
+"areas": "bar"
+},
+{
+"cp": "0xf057f",
+"name": "md-volume_low",
+"files": 1,
+"areas": "island"
+},
+{
+"cp": "0xf0580",
+"name": "md-volume_medium",
+"files": 1,
+"areas": "island"
+},
+{
+"cp": "0xf0589",
+"name": "md-watch",
+"files": 1,
+"areas": "island"
+},
+{
+"cp": "0xf0597",
+"name": "md-weather_rainy",
+"files": 1,
+"areas": "bar"
+},
+{
+"cp": "0xf05aa",
+"name": "md-wifi_off",
+"files": 1,
+"areas": "bar"
+},
+{
+"cp": "0xf061a",
+"name": "md-chip",
+"files": 1,
+"areas": "bar"
+},
+{
+"cp": "0xf06d0",
+"name": "md-eye_outline",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf070e",
+"name": "md-run",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf073a",
+"name": "md-cancel",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf0765",
+"name": "md-circle",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf0785",
+"name": "md-sticker_emoji",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf07b7",
+"name": "md-console_line",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf07c0",
+"name": "md-desktop_classic",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf07f5",
+"name": "md-form_textbox_password",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf0818",
+"name": "md-content_save_outline",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf082e",
+"name": "md-notebook",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf0841",
+"name": "md-video_input_hdmi",
+"files": 1,
+"areas": "island"
+},
+{
+"cp": "0xf0849",
+"name": "md-account_group",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf088c",
+"name": "md-reminder",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf089f",
+"name": "md-battery_charging_outline",
+"files": 1,
+"areas": "island"
+},
+{
+"cp": "0xf08b9",
+"name": "md-remote_desktop",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf08bb",
+"name": "md-cog_outline",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf08c6",
+"name": "md-application",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf091f",
+"name": "md-wifi_strength_1",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf0922",
+"name": "md-wifi_strength_2",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf0925",
+"name": "md-wifi_strength_3",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf0929",
+"name": "md-wifi_strength_4_alert",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf092e",
+"name": "md-wifi_strength_off_outline",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf092f",
+"name": "md-wifi_strength_outline",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf0930",
+"name": "md-pin_off_outline",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf0931",
+"name": "md-pin_outline",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf0976",
+"name": "md-image_outline",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf097b",
+"name": "md-keyboard_outline",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf099d",
+"name": "md-shield_lock",
+"files": 1,
+"areas": "bar"
+},
+{
+"cp": "0xf0d75",
+"name": "md-forwardburger",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf0d78",
+"name": "md-file_gif_box",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf0df0",
+"name": "md-phone_outline",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf0e1e",
+"name": "md-check_bold",
+"files": 1,
+"areas": "island"
+},
+{
+"cp": "0xf0eb1",
+"name": "md-fingerprint_off",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf0ec2",
+"name": "md-record_circle",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf0f4c",
+"name": "md-emoticon_frown",
+"files": 1,
+"areas": "omawhatsapp"
+},
+{
+"cp": "0xf11e2",
+"name": "md-router",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf14de",
+"name": "md-rocket_launch",
+"files": 1,
+"areas": "shell/services"
+},
+{
+"cp": "0xf14fb",
+"name": "md-square_rounded",
+"files": 1,
+"areas": "shell/plugins"
+},
+{
+"cp": "0xf16a3",
+"name": "md-robot_excited",
+"files": 1,
+"areas": "shell/plugins"
+}
+]

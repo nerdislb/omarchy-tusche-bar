@@ -4,6 +4,7 @@
     pixel-style.py status                 prints the state as JSON
     pixel-style.py set pixel|tusche [--no-restart] [--no-background]
     pixel-style.py ensure-include         adds this style's file to Umbriel's includes
+    pixel-style.py ensure-fonts           installs static Tiny5 and the pixel symbols
     pixel-style.py retheme                after a theme switch: a new dot grid (theme-set hook)
 
 The pixel style is a layer over the theme: its palette stays. Switching to it
@@ -19,6 +20,9 @@ then:
     windows dissolving in and out on a Bayer grid), which Umbriel includes last;
   * sets a dot-grid background drawn from the theme's colours;
   * switches Tusche Cursor, when installed, to its pixel family;
+  * installs static Tiny5 (Regular and Bold) and Tusche Pixel Symbols, a
+    7x7 pixel font for the Nerd Font symbols that fontconfig puts right after
+    Tiny5 (it stays installed: only Tiny5 text ever reaches it);
   * turns on native text for the shell (Qt's default text blurs a pixel face)
     and restarts the shell, the one step that cannot happen live.
 
@@ -35,6 +39,9 @@ import shutil
 import subprocess
 import sys
 import tempfile
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import umbriel_include  # noqa: E402
 
 HERE = Path(__file__).resolve().parent.parent
 ASSETS = HERE / 'assets' / 'pixel'
@@ -112,8 +119,30 @@ def run(argv, timeout=60, check=True):
 
 # ---------------------------------------------------------------- shell.toml
 
-def block_text():
-    return (ASSETS / 'shell-block.toml').read_bytes()
+def base_size(p):
+    """[font] base-size outside our block (the shell's default is 12)."""
+    path = p['shell_toml']
+    text = path.read_text() if path.exists() else ''
+    if BEGIN in text and END in text:
+        text = text[:text.index(BEGIN)] + text[text.index(END) + len(END):]
+    section, size = '', 12
+    for line in text.splitlines():
+        line = line.split('#', 1)[0].strip()
+        if line.startswith('[') and line.endswith(']'):
+            section = line[1:-1].strip()
+        elif section == 'font' and re.match(r'base-size\s*=', line):
+            try:
+                size = int(line.split('=', 1)[1].strip().strip('"'))
+            except ValueError:
+                pass
+    return max(1, size)
+
+
+def block_text(p):
+    # the shell scales [bar] icon-font by base-size / 12 and rounds: pick the
+    # whole number that lands on Tiny5's 16-px grid size
+    icon_font = round(16 * 12 / base_size(p))
+    return (ASSETS / 'shell-block.toml').read_bytes().replace(b'@ICON_FONT@', str(icon_font).encode())
 
 
 def has_block(data):
@@ -124,11 +153,27 @@ def add_block(p, state):
     path = p['shell_toml']
     data = path.read_bytes() if path.exists() else b''
     if has_block(data):
+        refresh_block(p, state, data)
         return
     sep = b'' if not data or data.endswith(b'\n') else b'\n'
-    added = sep + block_text()
+    added = sep + block_text(p)
     state['shell_toml'] = {'before': sha(data), 'added': added.decode(), 'existed': path.exists()}
     atomic_write(path, data + added, 0o600 if not path.exists() else None)
+
+
+def refresh_block(p, state, data):
+    """An older block of ours at the end of the file: swap in the current one."""
+    record = state.get('shell_toml') or {}
+    added = record.get('added', '').encode()
+    if not added or not data.endswith(added):
+        return
+    sep = b'\n' if added.startswith(b'\n') else b''
+    fresh = sep + block_text(p)
+    if fresh == added:
+        return
+    record['added'] = fresh.decode()
+    state['shell_toml'] = record
+    atomic_write(p['shell_toml'], data[:-len(added)] + fresh)
 
 
 def remove_block(p, state):
@@ -197,25 +242,8 @@ def set_bar_background(p, value):
 
 def ensure_include(p):
     """Add tusche-pixel.toml as the last optional include of Umbriel's config."""
-    config = p['umbriel_dir'] / 'config.toml'
-    if not config.exists():
-        return 'no umbriel config'
-    text = config.read_text()
-    if INCLUDE in text:
-        return 'present'
-    section = re.search(r'^\[include\.optional\]\s*$', text, re.M)
-    if not section:
-        return 'no [include.optional]'
-    line = re.compile(r'^(files\s*=\s*\[)(.*?)(\]\s*)$', re.M)
-    m = line.search(text, section.end())
-    nxt = re.search(r'^\[', text[section.end():], re.M)
-    if not m or (nxt and m.start() > section.end() + nxt.start()):
-        return 'no files list'
-    inner = m.group(2).rstrip()
-    new_inner = (inner + ', ' if inner.strip() else '') + '"' + INCLUDE + '"'
-    shutil.copy2(config, config.with_name(config.name + '.bak-tusche-pixel'))
-    atomic_write(config, (text[:m.start()] + m.group(1) + new_inner + m.group(3) + text[m.end():]).encode())
-    return 'added'
+    return umbriel_include.ensure(p['umbriel_dir'] / 'config.toml', INCLUDE, '.bak-tusche-pixel',
+                                  lambda path, text: atomic_write(path, text.encode()))
 
 
 SHADER = 'tusche-pixel-dither.glsl'
@@ -349,6 +377,51 @@ def set_cursor_family(family):
     run([str(tool), '--family', family, '--save', '--apply', '--quiet'], timeout=300)
 
 
+# ---------------------------------------------------------------- fonts
+
+FONTCONF = '60-tusche-pixel-symbols.conf'
+
+
+def font_paths():
+    data = Path(os.environ.get('XDG_DATA_HOME') or home() / '.local' / 'share')
+    return {
+        'tiny5': data / 'fonts' / 'tiny5',
+        'symbols': data / 'fonts' / 'tusche-pixel-symbols',
+        'conf': config_home() / 'fontconfig' / 'conf.d' / FONTCONF,
+        'replaced': state_home() / 'tusche-bar' / 'replaced-fonts',
+    }
+
+
+def ensure_fonts():
+    """Static Tiny5 (Regular + Bold), the pixel symbols, and the fontconfig rule
+    that puts the symbols right after Tiny5. They stay installed when the Tusche
+    style returns: nothing else asks for Tiny5, so they change nothing then.
+    Returns True when something changed (the shell reads fonts at start)."""
+    src = ASSETS / 'fonts'
+    fp = font_paths()
+    changed = False
+    variable = fp['tiny5'] / 'Tiny5.ttf'
+    if variable.exists():
+        # the variable Tiny5 draws bold as a smeared synthetic bold in Qt
+        fp['replaced'].mkdir(parents=True, exist_ok=True)
+        shutil.move(str(variable), str(fp['replaced'] / 'Tiny5-variable.ttf'))
+        changed = True
+    wanted = [(src / name, fp['tiny5'] / name) for name in ('Tiny5-Regular.ttf', 'Tiny5-Bold.ttf', 'OFL-tiny5.txt')]
+    wanted += [(src / name, fp['symbols'] / name) for name in ('TuschePixelSymbols.ttf', 'LICENSE-symbols.txt')]
+    wanted += [(src / FONTCONF, fp['conf'])]
+    for source, target in wanted:
+        if not source.exists():
+            continue
+        data = source.read_bytes()
+        if target.exists() and target.read_bytes() == data:
+            continue
+        atomic_write(target, data, 0o644)
+        changed = True
+    if changed and shutil.which('fc-cache'):
+        run(['fc-cache', '-f', str(fp['tiny5']), str(fp['symbols'])], timeout=120, check=False)
+    return changed
+
+
 # ---------------------------------------------------------------- shell
 
 def native_text(p, on):
@@ -363,8 +436,37 @@ def native_text(p, on):
     return False
 
 
+def umbriel_env():
+    """The environment with a live UMBRIEL_SOCKET: a stale one (left in the
+    systemd user environment by an earlier session) makes omarchy-restart-shell
+    stop the shell and fall back to Hyprland's dispatcher, which never starts it."""
+    env = dict(os.environ)
+    sock = env.get('UMBRIEL_SOCKET', '')
+    if sock and Path(sock).is_socket():
+        return env
+    runtime = env.get('XDG_RUNTIME_DIR') or f'/run/user/{os.getuid()}'
+    candidate = Path(runtime) / f"umbriel-{env.get('WAYLAND_DISPLAY') or 'wayland-0'}.sock"
+    if candidate.is_socket():
+        env['UMBRIEL_SOCKET'] = str(candidate)
+    return env
+
+
+def shell_running():
+    return subprocess.run(['pgrep', '-x', 'quickshell'], capture_output=True).returncode == 0
+
+
 def restart_shell():
-    run(['omarchy-restart-shell'], timeout=120)
+    env = umbriel_env()
+    subprocess.run(['omarchy-restart-shell'], capture_output=True, text=True, timeout=120, env=env)
+    # never leave the desktop without its shell: start it through Umbriel if
+    # the restart stopped it and nothing brought it back
+    import time
+    for _ in range(20):
+        if shell_running():
+            return
+        time.sleep(0.5)
+    if env.get('UMBRIEL_SOCKET') and shutil.which('umbriel'):
+        subprocess.run(['umbriel', 'msg', 'spawn', 'omarchy-launch-shell'], capture_output=True, timeout=30, env=env)
 
 
 # ---------------------------------------------------------------- theme hook
@@ -424,8 +526,10 @@ def set_style(p, style, restart=True, background=True):
     changed_text = False
     if style == 'pixel':
         if state.get('style') != 'pixel':
+            # barBackground as found: None (no key in shell.json) is restored as no key
             state['previous'] = {'corners': corners_now() or 'theme', 'background': background_now(p),
-                                 'barBackground': bar_background_now(p) or 'opaque', 'cursorFamily': cursor_family()}
+                                 'barBackground': bar_background_now(p), 'cursorFamily': cursor_family(),
+                                 'nativeText': p['native_flag'].exists()}
         state['style'] = 'pixel'
         save_state(p, state)
         add_block(p, state)
@@ -442,24 +546,31 @@ def set_style(p, style, restart=True, background=True):
             set_cursor_family('pixel')
         except (OSError, RuntimeError, subprocess.SubprocessError) as error:
             print('warning: cursor: ' + str(error), file=sys.stderr)
-        changed_text = native_text(p, True)
+        try:
+            fonts_changed = ensure_fonts()
+        except (OSError, RuntimeError, subprocess.SubprocessError) as error:
+            print('warning: fonts: ' + str(error), file=sys.stderr)
+            fonts_changed = False
+        changed_text = native_text(p, True) or fonts_changed
     else:
         previous = state.get('previous', {})
         remove_block(p, state)
         write_umbriel(p, 'tusche')
-        if previous.get('barBackground') and bar_background_now(p) == 'opaque':
+        if 'barBackground' in previous and bar_background_now(p) == 'opaque':
             set_bar_background(p, previous['barBackground'])
         set_corners(previous.get('corners') or 'theme')
         # only a grid of ours goes back; a background chosen meanwhile stays
         if background and previous.get('background') and in_grid_dir(p, background_now(p)):
             set_background(previous['background'])
         install_hook(p, False)
-        if previous.get('cursorFamily') and cursor_family() == 'pixel':
+        if 'cursorFamily' in previous and cursor_family() == 'pixel':
             try:
-                set_cursor_family(previous['cursorFamily'])
+                # no Tusche Cursor config before: its default family
+                set_cursor_family(previous['cursorFamily'] or 'auto')
             except (OSError, RuntimeError, subprocess.SubprocessError) as error:
                 print('warning: cursor: ' + str(error), file=sys.stderr)
-        changed_text = native_text(p, False)
+        # native text that was on before the pixel style stays on
+        changed_text = native_text(p, False) if not previous.get('nativeText') else False
         state = {'style': 'tusche'}
         save_state(p, state)
     if restart and changed_text:
@@ -492,6 +603,9 @@ def main(argv):
         except (OSError, RuntimeError, subprocess.SubprocessError) as error:
             print('error: ' + str(error), file=sys.stderr)
             return 1
+        return 0
+    if len(argv) >= 2 and argv[1] == 'ensure-fonts':
+        print(json.dumps({'changed': ensure_fonts()}))
         return 0
     if len(argv) >= 2 and argv[1] == 'ensure-include':
         print(ensure_include(p))

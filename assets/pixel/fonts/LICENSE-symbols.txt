@@ -1,0 +1,17 @@
+Tusche Pixel Symbols (TuschePixelSymbols.ttf)
+
+Drawn for the Tusche pixel style on a 7x7 grid. Master: assets/pixel/symbols/
+tusche-pixel-symbols.vectorcraft (VectorCraft). Some bitmaps follow YAMI's 7x7
+icon set (check, close, arrows, send, gear, folder, trash, power, bolt, leaf,
+gauge, lock, mic, copy, image, magnify):
+
+  MIT License, Copyright (c) 2026 YAMI contributors
+  https://github.com/Trendorin/yami
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files, to deal in the Software
+without restriction, subject to including the above copyright notice and this
+permission notice in all copies or substantial portions of the Software. THE
+SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+
+The codepoints are Nerd Fonts codepoints; no Nerd Fonts glyph outlines are used.
