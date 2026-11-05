@@ -51,8 +51,13 @@ Item {
     "com.omastorm.radar": { name: "Rain radar", glyph: "\u{f0597}", file: "~/.config/omarchy/plugins/com.omastorm.radar/ui/RadarBar.qml" },
     "community.plugin-manager": { name: "Plugins", glyph: "\u{f03d7}", file: "~/.config/omarchy/plugins/community.plugin-manager/BarWidget.qml" },
     "flux": { name: "Flux · phone", glyph: "\u{f011c}", command: "omarchy-shell shell toggle flux" },
-    "omarchy.power": { name: "Battery & power", glyph: "\u{f0079}", file: "@/shell/plugins/panels/power/Panel.qml" }
+    "omarchy.power": { name: "Battery & power", glyph: "\u{f0079}", file: "@/shell/plugins/panels/power/Panel.qml" },
+    // not embeddable: only a deviation while the privacy curtain is on; a
+    // click lifts it (the same toggle as Super+Shift+H, with its notice)
+    "tusche.curtain": { name: "Privacy curtain", glyph: "\u{f0209}", command: "python3 '" + curtainScript + "' toggle" }
   })
+  // this generation's own curtain script (bin/curtain.py)
+  readonly property string curtainScript: decodeURIComponent(String(Qt.resolvedUrl("../bin/curtain.py")).replace(/^file:\/\//, ""))
   function filePath(f) {
     if (f.indexOf("@/") === 0) return "file://" + omarchyPath + f.substring(1)
     if (f.indexOf("~/") === 0) return "file://" + home + f.substring(1)
@@ -216,6 +221,19 @@ Item {
       }
     }
   }
+  // The privacy curtain (bin/curtain.py) is on while its Umbriel file holds the
+  // capture rule. Watched, not polled: the script rewrites it atomically.
+  property bool curtainOn: false
+  FileView {
+    id: curtainFile
+    path: root.home + "/.config/umbriel/tusche-curtain.toml"
+    watchChanges: true
+    printErrors: false
+    onLoaded: root.curtainOn = /^\s*block_capture\s*=\s*true/m.test(String(text()))
+    // text() is stale in the change signal itself: reload, then onLoaded
+    onFileChanged: reload()
+    onLoadFailed: root.curtainOn = false
+  }
   property var lastCpu: null
   FileView {
     id: stat
@@ -272,6 +290,8 @@ Item {
   // Deviations: what is worth showing right now.
   readonly property var deviations: {
     var out = []
+    if (curtainOn) out.push({ glyph: "\u{f0209}", color: Commons.Color.accent, member: "tusche.curtain",
+      tip: "Privacy curtain on: captures show the wallpaper · click to lift it" })
     if (!wifiUp) out.push({ glyph: "\u{f05aa}", color: Commons.Color.urgent, member: "omarchy.network" })
     if (vpnUp) out.push({ glyph: "\u{f099d}", color: Commons.Color.accent, member: "io.github.iamfitsum.omarchy-proton-vpn" })
     if (!tailscaleUp) out.push({ glyph: "\u{f0570}", color: Util.alpha(fg, 0.5), member: "omarchy.tailscale" })
@@ -334,6 +354,7 @@ Item {
         id: devCell
         required property var modelData
         onClicked: { root.popupAnchor = devCell; root.openMember(modelData.member) }
+        tooltipText: modelData.tip || ""
         width: Style.bar.iconSlot
         StatusFace {
           anchors.fill: parent; glyph: modelData.glyph || ""; chip: !!modelData.chip
