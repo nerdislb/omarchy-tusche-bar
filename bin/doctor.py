@@ -215,19 +215,17 @@ def check_pixel():
 def check_fonts():
     data = Path(os.environ.get('XDG_DATA_HOME') or Path.home() / '.local' / 'share') / 'fonts'
     problems = []
+    for name in ('TuschePixel-Regular.ttf', 'TuschePixel-Bold.ttf'):
+        if not (data / 'tusche-pixel' / name).exists():
+            problems.append(name + ' missing')
     if (data / 'tiny5' / 'Tiny5.ttf').exists():
         problems.append('the variable Tiny5.ttf is still installed (smeared bold)')
-    for name in ('Tiny5-Regular.ttf', 'Tiny5-Bold.ttf'):
-        if not (data / 'tiny5' / name).exists():
-            problems.append(name + ' missing')
-    if not (data / 'tusche-pixel-symbols' / 'TuschePixelSymbols.ttf').exists():
-        problems.append('Tusche Pixel Symbols missing')
-    if not (CONFIG / 'fontconfig' / 'conf.d' / '60-tusche-pixel-symbols.conf').exists():
-        problems.append('fontconfig rule for the symbols missing')
+    if (CONFIG / 'fontconfig' / 'conf.d' / '60-tusche-pixel-symbols.conf').exists():
+        problems.append('the old symbol fallback rule is still there')
     if problems:
         fail('pixel fonts', '; '.join(problems) + ' (pixel-style.py ensure-fonts repairs it)')
     else:
-        ok('pixel fonts', 'static Tiny5 and Tusche Pixel Symbols installed')
+        ok('pixel fonts', 'Tusche Pixel installed')
 
 
 def check_umbriel():

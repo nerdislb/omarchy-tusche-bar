@@ -4,14 +4,14 @@
     pixel-style.py status                 prints the state as JSON
     pixel-style.py set pixel|tusche [--no-restart] [--no-background]
     pixel-style.py ensure-include         adds this style's file to Umbriel's includes
-    pixel-style.py ensure-fonts           installs static Tiny5 and the pixel symbols
+    pixel-style.py ensure-fonts           installs Tusche Pixel (Tiny5 + the pixel symbols)
     pixel-style.py retheme                after a theme switch: a new dot grid (theme-set hook)
 
 The pixel style is a layer over the theme: its palette stays. Switching to it
 records what it replaces (Omarchy's corner choice, the current background) and
 then:
 
-  * appends a managed block to ~/.config/omarchy/shell.toml (Tiny5 for the shell
+  * appends a managed block to ~/.config/omarchy/shell.toml (Tusche Pixel for the shell
     alone, font sizes on the pixel grid, opaque plates), which the shell reads
     live;
   * squares the corners with Omarchy's own toggle (`omarchy-hyprland-corners`),
@@ -20,9 +20,9 @@ then:
     windows dissolving in and out on a Bayer grid), which Umbriel includes last;
   * sets a dot-grid background drawn from the theme's colours;
   * switches Tusche Cursor, when installed, to its pixel family;
-  * installs static Tiny5 (Regular and Bold) and Tusche Pixel Symbols, a
-    7x7 pixel font for the Nerd Font symbols that fontconfig puts right after
-    Tiny5 (it stays installed: only Tiny5 text ever reaches it);
+  * installs Tusche Pixel: Tiny5's letters and 7x7 pixel symbols for the
+    Nerd Font codepoints in one family, so no symbol depends on Qt's font
+    fallback (it stays installed; nothing else asks for it);
   * turns on native text for the shell (Qt's default text blurs a pixel face)
     and restarts the shell, the one step that cannot happen live.
 
@@ -379,24 +379,25 @@ def set_cursor_family(family):
 
 # ---------------------------------------------------------------- fonts
 
-FONTCONF = '60-tusche-pixel-symbols.conf'
+OUR_CONF = '60-tusche-pixel-symbols.conf'   # an earlier fallback rule of ours
 
 
 def font_paths():
     data = Path(os.environ.get('XDG_DATA_HOME') or home() / '.local' / 'share')
     return {
         'tiny5': data / 'fonts' / 'tiny5',
-        'symbols': data / 'fonts' / 'tusche-pixel-symbols',
-        'conf': config_home() / 'fontconfig' / 'conf.d' / FONTCONF,
+        'pixel': data / 'fonts' / 'tusche-pixel',
+        'old_symbols': data / 'fonts' / 'tusche-pixel-symbols',
+        'old_conf': config_home() / 'fontconfig' / 'conf.d' / OUR_CONF,
         'replaced': state_home() / 'tusche-bar' / 'replaced-fonts',
     }
 
 
 def ensure_fonts():
-    """Static Tiny5 (Regular + Bold), the pixel symbols, and the fontconfig rule
-    that puts the symbols right after Tiny5. They stay installed when the Tusche
-    style returns: nothing else asks for Tiny5, so they change nothing then.
-    Returns True when something changed (the shell reads fonts at start)."""
+    """Tusche Pixel (Regular and a Bold that keeps the Regular pixels) and a
+    static Tiny5. They stay installed when the Tusche style returns: nothing
+    else asks for them. Returns True when something changed (the shell reads
+    fonts at start)."""
     src = ASSETS / 'fonts'
     fp = font_paths()
     changed = False
@@ -406,9 +407,18 @@ def ensure_fonts():
         fp['replaced'].mkdir(parents=True, exist_ok=True)
         shutil.move(str(variable), str(fp['replaced'] / 'Tiny5-variable.ttf'))
         changed = True
+    # the separate symbol font with its fontconfig fallback came first; Qt's
+    # fallback choice was not reliable, so it is gone again
+    conf = fp['old_conf']
+    if conf.exists() and 'Tusche Bar' in conf.read_text(errors='replace'):
+        conf.unlink()
+        changed = True
+    if fp['old_symbols'].is_dir() and (fp['old_symbols'] / 'TuschePixelSymbols.ttf').exists():
+        shutil.rmtree(fp['old_symbols'])
+        changed = True
     wanted = [(src / name, fp['tiny5'] / name) for name in ('Tiny5-Regular.ttf', 'Tiny5-Bold.ttf', 'OFL-tiny5.txt')]
-    wanted += [(src / name, fp['symbols'] / name) for name in ('TuschePixelSymbols.ttf', 'LICENSE-symbols.txt')]
-    wanted += [(src / FONTCONF, fp['conf'])]
+    wanted += [(src / name, fp['pixel'] / name)
+               for name in ('TuschePixel-Regular.ttf', 'TuschePixel-Bold.ttf', 'OFL-tiny5.txt', 'LICENSE-symbols.txt')]
     for source, target in wanted:
         if not source.exists():
             continue
@@ -418,7 +428,7 @@ def ensure_fonts():
         atomic_write(target, data, 0o644)
         changed = True
     if changed and shutil.which('fc-cache'):
-        run(['fc-cache', '-f', str(fp['tiny5']), str(fp['symbols'])], timeout=120, check=False)
+        run(['fc-cache', '-f', str(fp['tiny5']), str(fp['pixel'])], timeout=120, check=False)
     return changed
 
 

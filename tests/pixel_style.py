@@ -109,7 +109,9 @@ class PixelStyle(unittest.TestCase):
         self.assertTrue(out['shellBlock'] and out['umbrielInclude'] and out['nativeText'])
         self.assertEqual(out['corners'], 'sharp')
         self.assertIn('pixel-backgrounds', out['background'])
-        self.assertIn('family = "Tiny5"', shell.read_text())
+        self.assertIn('family = "Tusche Pixel"', shell.read_text())
+        # base-size 14: the bar icon token that lands on 16 px
+        self.assertIn('icon-font = 14', shell.read_text())
         self.assertEqual(json.loads((self.home / '.config/omarchy/shell.json').read_text())['bar']['background'], 'opaque')
         self.assertIn('"tusche-pixel.toml"', (self.home / '.config/umbriel/config.toml').read_text())
         self.assertTrue((self.home / '.config/omarchy/hooks/theme-set.d/80-tusche-pixel').exists())

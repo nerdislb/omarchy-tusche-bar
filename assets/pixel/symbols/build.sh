@@ -1,5 +1,6 @@
 #!/bin/bash
-# Rebuild ../fonts/TuschePixelSymbols.ttf from the VectorCraft master.
+# Rebuild ../fonts/TuschePixelSymbols.ttf and Tusche Pixel (Tiny5 + symbols)
+# from the VectorCraft master.
 #
 #   build.sh            master (edited in VectorCraft) -> SVG -> font
 #   build.sh --redraw   glyphs.json (from build_glyphs.py) -> new master first
@@ -19,3 +20,5 @@ if [[ ${1:-} == --redraw ]]; then
 fi
 vectorcraft-cli convert "$here/tusche-pixel-symbols.vectorcraft" "$work/master.svg" >/dev/null
 "$py" -I "$here/make_font.py" "$work/master.svg" "$here/layout.json" "$here/../fonts/TuschePixelSymbols.ttf"
+# one family with Tiny5: no symbol depends on Qt's font fallback
+"$py" -I "$here/merge_font.py" "$here/../fonts"

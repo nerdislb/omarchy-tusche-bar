@@ -1,7 +1,8 @@
 # >>> tusche pixel style (written by the Tusche Bar; switch back in its Control Center) >>>
-# Tiny5 for the shell alone; pixel faces want whole multiples of their grid.
+# Tusche Pixel (Tiny5 letters + the pixel symbols) for the shell alone; pixel
+# faces want whole multiples of their grid.
 [font]
-family = "Tiny5"
+family = "Tusche Pixel"
 caption = 16
 body-small = 16
 body = 16
