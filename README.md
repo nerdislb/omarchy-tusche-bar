@@ -676,3 +676,15 @@ If an already configured Omazen bridge stops following theme changes while
 Omarchy's other app retints are queued, enable the independent user palette
 watcher described in [Zen live theme sync](integrations/zen-live-theme/README.md).
 It does not restart browsers, change their profiles or modify other app hooks.
+
+### Look layers
+
+The `nerdibeard.tusche-bar` entry in `shell.json` accepts three optional presentation settings:
+
+- `logoImage`: an absolute SVG or PNG path. An empty string restores the drawn `logo`. Images use the menu slot's icon canvas, decode at the screen's pixel ratio, retain their baked colors at rest and take the inverted tab's text color while the menu is open. An unreadable image falls back to the drawn logo. The menu keeps its existing click targets.
+- `daylineNow`: `off` (default) or `on`. With `dayline: "on"`, a 2×5 logical pixel accent notch marks the current minute. It uses the existing minute clock and reserves no extra screen space.
+- `workspacePing`: `off` (default) or `on`. A workspace change confirms the active pip with a 100 ms accent square. Reduced motion suppresses it; no animation runs at rest.
+
+Use `omarchy-shell tusche-bar set logoImage /absolute/mark.svg`, `omarchy-shell tusche-bar set daylineNow on`, or `omarchy-shell tusche-bar set workspacePing on`. These use the existing watched configuration and need no shell restart. Bar presets preserve the separate look options.
+
+The Control Center shows Today, Funk, Register, Umbra and Tusche chips in Quick and beside the Style section in Theme & font when `~/.local/bin/look status --json` succeeds. It reads status on opening and calls `look set <name>` directly. Save or cancel staged Control Center edits first; look changes apply immediately.

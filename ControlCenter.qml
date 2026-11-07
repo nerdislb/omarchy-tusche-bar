@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import Quickshell
@@ -78,6 +79,29 @@ PanelWindow {
   readonly property var screenChoices: Quickshell.screens.map(function(s) {
     return { name: s.name, width: s.width, height: s.height, x: s.x, y: s.y }
   })
+
+  property bool lookAvailable: false
+  property string activeLook: ""
+  readonly property string lookCommand: homeDir + "/.local/bin/look"
+  Process {
+    id: lookProbe
+    command: ["bash", "-c", 'test -x "$1" && "$1" status --json', "look-probe", win.lookCommand]
+    stdout: StdioCollector {
+      onStreamFinished: {
+        try { win.activeLook = String(JSON.parse(text).look || "") } catch (e) { win.activeLook = "" }
+      }
+    }
+    onExited: function(code) { win.lookAvailable = code === 0 }
+  }
+  Process {
+    id: lookSet
+    property string requested: ""
+    command: [win.lookCommand, "set", requested]
+    onExited: function(code) {
+      if (code === 0) win.activeLook = requested
+      else { win.message = "Could not apply the look."; win.messageError = true }
+    }
+  }
 
   // ---------------------------------------------------------------- probes (read-only)
   readonly property string homeDir: Quickshell.env("HOME")
@@ -316,6 +340,8 @@ PanelWindow {
     area = CC.isArea(requestedArea) ? CC.resolveArea(requestedArea) : "quick"
     if (area !== "quick") configureArea = area
     requestedArea = ""
+    lookAvailable = false; activeLook = ""
+    lookProbe.running = true
     changedOnly = false
     edits = ({}); usedLive = false; applied = ({}); committed = false
     cardsStatus = ""                            // read again below; joins the snapshot when it arrives
@@ -1358,6 +1384,7 @@ PanelWindow {
                 visible: win.area === "quick" && !win.changedOnly
                 width: parent.width
                 spacing: Style.space(2)
+                LookRow {}
                 SectionHead { text: "Look" }
                 Repeater { model: CC.QUICK.filter(function(id) { return id.indexOf("bar.") === 0 }); delegate: settingRow }
                 SectionHead { visible: win.islandAvailable; text: "Tusche Island" }
@@ -1887,6 +1914,7 @@ PanelWindow {
       readonly property bool mixed: win.changedOnly || win.area === "quick" || win.area === "windows" || win.area === "input"
       readonly property string tag: !spec ? "" : ["omarchy", "hypr", "idle", "link"].indexOf(spec.domain) !== -1 || gen.mixed ? CC.sourceOf(spec) : ""
       width: editorColumn.width
+      LookRow { visible: win.lookAvailable && gen.modelData.kind === "head" && gen.modelData.text === "STYLE" }
       SectionHead { visible: gen.modelData.kind === "head"; text: CC.sectionTitle(gen.modelData.text) }
       LinkRow {
         visible: !!gen.spec && gen.spec.kind === "link"
@@ -1937,6 +1965,23 @@ PanelWindow {
     font.pixelSize: Style.font.body
     color: Commons.Color.popups.text
   }
+  component LookRow: Row {
+    visible: win.lookAvailable
+    width: parent.width
+    spacing: Style.space(6)
+    Strong { text: "Look"; width: Style.space(60); anchors.verticalCenter: parent.verticalCenter }
+    Repeater {
+      model: ["today", "funk", "register", "umbra", "tusche"]
+      Chip {
+        required property string modelData
+        label: modelData.charAt(0).toUpperCase() + modelData.slice(1)
+        selected: win.activeLook === modelData
+        enabled: !lookSet.running && !win.working && !win.usedLive && win.changeList.length === 0
+        onPicked: { lookSet.requested = modelData; lookSet.running = true }
+      }
+    }
+  }
+
   component SectionHead: Strong {
     font.pixelSize: Style.font.caption
     font.bold: true
