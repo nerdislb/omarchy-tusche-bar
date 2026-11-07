@@ -226,7 +226,7 @@ Item {
   name: "WorkspaceRendering"
   when: windowShown
   function test_00_workspace_ping_is_bounded_and_optional() {
-   var item=createTemporaryObject(face,canvas,{workspacePing:true})
+   var item=createTemporaryObject(face,canvas,{workspacePing:true,accent:"#c85020",pixel:true})
    compare(item.pingOpacity,0)
    item.active=2
    wait(40)

@@ -33,6 +33,9 @@ Item {
     anchors.centerIn: parent
     width: Style.space(8); height: width
     color: root.accent
+    // Keep the stamp visible even when the active pip already uses accent.
+    border.width: 1
+    border.color: root.barColor
     opacity: current ? root.pingOpacity : 0
     visible: opacity > 0
     z: 2
