@@ -294,7 +294,7 @@ Item {
     if (curtainOn) out.push({ glyph: "\u{f0209}", color: Commons.Color.accent, member: "tusche.curtain", tip: curtainTip })
     if (!wifiUp) out.push({ glyph: "\u{f05aa}", color: Commons.Color.urgent, member: "omarchy.network" })
     if (vpnUp) out.push({ glyph: "\u{f099d}", color: Commons.Color.accent, member: "io.github.iamfitsum.omarchy-proton-vpn" })
-    if (!tailscaleUp) out.push({ glyph: "\u{f0570}", color: Util.alpha(fg, 0.5), member: "omarchy.tailscale" })
+    if (!tailscaleUp) out.push({ glyph: "\u{f0570}", color: Bridge.ModuleBus.secondary(root, fg, 0.5), member: "omarchy.tailscale" })
     if (btConnected.length) out.push({ glyph: "\u{f02cb}", color: fg, member: "omarchy.bluetooth" })
     if (phone && phone.online && phone.charge >= 0 && phone.charge <= 20 && !phone.charging) out.push({ glyph: "\u{f011c}", color: Commons.Color.urgent, member: "flux" })
     if (sysHot) out.push({ chip: true, color: Commons.Color.urgent, member: "bitr0t.system-monitor" })
@@ -333,7 +333,7 @@ Item {
       width: Style.bar.iconSlot
       tooltipText: root.curtainTip
       onClicked: { root.popupAnchor = curtainCell; root.openMember("tusche.curtain") }
-      StatusFace { anchors.fill: parent; glyph: "\u{f0209}"; ink: root.fg; glyphInk: Commons.Color.accent; barSize: root.barSize }
+      StatusFace { anchors.fill: parent; glyph: "\u{f0209}"; textBackgrounds: Bridge.ModuleBus.textBackgrounds(root, root.fg); ink: root.fg; glyphInk: Commons.Color.accent; barSize: root.barSize }
     }
 
     // groups
@@ -350,7 +350,7 @@ Item {
         width: modelData.id === "phone" ? Style.space(58) : Style.bar.iconSlot
         StatusFace {
           anchors.fill: parent; group: modelData.id
-          ink: root.fg; accent: Commons.Color.accent; urgent: Commons.Color.urgent; linkInk: Commons.Color.popups.border || root.fg
+          textBackgrounds: Bridge.ModuleBus.textBackgrounds(root, root.fg); ink: root.fg; accent: Commons.Color.accent; urgent: Commons.Color.urgent; linkInk: Commons.Color.popups.border || root.fg
           barSize: root.barSize; wifiUp: root.wifiUp; vpnUp: root.vpnUp; tailscaleUp: root.tailscaleUp
           bluetoothConnected: root.btConnected.length > 0; phone: root.phone; cpu: root.cpu; sysHot: root.sysHot
         }
@@ -368,7 +368,7 @@ Item {
         width: Style.bar.iconSlot
         StatusFace {
           anchors.fill: parent; glyph: modelData.glyph || ""; chip: !!modelData.chip
-          ink: root.fg; glyphInk: modelData.color; urgent: Commons.Color.urgent
+          textBackgrounds: Bridge.ModuleBus.textBackgrounds(root, root.fg); ink: root.fg; glyphInk: modelData.color; urgent: Commons.Color.urgent
           barSize: root.barSize; cpu: root.cpu; sysHot: root.sysHot
         }
       }
@@ -382,7 +382,7 @@ Item {
       key: "all"
       width: Style.bar.iconSlot
       onClicked: root.openGroup("all", moreCell)
-      StatusFace { anchors.fill: parent; glyph: "\u{f01d8}"; ink: root.fg; glyphInk: Util.alpha(root.fg, 0.7); barSize: root.barSize }
+      StatusFace { anchors.fill: parent; glyph: "\u{f01d8}"; textBackgrounds: Bridge.ModuleBus.textBackgrounds(root, root.fg); ink: root.fg; glyphInk: Bridge.ModuleBus.secondary(root, root.fg, 0.7); barSize: root.barSize }
     }
   }
 

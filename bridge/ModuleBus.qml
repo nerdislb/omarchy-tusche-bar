@@ -5,6 +5,7 @@ import Quickshell.Hyprland
 import qs.Commons
 import qs.Commons as Commons
 import "../Presets.js" as Presets
+import "../BarContrast.js" as BarContrast
 
 QtObject {
   property var instances: ({})
@@ -20,6 +21,15 @@ QtObject {
   // The bar colour as an opaque ink/fill (Commons.Color.bar.background has alpha 0
   // while Omarchy's bar is transparent).
   readonly property color barColor: Qt.rgba(Commons.Color.bar.background.r, Commons.Color.bar.background.g, Commons.Color.bar.background.b, 1)
+  function textBackgrounds(item, ink) {
+    // Bar entry settings include the plate name; native/unplated entries use
+    // the plain bar surface. Reading settings keeps this live when regrouped.
+    return BarContrast.backgrounds(ink, barColor, Commons.Color.accent,
+      !!(item && item.settings && item.settings.plate))
+  }
+  function secondary(item, ink, minimum) {
+    return BarContrast.color(ink, textBackgrounds(item, ink), minimum)
+  }
   // Light themes (Papier …): Qt.lighter() runs into white there, so raised
   // and sunken parts are drawn the other way round.
   function isLight(c) { return 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b > 0.55 }

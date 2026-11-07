@@ -1,5 +1,7 @@
 import QtQuick
 import qs.Commons
+import qs.Commons as Commons
+import "../BarContrast.js" as BarContrast
 
 // Shared, inert presentation: production owns the registered click wrapper;
 // Control Center supplies a snapshot. No services, timers or device operations.
@@ -8,6 +10,7 @@ Item {
   property string group: ""
   property string glyph: ""
   property bool chip: false
+  property var textBackgrounds: [Commons.Color.background]
   property color ink: "white"
   property color accent: ink
   property color urgent: ink
@@ -57,7 +60,7 @@ Item {
     visible: root.group === "phone"
     anchors.centerIn: parent
     spacing: Style.space(3)
-    Glyph { text: "\u{f011c}"; color: root.phone && root.phone.online ? root.ink : Util.alpha(root.ink, 0.45) }
+    Glyph { text: "\u{f011c}"; color: root.phone && root.phone.online ? root.ink : BarContrast.color(root.ink, root.textBackgrounds, 0.45) }
     Text {
       renderType: Text.NativeRendering
       textFormat: Text.PlainText
@@ -65,7 +68,7 @@ Item {
       text: root.phone && root.phone.charge >= 0 ? root.phone.charge + "%" : "–"
       font.family: Style.font.family
       font.pixelSize: Style.font.bodySmall
-      color: root.phone && root.phone.charge >= 0 && root.phone.charge <= 20 && !root.phone.charging ? root.urgent : Util.alpha(root.ink, 0.75)
+      color: root.phone && root.phone.charge >= 0 && root.phone.charge <= 20 && !root.phone.charging ? root.urgent : BarContrast.color(root.ink, root.textBackgrounds, 0.75)
     }
   }
   Glyph { visible: root.group === "" && !root.chip; anchors.centerIn: parent; text: root.glyph; color: root.glyphInk }

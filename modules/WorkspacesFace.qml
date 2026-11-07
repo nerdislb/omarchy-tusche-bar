@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.Commons
 import ".." as Root
+import "../BarContrast.js" as BarContrast
 
 // Shared presentation only. Live bar and visual settings supply the same
 // data/palette; previews never create a service or perform desktop actions.
@@ -47,6 +48,11 @@ Item {
   property var workspaceLabels: ({})
   property real barSize: 30
   property color fg: "white"
+  property var textBackgrounds: [barColor]
+  function secondary(minimum, overlay) {
+    var surfaces = overlay ? textBackgrounds.map(function(bg) { return BarContrast.composite(fg, bg, overlay) }) : textBackgrounds
+    return BarContrast.color(fg, surfaces, minimum)
+  }
   property color accent: fg
   property color strong: fg
   property color urgentColor: accent
@@ -146,7 +152,7 @@ Item {
           Text { renderType: Text.NativeRendering;
             anchors.centerIn: parent
             opacity: pips.grow
-            text: modelData === 10 ? "0" : String(modelData)
+            text: root.label(modelData)
             font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.bodySmall
             color: parent.occ ? root.barColor : root.fg
           }
@@ -168,7 +174,7 @@ Item {
         Text { renderType: Text.NativeRendering;
           anchors.centerIn: parent
           opacity: pips.grow
-          text: root.active === 10 ? "0" : String(root.active)
+          text: root.label(root.active)
           font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.bodySmall
           color: root.barColor
         }
@@ -215,7 +221,7 @@ Item {
             text: root.label(parent.modelData)
             font.family: Style.font.family
             font.pixelSize: Style.font.body
-            color: parent.on || parent.urg ? root.barColor : Util.alpha(root.fg, parent.occ ? 0.9 : 0.45)
+            color: parent.on || parent.urg ? root.barColor : root.secondary(parent.occ ? 0.9 : 0.45, parent.occ ? 0.14 : 0)
           }
           Ping { current: parent.modelData === root.active }
           MouseArea { enabled: root.interactive; anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.workspacePicked(parent.modelData) }
@@ -252,7 +258,7 @@ Item {
         color: root.barColor
         border.width: Math.max(1, Style.space(1.5)); border.color: root.accent
         Ping { current: true }
-        Text { renderType: Text.NativeRendering; anchors.centerIn: parent; text: root.active === 10 ? "0" : String(root.active); font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.body; color: root.strong }
+        Text { renderType: Text.NativeRendering; anchors.centerIn: parent; text: root.label(root.active); font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.body; color: root.strong }
       }
       MouseArea {
         enabled: root.interactive
@@ -333,7 +339,7 @@ Item {
             elide: Text.ElideRight
             font.family: Style.font.family
             font.pixelSize: Style.font.bodySmall
-            color: mapCell.act ? root.strong : root.dim
+            color: mapCell.act ? root.strong : BarContrast.color(root.fg, [mapCell.color], 0.45)
           }
           Ping { current: mapCell.act }
           MouseArea {

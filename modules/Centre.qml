@@ -29,7 +29,7 @@ Item {
     anchors.verticalCenter: parent.verticalCenter
     text: root.temperature
     font.family: Style.font.family; font.pixelSize: Style.font.bodySmall
-    color: Util.alpha(root.fg, 0.75)
+    color: Bridge.ModuleBus.secondary(root, root.fg, 0.75)
   }
 
   property string temperature: ""

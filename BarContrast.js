@@ -30,8 +30,8 @@ function opacity(ink, backgrounds, minimum) {
         if (passes(mid, 4.55)) high = mid
         else low = mid
     }
-    // QColor stores alpha on an 8-bit grid. Round upward, including a small
-    // margin for the compositor's 8-bit surface rounding.
+    // Round upward on the compositor's 8-bit output grid, including a small
+    // margin for surface rounding.
     return Math.min(1, (Math.ceil(high * 255) + 1) / 255)
 }
 function color(ink, backgrounds, minimum) {

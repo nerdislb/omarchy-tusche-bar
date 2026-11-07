@@ -14,7 +14,7 @@ let checks = 0;
 function test(label, run) { run(); checks++; console.log('PASS ' + label); }
 
 test('optional additions default off and never rebuild the native layout', () => {
-  for (const key of ['statusHints','seal','dayline','daylineNow','workspacePing']) {
+  for (const key of ['statusHints','seal','dayline','daylineNow','workspacePing','channels']) {
     assert.equal(p.normalizeOptions({})[key], 'off');
     assert.equal(p.layoutDiffers({[key]:'on'},{}), false);
     assert.equal(p.keepLook(p.PRESETS[1].options,{[key]:'on'})[key], 'on');
@@ -102,4 +102,16 @@ test('logo paths round-trip and custom images replace even the native menu', () 
   assert.equal(p.build(base,{logoImage:''},'/modules').left[0],'omarchy.menu');
 });
 
+test('channel list validation and presets preserve live strings including empty slots', () => {
+  const defaults='MAIN,BUILD,WEB,CHAT,MEDIA,STUDIO,NOTES,PLAY,AUX,NIGHT';
+  assert.equal(p.normalizeOptions({}).channelNames,defaults);
+  for (const names of ['', 'Main,,Web', '<b>build</b>,chat', 'a'.repeat(2048)]) {
+    assert.equal(p.optionValid('channelNames',names),true);
+    assert.equal(p.normalizeOptions({channelNames:names}).channelNames,names);
+    assert.equal(p.keepLook(p.PRESETS[1].options,{channelNames:names}).channelNames,names);
+    assert.equal(p.layoutDiffers({channelNames:names},{}),false);
+  }
+  for (const names of ['a\nb', 'a\x00b', 'a'.repeat(2049), null])
+    assert.equal(p.optionValid('channelNames',names),false);
+});
 console.log('PRESENTATION_RESULT '+checks);

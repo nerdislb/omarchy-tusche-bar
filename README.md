@@ -679,12 +679,18 @@ It does not restart browsers, change their profiles or modify other app hooks.
 
 ### Look layers
 
-The `nerdibeard.tusche-bar` entry in `shell.json` accepts three optional presentation settings:
+The `nerdibeard.tusche-bar` entry in `shell.json` accepts these optional presentation settings:
 
 - `logoImage`: an absolute SVG or PNG path. An empty string restores the drawn `logo`. Images use the menu slot's icon canvas, decode at the screen's pixel ratio, retain their baked colors while the menu slot takes its inverted tab appearance. An unreadable image falls back to the drawn logo. The menu keeps its existing click targets.
 - `daylineNow`: `off` (default) or `on`. With `dayline: "on"`, a 2×5 logical pixel accent notch marks the current minute. It uses the existing minute clock and reserves no extra screen space.
+- `channels`: `off` (default) or `on`. Shows a monitor-local channel such as `02 BUILD` beside the workspace pips, followed by the layout name. Popout badges use the same channel labels. The longest configured label reserves a fixed width in the current bar font.
+- `channelNames`: a comma-separated list, index 1 first. Default: `MAIN,BUILD,WEB,CHAT,MEDIA,STUDIO,NOTES,PLAY,AUX,NIGHT`. Labels are uppercase plain text; an empty or missing entry displays `CH 02` for channel two. An empty list uses numeric fallbacks throughout.
 - `workspacePing`: `off` (default) or `on`. A workspace change confirms the active pip with a 100 ms accent square. Reduced motion suppresses it; no animation runs at rest.
 
 Use `omarchy-shell tusche-bar set logoImage /absolute/mark.svg`, `omarchy-shell tusche-bar set daylineNow on`, or `omarchy-shell tusche-bar set workspacePing on`. These use the existing watched configuration and need no shell restart. Bar presets preserve the separate look options.
+
+Enable channels with `omarchy-shell tusche-bar set channels on`; customize them with `omarchy-shell tusche-bar set channelNames "MAIN,BUILD,WEB,CHAT"`. Both options update live and remain independent of presets.
+
+Secondary text uses a shared WCAG contrast calculation against the theme's bar surface. A plate also accounts for its foreground fill at rest (7.5%), hover (13%) and open-panel accent tint (20%). Passing opacity values stay unchanged; deficient values only increase. The calculation runs on palette/settings changes, with no idle timer or frame loop.
 
 The Control Center shows Today, Funk, Register, Umbra and Tusche chips in Quick and beside the Style section in Theme & font when `~/.local/bin/look status --json` succeeds. It reads status on opening and calls `look set <name>` directly. Save or cancel staged Control Center edits first; look changes apply immediately.

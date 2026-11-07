@@ -60,7 +60,7 @@ for(const p of palettes) {
       assert(alpha>=old);
       let before=Math.min(...surfaces.map(s=>ratio(ctx.composite(fg,s,old),s)));
       if(before>=4.6) assert.equal(alpha,old,'passing alpha stays bit-identical');
-      // Match Qt alpha storage and the final 8-bit compositor target.
+      // Cover alpha quantization and the final 8-bit compositor target.
       let stored=Math.round(alpha*255)/255;
       let min=Infinity;
       // Include the plate animation between foreground and accent tints.

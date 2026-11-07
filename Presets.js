@@ -3,6 +3,8 @@ var ELEMENTS = {
     label: "Device announcements",
     variants: [{ id: "off", label: "Off" }, { id: "on", label: "Announce output and Bluetooth changes on the OSD" }]
   },
+  channels: { label: "Workspace channels", variants: [{ id: "off", label: "Off" }, { id: "on", label: "On" }] },
+  channelNames: { label: "Channel names", variants: [{ id: "MAIN,BUILD,WEB,CHAT,MEDIA,STUDIO,NOTES,PLAY,AUX,NIGHT", label: "Default channels" }] },
   logoImage: { label: "Logo image", variants: [{ id: "", label: "Drawn logo" }] },
   daylineNow: { label: "Day progress notch", variants: [{ id: "off", label: "Off" }, { id: "on", label: "On" }] },
   workspacePing: { label: "Workspace confirmation", variants: [{ id: "off", label: "Off" }, { id: "on", label: "On" }] },
@@ -120,7 +122,7 @@ var ELEMENTS = {
 
 // Look options that sit on top of any preset: presets keep the current
 // value, and preset matching ignores them.
-var LOOK = ["edge", "keys", "frames", "glass", "glassMotion", "motion", "statusHints", "dayline", "daylineNow", "workspacePing", "logoImage", "seal", "sealIdle", "sealShare"]
+var LOOK = ["edge", "keys", "frames", "glass", "glassMotion", "motion", "statusHints", "dayline", "daylineNow", "workspacePing", "channels", "channelNames", "logoImage", "seal", "sealIdle", "sealShare"]
 
 // Presentation only: these never change the native layout, display geometry,
 // services or their settings. Native widgets ("today") keep their own renderer.
@@ -325,6 +327,7 @@ function insertBefore(layout, id, entry) {
 }
 
 function optionValid(key, value) {
+  if (key === "channelNames") return typeof value === "string" && value.length <= 2048 && !/[\x00-\x1f\x7f]/.test(value)
   if (key === "logoImage") return typeof value === "string" && (value === "" || /^\/[^\x00-\x1f]*\.(svg|png)$/i.test(value))
   return !!ELEMENTS[key] && ELEMENTS[key].variants.some(function(v) { return v.id === value })
 }
@@ -332,7 +335,7 @@ function optionValid(key, value) {
 function normalizeOptions(o) {
   var out = {}
   for (var key in ELEMENTS) {
-    var v = o && o[key] ? String(o[key]) : ELEMENTS[key].variants[0].id
+    var v = o && o[key] !== undefined && o[key] !== null ? String(o[key]) : ELEMENTS[key].variants[0].id
     var ok = optionValid(key, v)
     out[key] = ok ? v : ELEMENTS[key].variants[0].id
   }

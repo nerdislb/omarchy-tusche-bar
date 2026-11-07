@@ -47,12 +47,16 @@ QtObject {
  property QtObject bar: QtObject { property color background: "#e9edf0"; property color text: "#171c24" }
 }
 ''')
-        for name in ['VisualBarEditor.qml','BarSpecimen.qml','MotionPreview.qml','VisualEditor.js','Presets.js','BarMaterialCard.qml','MaterialCard.qml','InkSheet.qml','MetalShape.qml','GlassFrameGlint.qml','GlassMath.js','EdgeSpring.qml','GlassBackdrop.qml','GlassSurface.qml']:
+        for name in ['VisualBarEditor.qml','BarSpecimen.qml','MotionPreview.qml','VisualEditor.js','Presets.js','BarContrast.js','BarMaterialCard.qml','MaterialCard.qml','InkSheet.qml','MetalShape.qml','GlassFrameGlint.qml','GlassMath.js','EdgeSpring.qml','GlassBackdrop.qml','GlassSurface.qml']:
             shutil.copy2(ROOT / name, tmp / name)
         (tmp / 'modules').mkdir()
         for name in ['QuotaFace.qml','StatusFace.qml','WorkspacesFace.qml','WorkspaceMiniature.qml','ArchLogo.qml','SealLogo.qml']:
             shutil.copy2(ROOT / 'modules' / name, tmp / 'modules' / name)
         shutil.copytree(ROOT / 'shaders',tmp / 'shaders')
+        # Material renderers import this presentation-only state as well.
+        (tmp / 'bridge').mkdir()
+        (tmp / 'bridge/qmldir').write_text('singleton ModuleBus 1.0 ModuleBus.qml\n')
+        (tmp / 'bridge/ModuleBus.qml').write_text('pragma Singleton\nimport QtQuick\nQtObject { property string motion: "spring"; property bool pixel: false; property bool umbriel: false }\n')
         themes = {}
         for theme in ['papier','tusche','frost','smoke','chrom','platin']:
             themes[theme] = {'material':json.loads((ROOT / 'themes' / theme / 'bar-material.json').read_text()), 'palette':tomllib.loads((ROOT / 'themes' / theme / 'colors.toml').read_text())}

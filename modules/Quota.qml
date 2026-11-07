@@ -320,6 +320,7 @@ Item {
     variant: root.variant
     barSize: root.barSize
     fg: root.fg
+    textBackgrounds: Bridge.ModuleBus.textBackgrounds(root, root.fg)
     pal: root.pal
     metal: Bridge.ModuleBus.metal
     items: root.items
@@ -354,7 +355,7 @@ Item {
     font.family: Style.font.family
     font.pixelSize: Style.font.caption
     // secondary: quieter than the values beside it
-    color: Util.alpha(root.fg, root.creditView.state === "ok" ? 0.62 : 0.42)
+    color: Bridge.ModuleBus.secondary(root, root.fg, root.creditView.state === "ok" ? 0.62 : 0.42)
     MouseArea {
       anchors.fill: parent
       cursorShape: Qt.PointingHandCursor

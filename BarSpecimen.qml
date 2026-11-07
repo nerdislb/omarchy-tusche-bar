@@ -216,6 +216,7 @@ Item {
       workspaceLabels: root.ws.workspaceLabels || ({})
       barSize: root.barSize
       fg: root.foreground; accent: root.accent; strong: root.strong; urgentColor: root.urgent
+      textBackgrounds: [root.background]
       barColor: root.background
       barLight: 0.2126 * root.background.r + 0.7152 * root.background.g + 0.0722 * root.background.b > 0.55
       interactive: false
@@ -240,7 +241,7 @@ Item {
       Modules.QuotaFace {
         id: face
         variant: root.opts.ai; barSize: root.barSize
-        fg: root.foreground; accent: root.accent; urgent: root.urgent
+        fg: root.foreground; textBackgrounds: [root.background]; accent: root.accent; urgent: root.urgent
         pal: root.quota.pal || ({})
         metal: root.metal
         items: root.quota.items || []
@@ -279,6 +280,7 @@ Item {
           glyph: modelData.glyph || ""
           chip: !!modelData.chip
           ink: root.foreground
+          textBackgrounds: [root.background]
           glyphInk: modelData.tone || root.foreground
           accent: root.accent; urgent: root.urgent
           linkInk: Commons.Color.popups.border || root.foreground

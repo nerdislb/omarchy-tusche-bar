@@ -56,7 +56,7 @@ QtObject {
  property QtObject bar: QtObject { property color background: "#e9edf0"; property color text: "#171c24" }
 }
 ''')
-        for name in ['Watchdog.js','ControlCenter.qml','ControlCenter.js','OmarchySettings.js','ScreenProfiles.qml','VisualBarEditor.qml','BarSpecimen.qml','MotionPreview.qml','VisualEditor.js','Presets.js','BarMaterialCard.qml','MaterialCard.qml','InkSheet.qml','MetalShape.qml','GlassFrameGlint.qml','GlassMath.js','EdgeSpring.qml','GlassBackdrop.qml','GlassSurface.qml']:
+        for name in ['Watchdog.js','ControlCenter.qml','ControlCenter.js','OmarchySettings.js','ScreenProfiles.qml','VisualBarEditor.qml','BarSpecimen.qml','MotionPreview.qml','VisualEditor.js','Presets.js','BarContrast.js','BarMaterialCard.qml','MaterialCard.qml','InkSheet.qml','MetalShape.qml','GlassFrameGlint.qml','GlassMath.js','EdgeSpring.qml','GlassBackdrop.qml','GlassSurface.qml']:
             shutil.copy2(ROOT / name, tmp / name)
         (tmp / 'modules').mkdir()
         for name in ['QuotaFace.qml','StatusFace.qml','WorkspacesFace.qml','WorkspaceMiniature.qml','ArchLogo.qml','SealLogo.qml']:

@@ -5,6 +5,8 @@ import "../bridge" as Bridge
 import ".." as Root
 import "../WorkspaceGeometry.js" as WorkspaceGeometry
 import "../WorkspaceLayout.js" as WorkspaceLayout
+import "../ChannelNames.js" as Channels
+import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
 import qs.Commons
@@ -41,6 +43,20 @@ Item {
     : String(Bridge.ModuleBus.optionFor(root, "workspaces", baseVariant))
   readonly property bool showMenu: setting("menu", true) !== false
   readonly property string logoImage: Bridge.ModuleBus.engine ? Bridge.ModuleBus.engine.options.logoImage : ""
+  readonly property bool channels: !!Bridge.ModuleBus.engine && Bridge.ModuleBus.engine.options.channels === "on"
+  readonly property var channelNames: Channels.parse(Bridge.ModuleBus.engine ? Bridge.ModuleBus.engine.options.channelNames : "")
+  readonly property string outputName: root.QsWindow && root.QsWindow.window && root.QsWindow.window.screen ? root.QsWindow.window.screen.name : ""
+  function channelLabel(id) { return Channels.label(Channels.position(id, workspaces, umbriel), channelNames) }
+  readonly property string channelLabelText: channels ? channelLabel(active) : ""
+  // Measure every configured name, plus the numeric fallback, in the actual
+  // bar font. Switching workspaces never changes the reserved width.
+  readonly property real channelWidth: {
+    var labels = channelNames.map(function(name, index) { return Channels.label(index + 1, channelNames) })
+    labels.push("CH 99")
+    var width = 0
+    for (var i = 0; i < labels.length; i++) width = Math.max(width, channelMetrics.advanceWidth(labels[i]))
+    return Math.ceil(width)
+  }
   readonly property string logo: String(setting("logo", "omarchy"))
   readonly property int barSize: bar && bar.barSize ? bar.barSize : Style.bar.sizeHorizontal
   readonly property color fg: bar && bar.barForeground ? bar.barForeground : Commons.Color.bar.text
@@ -55,7 +71,8 @@ Item {
   // ---------------------------------------------------------------- data
   readonly property var nativeWorkspaces: Hyprland.workspaces.values
   readonly property var workspaces: !nativeGeometryReady ? (snapshot ? snapshot.workspaces : []) : nativeWorkspaces
-  readonly property int active: !nativeGeometryReady ? (snapshot ? snapshot.active.id : 1)
+  readonly property int shownWorkspace: channels && umbriel && outputName !== "" ? Commons.Compositor.shownWorkspaceId(outputName) : -1
+  readonly property int active: shownWorkspace > 0 ? shownWorkspace : !nativeGeometryReady ? (snapshot ? snapshot.active.id : 1)
     : Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.id : 1
 
   function byId(id) {
@@ -75,6 +92,17 @@ Item {
   // Existing compact variants retain the native 1–5/+10 convention. The map
   // includes every occupied regular workspace, including high and named IDs.
   readonly property var compactIds: {
+    if (channels && umbriel) {
+      var position = Channels.position(active, workspaces, true)
+      var base = active - position
+      var local = active < 1000 ? [base + 1, base + 2, base + 3, base + 4, base + 5] : []
+      var current = byId(active)
+      for (var c = 0; c < workspaces.length; c++) {
+        var w = workspaces[c]
+        if (current && w.monitor === current.monitor && local.indexOf(w.id) < 0) local.push(w.id)
+      }
+      return local.sort(function(a, b) { return a - b })
+    }
     var list = [1, 2, 3, 4, 5]
     for (var i = 0; i < workspaces.length; i++) {
       var id = workspaces[i].id
@@ -94,14 +122,21 @@ Item {
   readonly property var urgentIds: workspaces.filter(function(w) { return root.urgent(w.id) }).map(function(w) { return w.id })
   readonly property var workspaceLabels: {
     var labels = {}
-    for (var i = 0; i < workspaces.length; ++i) if (workspaces[i].id < 0) labels[workspaces[i].id] = workspaces[i].name
+    if (channels) {
+      for (var j = 0; j < ids.length; j++) {
+        var position = Channels.position(ids[j], workspaces, umbriel)
+        if (position > 0) labels[ids[j]] = position === 10 ? "0" : String(position)
+      }
+    } else {
+      for (var i = 0; i < workspaces.length; ++i) if (workspaces[i].id < 0) labels[workspaces[i].id] = workspaces[i].name
+    }
     return labels
   }
 
   // Hover popout card below the workspace indicators.
   property bool hoverPopoutOpen: false
   property bool popoutRequested: false
-  readonly property Item popoutItem: popoutLoader.item
+  readonly property var popoutItem: popoutLoader.item
   readonly property bool popoutHovered: !!popoutLoader.item && popoutLoader.item.hovered
   readonly property bool popoutVisible: hoverPopoutOpen || (!!popoutLoader.item && popoutLoader.item.visible)
   readonly property bool hoverPopoutAllowed: variant !== "none" && !dropOpen && (!bar || !bar.activePopout)
@@ -155,7 +190,7 @@ Item {
   // which pushes every change, so there is nothing to query.
   readonly property bool umbriel: Bridge.ModuleBus.umbriel
   readonly property string layoutLabel: umbriel
-    ? WorkspaceLayout.label(Commons.Compositor.workspaceLayout(Commons.Compositor.focusedWorkspaceId)) : ""
+    ? WorkspaceLayout.label(Commons.Compositor.workspaceLayout(active)) : ""
   readonly property var compositorSnapshot: umbriel ? WorkspaceGeometry.snapshotFromCompositor(
     Commons.Compositor.outputList(), Commons.Compositor.workspaceList(), Commons.Compositor.windowList(),
     Commons.Compositor.focusedWorkspaceId) : null
@@ -181,7 +216,7 @@ Item {
   // instantiates another native widget/service. The caller owns preview input.
   function previewData() {
     return { ids: compactIds.slice(), occupiedIds: minimapIds.filter(function(id) { return occupied(id) || id === active }),
-      active: active, windowCounts: windowCounts, urgentIds: urgentIds.slice(),
+      active: active, channel: channelLabelText, channelWidth: channelWidth, channels: channels, windowCounts: windowCounts, urgentIds: urgentIds.slice(),
       geometry: collectGeometry(), workspaceLabels: workspaceLabels }
   }
   readonly property bool geometryOwner: {
@@ -388,7 +423,27 @@ Item {
 
   readonly property real menuWidth: showMenu ? barSize + Style.space(4) : 0
   implicitHeight: barSize
-  implicitWidth: menuWidth + face.implicitWidth + layoutStatus.width + Style.space(6)
+  implicitWidth: menuWidth + face.implicitWidth + channelStatus.width + layoutStatus.width + Style.space(6)
+
+  FontMetrics { id: channelMetrics; font: channelName.font }
+  Item {
+    id: channelStatus
+    visible: root.channels && root.variant !== "none"
+    x: root.menuWidth + face.implicitWidth
+    width: visible ? root.channelWidth + Style.space(8) : 0
+    height: root.barSize
+    Text {
+      id: channelName
+      objectName: "channelName"
+      x: Style.space(8); anchors.verticalCenter: parent.verticalCenter
+      text: root.channelLabelText
+      textFormat: Text.PlainText
+      renderType: Text.NativeRendering
+      font.family: Style.font.family
+      font.pixelSize: Style.font.caption
+      color: root.fg
+    }
+  }
 
   // Reserve the longest label's width so cycling layouts does not move the
   // neighbouring widgets. Unknown/disconnected state has no stale label.
@@ -397,7 +452,7 @@ Item {
   Item {
     id: layoutStatus
     visible: root.variant !== "none" && root.layoutLabel !== ""
-    x: root.menuWidth + face.implicitWidth
+    x: root.menuWidth + face.implicitWidth + channelStatus.width
     width: visible ? Math.ceil(layoutMetrics.advanceWidth) + Style.space(14) : 0
     height: root.barSize
     Text {
@@ -408,7 +463,7 @@ Item {
       renderType: Text.NativeRendering
       font.family: Style.font.family
       font.pixelSize: Style.font.caption
-      color: Util.alpha(root.fg, 0.62)
+      color: Bridge.ModuleBus.secondary(root, root.fg, 0.62)
     }
   }
 
@@ -598,6 +653,7 @@ Item {
     workspaceLabels: root.workspaceLabels
     barSize: root.barSize
     fg: root.fg
+    textBackgrounds: Bridge.ModuleBus.textBackgrounds(root, root.fg)
     accent: root.accent
     strong: root.strong
     urgentColor: root.urgentColor
@@ -632,6 +688,10 @@ Item {
         urgentIds: root.urgentIds
         geometry: root.geometry
         workspaceLabels: root.workspaceLabels
+        channels: root.channels
+        channelNames: root.channelNames
+        channelWorkspaces: root.workspaces
+        umbriel: root.umbriel
         monitors: root.geometryMonitors
         onWorkspacePicked: function(id) { root.focusWorkspace(id) }
         onWindowPicked: function(id, addr) { root.focusWindow(id, addr) }

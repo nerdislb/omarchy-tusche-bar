@@ -3,6 +3,7 @@ import "../bridge" as Bridge
 import ".." as Root
 import "../WorkspaceGeometry.js" as WorkspaceGeometry
 import "../GlassMath.js" as GlassMath
+import "../ChannelNames.js" as Channels
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland
@@ -29,6 +30,10 @@ PanelWindow {
   property var geometry: ({})
   property var workspaceLabels: ({})
   property var monitors: []
+  property bool channels: false
+  property var channelNames: []
+  property var channelWorkspaces: []
+  property bool umbriel: false
 
   signal workspacePicked(int workspaceId)
   signal windowPicked(int workspaceId, string address)
@@ -101,8 +106,11 @@ PanelWindow {
   readonly property real anchorH: anchorItem ? anchorItem.height : 0
   readonly property real screenW: screen ? screen.width : 1920
   readonly property real screenH: screen ? screen.height : 1080
-  readonly property real barW: anchorWindow ? anchorWindow.width : screenW
-  readonly property real barH: anchorWindow ? anchorWindow.height : (bar && bar.barSize ? bar.barSize : Style.bar.sizeHorizontal)
+  // The shell's bar window can cover the whole output to host popouts.
+  // Its thickness is the bar API's size, not the layer window's height.
+  readonly property real barThickness: bar && bar.barSize ? bar.barSize : Style.bar.sizeHorizontal
+  readonly property real barW: barPos === "left" || barPos === "right" ? barThickness : screenW
+  readonly property real barH: barPos === "top" || barPos === "bottom" ? barThickness : screenH
 
   readonly property real horizontalInset: padding * 2 + Border.left(borderSpec) + Border.right(borderSpec)
   readonly property real verticalInset: padding * 2 + Border.top(borderSpec) + Border.bottom(borderSpec)
@@ -267,6 +275,7 @@ PanelWindow {
   }
 
   function workspaceTitle(wsId) {
+    if (channels) return Channels.label(Channels.position(wsId, channelWorkspaces, umbriel), channelNames)
     if (workspaceLabels && workspaceLabels[wsId]) return String(workspaceLabels[wsId])
     return wsId === 10 ? "0" : String(wsId)
   }
@@ -357,7 +366,7 @@ PanelWindow {
                 id: badge
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.max(Style.space(18), badgeText.implicitWidth + Style.space(8))
+                width: Math.min(tile.viewW * 0.65, Math.max(Style.space(18), badgeText.implicitWidth + Style.space(8)))
                 height: Style.space(16)
                 radius: Math.min(Style.cornerRadius, 3)
                 color: tile.isUrgent
@@ -369,6 +378,9 @@ PanelWindow {
                   renderType: Text.NativeRendering
                   textFormat: Text.PlainText
                   anchors.centerIn: parent
+                  width: parent.width - Style.space(8)
+                  horizontalAlignment: Text.AlignHCenter
+                  elide: Text.ElideRight
                   text: popout.workspaceTitle(tile.wsId)
                   font.family: Style.font.family
                   font.bold: true

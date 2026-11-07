@@ -1,5 +1,6 @@
 import QtQuick
 import ".." as Root
+import "../BarContrast.js" as BarContrast
 import qs.Commons
 import qs.Commons as Commons
 
@@ -10,6 +11,8 @@ Item {
   property string variant: "gauge"
   property int barSize: Style.bar.sizeHorizontal
   property color fg: Commons.Color.bar.text
+  property var textBackgrounds: [Commons.Color.bar.background]
+  function secondary(minimum) { return BarContrast.color(fg, textBackgrounds, minimum) }
   property color accent: Commons.Color.accent
   property color urgent: Commons.Color.urgent
   property var pal: ({})
@@ -60,7 +63,7 @@ Item {
         spacing: Style.space(2)
         Row {
           spacing: Style.space(4)
-          Text { textFormat: Text.PlainText; renderType: Text.NativeRendering; text: root.tightest ? root.tightest.name : "AI"; font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.caption; color: Util.alpha(root.fg, 0.65) }
+          Text { textFormat: Text.PlainText; renderType: Text.NativeRendering; text: root.tightest ? root.tightest.name : "AI"; font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.caption; color: root.secondary(0.65) }
           Text { textFormat: Text.PlainText; renderType: Text.NativeRendering; text: root.tightest ? Math.round(root.tightest.percent * 100) + "%" : "–"; font.family: Style.font.family; font.pixelSize: Style.font.bodySmall; color: root.fg }
         }
         Rectangle {
@@ -84,7 +87,7 @@ Item {
           required property var modelData
           spacing: Style.space(2)
           anchors.verticalCenter: parent.verticalCenter
-          Text { textFormat: Text.PlainText; renderType: Text.NativeRendering; anchors.verticalCenter: parent.verticalCenter; text: root.letters[modelData.provider] || "?"; font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.caption; color: Util.alpha(root.fg, 0.65) }
+          Text { textFormat: Text.PlainText; renderType: Text.NativeRendering; anchors.verticalCenter: parent.verticalCenter; text: root.letters[modelData.provider] || "?"; font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.caption; color: root.secondary(0.65) }
           Column {
             anchors.verticalCenter: parent.verticalCenter
             spacing: 1
@@ -106,7 +109,7 @@ Item {
         visible: !!root.balance
         anchors.verticalCenter: parent.verticalCenter
         text: root.balance ? root.balance.value.replace(/^USD\s*/, "$") : ""
-        font.family: Style.font.family; font.pixelSize: Style.font.caption; color: Util.alpha(root.fg, 0.75)
+        font.family: Style.font.family; font.pixelSize: Style.font.caption; color: root.secondary(0.75)
       }
     }
   }
@@ -162,7 +165,7 @@ Item {
       track: Util.alpha(ring.ink, ring.metal && ring.metal.light ? (ring.percent < 0 ? 0.22 : 0.16) : (ring.percent < 0 ? 0.3 : 0.26))
       ink: ring.percent >= 0.9 ? root.urgent : (ring.metal && ring.metal.light ? "#1d1e21" : "#e6e7eb")
     }
-    Text { textFormat: Text.PlainText; renderType: Text.NativeRendering; anchors.centerIn: parent; text: ring.letter; font.family: Style.font.family; font.bold: true; font.pixelSize: ring.letterPx; color: Util.alpha(ring.ink, ring.percent < 0 ? 0.45 : 1) }
+    Text { textFormat: Text.PlainText; renderType: Text.NativeRendering; anchors.centerIn: parent; text: ring.letter; font.family: Style.font.family; font.bold: true; font.pixelSize: ring.letterPx; color: BarContrast.color(ring.ink, root.textBackgrounds, ring.percent < 0 ? 0.45 : 1) }
   }
 
   // Rings: one arc per tracked quota, provider initial inside.
@@ -208,7 +211,7 @@ Item {
             textFormat: Text.PlainText; renderType: Text.NativeRendering; antialiasing: false
             text: (root.letters[modelData.provider] || "?").toLowerCase()
             font.family: Style.font.family; font.pixelSize: Style.font.body
-            color: Util.alpha(root.fg, 0.6)
+            color: root.secondary(0.6)
           }
           Row {
             anchors.verticalCenter: parent.verticalCenter
@@ -228,7 +231,7 @@ Item {
             textFormat: Text.PlainText; renderType: Text.NativeRendering; antialiasing: false
             text: parent.p >= 0 ? Math.round(parent.p * 100) + "%" : "–"
             font.family: Style.font.family; font.pixelSize: Style.font.body
-            color: parent.p >= 0 ? root.tone(parent.p) : Util.alpha(root.fg, 0.45)
+            color: parent.p >= 0 ? root.tone(parent.p) : root.secondary(0.45)
           }
         }
       }

@@ -27,6 +27,8 @@ def run(output=None):
         )
         shutil.copy2(ROOT / 'WorkspaceGeometry.js', tmp / 'WorkspaceGeometry.js')
         shutil.copy2(ROOT / 'WorkspaceLayout.js', tmp / 'WorkspaceLayout.js')
+        shutil.copy2(ROOT / 'ChannelNames.js', tmp / 'ChannelNames.js')
+        shutil.copy2(ROOT / 'BarContrast.js', tmp / 'BarContrast.js')
         shutil.copy2(ROOT / 'LayoutFeedback.qml', tmp / 'LayoutFeedback.qml')
         shutil.copy2(ROOT / 'EdgeSpring.qml', tmp / 'EdgeSpring.qml')
         shutil.copy2(ROOT / 'GlassMath.js', tmp / 'GlassMath.js')
@@ -44,9 +46,11 @@ QtObject {
  property int focusedWorkspaceId: 3
  property string activeMode: "dwindle"
  property string outputName: "mock"
+ property var extraSpaces: []
+ function shownWorkspaceId(name) { return focusedWorkspaceId }
  function workspaceLayout(id) { return activeMode }
  function outputList() { return [{name:"mock",x:0,y:0,width:1200,height:900,reserved:[0,30,0,0],powered:true}] }
- function workspaceList() { return [{id:3,name:"3",output:outputName,shown:true,focused:true,windows:2,urgent:false,layout:activeMode},{id:5,name:"5",output:outputName,shown:false,focused:false,windows:1,urgent:true,layout:activeMode}] }
+ function workspaceList() { return [{id:3,name:"3",output:outputName,shown:focusedWorkspaceId===3,focused:focusedWorkspaceId===3,windows:2,urgent:false,layout:activeMode},{id:5,name:"5",output:outputName,shown:focusedWorkspaceId===5,focused:focusedWorkspaceId===5,windows:1,urgent:true,layout:activeMode}].concat(extraSpaces) }
  function windowList() { return [] }
 }''')
         write('imports/qs/Commons/Style.qml', '''pragma Singleton
@@ -167,6 +171,8 @@ QtObject {
  property var material: null
  property var metal: null
  property var engine: null
+ function textBackgrounds(item,ink) { return [barColor] }
+ function secondary(item,ink,minimum) { return Qt.rgba(ink.r,ink.g,ink.b,minimum) }
  property color barColor: "#eee9df"
  property bool barLight: true
  property string profile: ""
@@ -421,6 +427,48 @@ Item {
    Compositor.activeMode="<img src='https://example.invalid'>"
    compare(module.layoutLabel,"")
    Compositor.activeMode="dwindle"
+   Bridge.ModuleBus.umbriel=false
+  }
+  function test_04e_channels_are_live_stable_and_monitor_local() {
+   Bridge.ModuleBus.umbriel=true
+   Bridge.ModuleBus.engine={options:{logoImage:"",workspacePing:"off",channels:"off",channelNames:"MAIN,BUILD,WEB,CHAT,MEDIA,STUDIO,NOTES,PLAY,AUX,NIGHT"}}
+   var module=createTemporaryObject(live,canvas,{x:10,y:10,settings:({variant:"pips",menu:false})})
+   verify(module)
+   compare(module.channelLabelText,"")
+   var original=module.implicitWidth
+   Bridge.ModuleBus.engine={options:{logoImage:"",workspacePing:"off",channels:"on",channelNames:"MAIN,BUILD,WEB,CHAT,MEDIA,STUDIO,NOTES,PLAY,AUX,NIGHT"}}
+   compare(module.channelLabelText,"03 WEB")
+   verify(module.implicitWidth>original)
+   var reserved=module.implicitWidth
+   Compositor.focusedWorkspaceId=5
+   compare(module.channelLabelText,"05 MEDIA")
+   compare(module.implicitWidth,reserved)
+   // Sparse spaces on a second output retain their fixed channel position.
+   Compositor.extraSpaces=[{id:12,name:"12",output:"second",windows:1}]
+   Compositor.focusedWorkspaceId=12
+   compare(module.channelLabelText,"02 BUILD")
+   compare(module.ids,[11,12,13,14,15])
+   compare(module.workspaceLabels[12],"2")
+   compare(module.implicitWidth,reserved)
+   module.popoutRequested=true
+   tryVerify(function(){return !!module.popoutItem})
+   compare(module.popoutItem.workspaceTitle(12),"02 BUILD")
+   Bridge.ModuleBus.engine={options:{logoImage:"",workspacePing:"off",channels:"on",channelNames:"Main,,<b>BUILD</b>"}}
+   compare(module.channelLabelText,"CH 02")
+   compare(module.popoutItem.workspaceTitle(12),"CH 02")
+   compare(module.popoutItem.workspaceTitle(3),"03 <B>BUILD</B>")
+   Compositor.focusedWorkspaceId=3
+   var field=findChild(module,"channelName")
+   verify(field)
+   compare(field.textFormat,Text.PlainText)
+   compare(field.text,"03 <B>BUILD</B>")
+   Bridge.ModuleBus.engine={options:{logoImage:"",workspacePing:"off",channels:"on",channelNames:""}}
+   compare(module.channelLabelText,"CH 03")
+   Bridge.ModuleBus.engine={options:{logoImage:"",workspacePing:"off",channels:"off",channelNames:""}}
+   compare(module.implicitWidth,original)
+   Bridge.ModuleBus.engine=null
+   Compositor.extraSpaces=[]
+   Compositor.focusedWorkspaceId=3
    Bridge.ModuleBus.umbriel=false
   }
   function test_04e_layout_feedback_tracks_changes_without_startup_or_focus_noise() {
