@@ -1,0 +1,27 @@
+[32m  INFO[0m: Launching config: "/home/nerdi/src/omarchy-umbriel/shell/shell.qml"
+[32m  INFO[0m: Shell ID: "8bf4f6ae0cd00ca3e7a17ce5635744c4" Path ID "8bf4f6ae0cd00ca3e7a17ce5635744c4"
+[32m  INFO[0m: Saving logs to "/tmp/strand-f-lx3df76z/run/quickshell/by-id/mkmw158g5ot/log.qslog"
+[33m  WARN[0m: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+[34m DEBUG[97m qml[0m: omarchy-shell paths omarchyPath=/home/nerdi/src/omarchy-umbriel shellDir=/home/nerdi/src/omarchy-umbriel/shell firstPartyPluginsDir=/home/nerdi/src/omarchy-umbriel/shell/plugins defaultsPath=/home/nerdi/src/omarchy-umbriel/config/omarchy/shell.json userConfigPath=/tmp/strand-f-lx3df76z/home/.config/omarchy/shell.json
+[34m DEBUG[97m qml[0m: omarchy startup started settled=false backgroundActive=false backgroundReady=false desktopReady=false
+[32m  INFO[0m: Configuration Loaded
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/strand-f-lx3df76z/home/.config/omarchy/plugins/nerdibeard.tusche-bar/generations/e03ece41aacbd219" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/strand-f-lx3df76z/home/.config/omarchy/plugins/nerdibeard.tusche-bar/generations/e03ece41aacbd219/modules" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path contains invalid characters for a module name:  "/plugins/image-picker"
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/strand-f-lx3df76z/home/.config/omarchy/plugins/round2.probe" is outside of the config folder.
+[33m  WARN[97m quickshell.service.upower[0m: Could not connect to DBus. UPower service will not work.
+[33m  WARN[97m quickshell.service.powerprofiles[0m: Could not connect to DBus. PowerProfiles services will not work.
+[34m DEBUG[97m qml[0m: omarchy idle 2026-11-07T20:43:18.698Z service-ready
+[31m ERROR[97m quickshell.service.pipewire.loop[0m: Failed to connect pipewire context. Errno: 112
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path contains invalid characters for a module name:  "/plugins/services/remote-session"
+[34m DEBUG[97m qml[0m: omarchy startup intro-settled settled=true backgroundActive=true backgroundReady=false desktopReady=true
+[33m  WARN[97m qt.qpa.services[0m: Failed to register with host portal QDBusError("org.freedesktop.portal.Error.Failed", "Could not register app ID: Connection already associated with an application ID")
+[33m  WARN[97m quickshell.service.polkit.listener[0m: failed to register listener: Could not connect: No such file or directory
+[33m  WARN[97m quickshell.service.polkit[0m: failed to register listener on path "/org/omarchy/PolkitAgent"
+[34m DEBUG[97m qml[0m: omarchy idle 2026-11-07T20:43:18.899Z stay-awake: disabled state-file
+[34m DEBUG[97m qml[0m: omarchy idle 2026-11-07T20:43:18.905Z idle-monitor: active
+[33m  WARN[97m scene[0m: QML QQuickImage* at @Ui/BackgroundMedia.qml[38:5]: Cannot open: file:///tmp/strand-f-lx3df76z/home/.local/state/omarchy/current/background
+[33m  WARN[97m scene[0m: QML QQuickImage* at file:///home/nerdi/src/omarchy-umbriel/shell/plugins/lock/Service.qml[620:5]: Cannot open: file:///tmp/strand-f-lx3df76z/home/.local/state/omarchy/current/background?v=1
+[33m  WARN[97m scene[0m: QML FileView at qs:///tmp/strand-f-lx3df76z/home/.config/omarchy/plugins/nerdibeard.tusche-bar/generations/e03ece41aacbd219/OmiKit.qml[21:3]: Read of /tmp/strand-f-lx3df76z/home/.local/share/tusche-bar/current failed: File does not exist.
+[34m DEBUG[97m qml[0m: omarchy startup fade-started settled=true backgroundActive=true backgroundReady=false desktopReady=true
+[34m DEBUG[97m qml[0m: omarchy startup revealed settled=true backgroundActive=true backgroundReady=false desktopReady=true

@@ -1,0 +1,10 @@
+********* Start testing of qmltestrunner *********
+Config: Using QtTest library 6.12.0, Qt 6.12.0 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 16.2.1 20260810), omarchy 4.0.0.r7613.g9044b7e
+PASS   : qmltestrunner::BarContrastPixels::initTestCase()
+PASS   : qmltestrunner::BarContrastPixels::test_palette_pixels()
+PASS   : qmltestrunner::BarContrastPixels::cleanupTestCase()
+Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 969ms
+********* Finished testing of qmltestrunner *********
+
+PASS 42 real Qt before/after comparisons; 18/23 dark themes pixel-identical at .62
+Dark themes requiring a raise: c64, coffee, receiver-dark, spire, velvet-dusk

@@ -1,0 +1,369 @@
+[
+  {
+    "theme": "abendraster",
+    "mode": "dark",
+    "unchanged": true,
+    "changedBounds": null
+  },
+  {
+    "theme": "abendrot",
+    "mode": "dark",
+    "unchanged": true,
+    "changedBounds": null
+  },
+  {
+    "theme": "amiga-500",
+    "mode": "dark",
+    "unchanged": true,
+    "changedBounds": null
+  },
+  {
+    "theme": "amiga-500-kickstart",
+    "mode": "light",
+    "unchanged": false,
+    "changedBounds": [
+      11,
+      8,
+      311,
+      112
+    ]
+  },
+  {
+    "theme": "banish",
+    "mode": "dark",
+    "unchanged": true,
+    "changedBounds": null
+  },
+  {
+    "theme": "c64",
+    "mode": "dark",
+    "unchanged": false,
+    "changedBounds": [
+      11,
+      8,
+      311,
+      112
+    ]
+  },
+  {
+    "theme": "chrom",
+    "mode": "dark",
+    "unchanged": true,
+    "changedBounds": null
+  },
+  {
+    "theme": "coffee",
+    "mode": "dark",
+    "unchanged": false,
+    "changedBounds": [
+      11,
+      8,
+      311,
+      112
+    ]
+  },
+  {
+    "theme": "coffee-day",
+    "mode": "light",
+    "unchanged": false,
+    "changedBounds": [
+      11,
+      8,
+      311,
+      112
+    ]
+  },
+  {
+    "theme": "dos-moos",
+    "mode": "",
+    "unchanged": true,
+    "changedBounds": null
+  },
+  {
+    "theme": "dracula-reborn",
+    "mode": "dark",
+    "unchanged": true,
+    "changedBounds": null
+  },
+  {
+    "theme": "frost",
+    "mode": "light",
+    "unchanged": false,
+    "changedBounds": [
+      11,
+      8,
+      311,
+      112
+    ]
+  },
+  {
+    "theme": "harbor",
+    "mode": "",
+    "unchanged": false,
+    "changedBounds": [
+      11,
+      8,
+      311,
+      112
+    ]
+  },
+  {
+    "theme": "iris-dark",
+    "mode": "dark",
+    "unchanged": true,
+    "changedBounds": null
+  },
+  {
+    "theme": "iris-dark-raster",
+    "mode": "dark",
+    "unchanged": true,
+    "changedBounds": null
+  },
+  {
+    "theme": "iris-light",
+    "mode": "light",
+    "unchanged": false,
+    "changedBounds": [
+      11,
+      8,
+      311,
+      112
+    ]
+  },
+  {
+    "theme": "iris-light-raster",
+    "mode": "light",
+    "unchanged": false,
+    "changedBounds": [
+      11,
+      8,
+      311,
+      112
+    ]
+  },
+  {
+    "theme": "kandis",
+    "mode": "light",
+    "unchanged": false,
+    "changedBounds": [
+      11,
+      8,
+      311,
+      112
+    ]
+  },
+  {
+    "theme": "look-funk",
+    "mode": "dark",
+    "unchanged": true,
+    "changedBounds": null
+  },
+  {
+    "theme": "look-register",
+    "mode": "dark",
+    "unchanged": true,
+    "changedBounds": null
+  },
+  {
+    "theme": "look-tusche",
+    "mode": "light",
+    "unchanged": false,
+    "changedBounds": [
+      11,
+      8,
+      311,
+      112
+    ]
+  },
+  {
+    "theme": "look-umbra",
+    "mode": "dark",
+    "unchanged": true,
+    "changedBounds": null
+  },
+  {
+    "theme": "mechanoonna",
+    "mode": "",
+    "unchanged": false,
+    "changedBounds": [
+      11,
+      8,
+      311,
+      112
+    ]
+  },
+  {
+    "theme": "morgenraster",
+    "mode": "light",
+    "unchanged": false,
+    "changedBounds": [
+      11,
+      8,
+      311,
+      112
+    ]
+  },
+  {
+    "theme": "morgenrot",
+    "mode": "light",
+    "unchanged": false,
+    "changedBounds": [
+      11,
+      8,
+      311,
+      112
+    ]
+  },
+  {
+    "theme": "nachtlasur",
+    "mode": "dark",
+    "unchanged": true,
+    "changedBounds": null
+  },
+  {
+    "theme": "nachtlasur-raster",
+    "mode": "dark",
+    "unchanged": true,
+    "changedBounds": null
+  },
+  {
+    "theme": "papier",
+    "mode": "light",
+    "unchanged": false,
+    "changedBounds": [
+      11,
+      8,
+      311,
+      112
+    ]
+  },
+  {
+    "theme": "papier-lavur",
+    "mode": "light",
+    "unchanged": false,
+    "changedBounds": [
+      11,
+      8,
+      311,
+      112
+    ]
+  },
+  {
+    "theme": "papierlasur",
+    "mode": "light",
+    "unchanged": false,
+    "changedBounds": [
+      11,
+      8,
+      311,
+      112
+    ]
+  },
+  {
+    "theme": "papierlasur-raster",
+    "mode": "light",
+    "unchanged": false,
+    "changedBounds": [
+      11,
+      8,
+      311,
+      112
+    ]
+  },
+  {
+    "theme": "platin",
+    "mode": "light",
+    "unchanged": false,
+    "changedBounds": [
+      11,
+      8,
+      311,
+      112
+    ]
+  },
+  {
+    "theme": "receiver",
+    "mode": "light",
+    "unchanged": false,
+    "changedBounds": [
+      11,
+      8,
+      311,
+      112
+    ]
+  },
+  {
+    "theme": "receiver-dark",
+    "mode": "dark",
+    "unchanged": false,
+    "changedBounds": [
+      11,
+      8,
+      311,
+      112
+    ]
+  },
+  {
+    "theme": "rooibos",
+    "mode": "dark",
+    "unchanged": true,
+    "changedBounds": null
+  },
+  {
+    "theme": "smoke",
+    "mode": "dark",
+    "unchanged": true,
+    "changedBounds": null
+  },
+  {
+    "theme": "spire",
+    "mode": "dark",
+    "unchanged": false,
+    "changedBounds": [
+      11,
+      8,
+      311,
+      112
+    ]
+  },
+  {
+    "theme": "sunlit-sands",
+    "mode": "light",
+    "unchanged": false,
+    "changedBounds": [
+      11,
+      8,
+      311,
+      112
+    ]
+  },
+  {
+    "theme": "tusche",
+    "mode": "dark",
+    "unchanged": true,
+    "changedBounds": null
+  },
+  {
+    "theme": "tusche-lavur",
+    "mode": "dark",
+    "unchanged": true,
+    "changedBounds": null
+  },
+  {
+    "theme": "universo",
+    "mode": "dark",
+    "unchanged": true,
+    "changedBounds": null
+  },
+  {
+    "theme": "velvet-dusk",
+    "mode": "dark",
+    "unchanged": false,
+    "changedBounds": [
+      11,
+      8,
+      311,
+      112
+    ]
+  }
+]

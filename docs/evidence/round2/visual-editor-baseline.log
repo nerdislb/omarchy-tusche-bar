@@ -1,0 +1,70 @@
+  INFO: Launching config: "/tmp/visual-editor-qt-sqvirt6k/shell.qml"
+  INFO: Shell ID: "e08bc8305dbb81390f8fdf3568c49700" Path ID "e08bc8305dbb81390f8fdf3568c49700"
+  INFO: Saving logs to "/tmp/codex-F-bar2-run/quickshell/by-id/nt4w11xf5ot/log.qslog"
+  WARN quickshell.qmlscanner: Ignoring unresolvable import "/tmp/visual-editor-qt-sqvirt6k/bridge" from "/tmp/visual-editor-qt-sqvirt6k/BarMaterialCard.qml"
+  WARN quickshell.qmlscanner: Ignoring unresolvable import "/tmp/visual-editor-qt-sqvirt6k/bridge" from "/tmp/visual-editor-qt-sqvirt6k/GlassBackdrop.qml"
+  WARN quickshell.qmlscanner: Ignoring unresolvable import "/tmp/visual-editor-qt-sqvirt6k/bridge" from "/tmp/visual-editor-qt-sqvirt6k/GlassSurface.qml"
+  INFO: Configuration Loaded
+ DEBUG qml: PASS hover previews without staging or mutation
+ DEBUG qml: PASS leaving hover restores staged view
+ DEBUG qml: PASS explicit selection emits only a staged choice
+ DEBUG qml: PASS invalid choice rejected
+ DEBUG qml: PASS saved papier-workspaces
+ DEBUG qml: PASS saved tusche-ai
+ DEBUG qml: PASS saved frost-logo
+ DEBUG qml: PASS saved smoke-right
+ DEBUG qml: PASS saved chrom-ai
+ DEBUG qml: PASS saved platin-workspaces
+ DEBUG qml: PASS missing snapshot stays missing
+ DEBUG qml: PASS the complete proof is one strip
+ DEBUG qml: PASS all four parts are in the strip
+ DEBUG qml: PASS every part sits on the same line
+ DEBUG qml: PASS parts follow each other, sharing only their hairline
+ DEBUG qml: PASS the whole strip fits the editor width
+ DEBUG qml: PASS parts are numbered in the bar's order
+ DEBUG qml: PASS the strip is one row high
+ DEBUG qml: PASS the selected part is marked
+ DEBUG qml: PASS a part owns keyboard focus
+ DEBUG qml: PASS Right was delivered
+ DEBUG qml: PASS Right moves selection and focus to the next part
+ DEBUG qml: PASS Left walks back to the first part
+ DEBUG qml: PASS Left at the first part stays
+ DEBUG qml: PASS Right at the last part stays
+ DEBUG qml: PASS walking along the strip stages nothing
+ DEBUG qml: PASS a narrow strip wraps onto further lines
+ DEBUG qml: PASS no part reaches past the editor edge
+ DEBUG qml: PASS the strip's height holds every line
+ DEBUG qml: PASS the strip grew to hold the wrapped lines
+ DEBUG qml: PASS Right reaches the last part on the wrapped strip
+ DEBUG qml: PASS the strip returns to one line when there is room
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  WARN scene: @BarMaterialCard.qml[12:3]: Unable to assign [undefined] to bool
+ DEBUG qml: PASS motion preview uses the actual dry frame: papier
+ DEBUG qml: PASS motion preview preserves the approved outline: papier
+ DEBUG qml: PASS dry popup finishes its slower opening: papier
+ DEBUG qml: PASS saved papier-motion-frame
+  WARN scene: @BarMaterialCard.qml[12:3]: Unable to assign [undefined] to bool
+ DEBUG qml: PASS motion preview uses the actual dry frame: tusche
+ DEBUG qml: PASS motion preview preserves the approved outline: tusche
+ DEBUG qml: PASS dry popup finishes its slower opening: tusche
+ DEBUG qml: PASS saved tusche-motion-frame
+ DEBUG qml: PASS motion idle initially
+  WARN scene: @BarMaterialCard.qml[12:3]: Unable to assign [undefined] to bool
+ DEBUG qml: PASS production popup and frame are playing
+ DEBUG qml: PASS saved smoke-motion
+ DEBUG qml: PASS playback returns to idle
+  WARN scene: @BarMaterialCard.qml[12:3]: Unable to assign [undefined] to bool
+ DEBUG qml: PASS stop cancels queued popup playback
+  WARN scene: @BarMaterialCard.qml[12:3]: Unable to assign [undefined] to bool
+ DEBUG qml: PASS reduced motion keeps information without glints
+ DEBUG qml: PASS hiding cancels all motion
+ DEBUG qml: VISUAL_RESULT {"checks":47,"picks":1}
+
+Traceback (most recent call last):
+  File "/home/nerdi/Data/Work/strand-f-check-hgxkigxx/baseline/tests/visual_editor_runtime.py", line 254, in <module>
+    run(parser.parse_args().output.resolve())
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/nerdi/Data/Work/strand-f-check-hgxkigxx/baseline/tests/visual_editor_runtime.py", line 247, in run
+    assert message not in log, f'QML runtime issue: {message}'
+           ^^^^^^^^^^^^^^^^^^
+AssertionError: QML runtime issue: Unable to assign

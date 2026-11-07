@@ -1,0 +1,18 @@
+********* Start testing of qmltestrunner *********
+Config: Using QtTest library 6.12.0, Qt 6.12.0 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 16.2.1 20260810), omarchy 4.0.0.r7613.g9044b7e
+PASS   : qmltestrunner::WorkspaceRendering::initTestCase()
+PASS   : qmltestrunner::WorkspaceRendering::test_00_workspace_ping_is_bounded_and_optional()
+PASS   : qmltestrunner::WorkspaceRendering::test_01_shared_geometry_owner_and_idle()
+PASS   : qmltestrunner::WorkspaceRendering::test_02_real_mouse_target_and_profile()
+PASS   : qmltestrunner::WorkspaceRendering::test_03_all_shared_variants_are_inert_by_default()
+PASS   : qmltestrunner::WorkspaceRendering::test_04_native_metadata_fallback_is_shared_and_idle()
+PASS   : qmltestrunner::WorkspaceRendering::test_04b_leading_edge_refresh_collapses_bursts()
+PASS   : qmltestrunner::WorkspaceRendering::test_04c_hover_popout_and_window_focus()
+PASS   : qmltestrunner::WorkspaceRendering::test_04d_umbriel_ignores_hyprland_model()
+PASS   : qmltestrunner::WorkspaceRendering::test_04e_channels_are_live_stable_and_monitor_local()
+PASS   : qmltestrunner::WorkspaceRendering::test_04e_layout_feedback_tracks_changes_without_startup_or_focus_noise()
+PASS   : qmltestrunner::WorkspaceRendering::test_05_optional_theme_gallery()
+PASS   : qmltestrunner::WorkspaceRendering::cleanupTestCase()
+Totals: 13 passed, 0 failed, 0 skipped, 0 blacklisted, 4936ms
+********* Finished testing of qmltestrunner *********
+

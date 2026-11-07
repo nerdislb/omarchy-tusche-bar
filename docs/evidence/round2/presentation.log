@@ -1,0 +1,9 @@
+PASS optional additions default off and never rebuild the native layout
+PASS profiles are presentation-only with deterministic validation and fallback
+PASS profile choices stage without writes and prune after Use
+PASS Cancel restores only touched screens and preserves later unrelated overrides
+PASS bar and screen writes are separate ordered steps
+PASS atomic profile writer preserves layout, options, unrelated config and private mode
+PASS logo paths round-trip and custom images replace even the native menu
+PASS channel list validation and presets preserve live strings including empty slots
+PRESENTATION_RESULT 8

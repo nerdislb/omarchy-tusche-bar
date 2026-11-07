@@ -1,0 +1,5 @@
+look-funk: secondary .62 -> 0.620000; worst plate contrast 5.1499:1
+look-tusche: secondary .62 -> 0.654902; worst plate contrast 4.6185:1
+morgenraster: secondary .62 -> 0.658824; worst plate contrast 4.6198:1
+papier: secondary .62 -> 0.803922; worst plate contrast 4.5983:1
+PASS 42 installed palettes, 7644 contrasts; dark alpha unchanged: 216, raised: 134

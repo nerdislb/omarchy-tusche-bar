@@ -1,0 +1,2455 @@
+Warning: BarSpecimen.qml:18:35: Member "sizeHorizontal" not found on type "QObject" [missing-property]
+  property int barSize: Style.bar.sizeHorizontal
+                                  ^^^^^^^^^^^^^^
+Warning: BarSpecimen.qml:19:48: Member "text" not found on type "QObject" [missing-property]
+  property color foreground: Commons.Color.bar.text
+                                               ^^^^
+Warning: BarSpecimen.qml:20:56: Member "background" not found on type "QObject" [missing-property]
+  property color background: Qt.rgba(Commons.Color.bar.background.r, Commons.Color.bar.background.g, Commons.Color.bar.background.b, 1)
+                                                       ^^^^^^^^^^
+Warning: BarSpecimen.qml:20:88: Member "background" not found on type "QObject" [missing-property]
+  property color background: Qt.rgba(Commons.Color.bar.background.r, Commons.Color.bar.background.g, Commons.Color.bar.background.b, 1)
+                                                                                       ^^^^^^^^^^
+Warning: BarSpecimen.qml:20:120: Member "background" not found on type "QObject" [missing-property]
+  property color background: Qt.rgba(Commons.Color.bar.background.r, Commons.Color.bar.background.g, Commons.Color.bar.background.b, 1)
+                                                                                                                       ^^^^^^^^^^
+Warning: BarSpecimen.qml:59:33: Member "text" not found on type "QObject" [missing-property]
+    color: Commons.Color.popups.text
+                                ^^^^
+Warning: BarSpecimen.qml:57:29: Member "family" not found on type "QObject" [missing-property]
+    font.family: Style.font.family
+                            ^^^^^^
+Warning: BarSpecimen.qml:58:32: Member "caption" not found on type "QObject" [missing-property]
+    font.pixelSize: Style.font.caption
+                               ^^^^^^^
+Warning: BarSpecimen.qml:64:12: Unqualified access [unqualified]
+    color: root.foreground
+           ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:77:42: Unqualified access [unqualified]
+        readonly property bool selected: root.interactive && root.selectedPart === modelData
+                                         ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:77:62: Unqualified access [unqualified]
+        readonly property bool selected: root.interactive && root.selectedPart === modelData
+                                                             ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:79:44: Unqualified access [unqualified]
+        readonly property string numbered: root.strip ? (index + 1) + "  " + title : title
+                                           ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:81:16: Unqualified access [unqualified]
+        width: root.strip ? Math.max(Math.ceil(heading.implicitWidth) + Style.space(18), face.width + Style.space(28)) : root.width
+               ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:81:122: Unqualified access [unqualified]
+        width: root.strip ? Math.max(Math.ceil(heading.implicitWidth) + Style.space(18), face.width + Style.space(28)) : root.width
+                                                                                                                         ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:82:17: Unqualified access [unqualified]
+        height: root.labelHeight + root.barSize + Style.space(12)
+                ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:82:36: Unqualified access [unqualified]
+        height: root.labelHeight + root.barSize + Style.space(12)
+                                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:84:27: Unqualified access [unqualified]
+        activeFocusOnTab: root.interactive
+                          ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:86:27: Unqualified access [unqualified]
+        Accessible.name: (root.strip ? "Part " + (index + 1) + ", " : "") + title
+                          ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:88:39: Unqualified access [unqualified]
+        Accessible.onPressAction: if (root.interactive) root.partPicked(modelData)
+                                      ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:88:57: Unqualified access [unqualified]
+        Accessible.onPressAction: if (root.interactive) root.partPicked(modelData)
+                                                        ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:89:35: Unqualified access [unqualified]
+        Keys.onReturnPressed: if (root.interactive) root.partPicked(modelData)
+                                  ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:89:53: Unqualified access [unqualified]
+        Keys.onReturnPressed: if (root.interactive) root.partPicked(modelData)
+                                                    ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:90:34: Unqualified access [unqualified]
+        Keys.onEnterPressed: if (root.interactive) root.partPicked(modelData)
+                                 ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:90:52: Unqualified access [unqualified]
+        Keys.onEnterPressed: if (root.interactive) root.partPicked(modelData)
+                                                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:91:34: Unqualified access [unqualified]
+        Keys.onSpacePressed: if (root.interactive) root.partPicked(modelData)
+                                 ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:91:52: Unqualified access [unqualified]
+        Keys.onSpacePressed: if (root.interactive) root.partPicked(modelData)
+                                                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:92:29: Unqualified access [unqualified]
+        Keys.onLeftPressed: root.move(index, -1)
+                            ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:93:30: Unqualified access [unqualified]
+        Keys.onRightPressed: root.move(index, 1)
+                             ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:98:34: Unqualified access [unqualified]
+          color: cell.selected ? root.accent : Commons.Color.popups.text
+                                 ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:98:69: Member "text" not found on type "QObject" [missing-property]
+          color: cell.selected ? root.accent : Commons.Color.popups.text
+                                                                    ^^^^
+Warning: BarSpecimen.qml:102:14: Unqualified access [unqualified]
+          y: root.labelHeight
+             ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:104:19: Unqualified access [unqualified]
+          height: root.barSize + Style.space(12)
+                  ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:105:18: Unqualified access [unqualified]
+          color: root.background
+                 ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:107:61: Unqualified access [unqualified]
+          border.color: cell.selected || cell.activeFocus ? root.accent : Util.alpha(Commons.Color.popups.text, root.strip ? 0.22 : 0.16)
+                                                            ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:107:107: Member "text" not found on type "QObject" [missing-property]
+          border.color: cell.selected || cell.activeFocus ? root.accent : Util.alpha(Commons.Color.popups.text, root.strip ? 0.22 : 0.16)
+                                                                                                          ^^^^
+Warning: BarSpecimen.qml:107:113: Unqualified access [unqualified]
+          border.color: cell.selected || cell.activeFocus ? root.accent : Util.alpha(Commons.Color.popups.text, root.strip ? 0.22 : 0.16)
+                                                                                                                ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:112:21: Unqualified access [unqualified]
+            height: root.barSize
+                    ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:113:28: Unqualified access [unqualified]
+            width: item ? (root.strip ? (item.implicitWidth || item.width) : Math.min(parent.width - Style.space(12), item.implicitWidth || item.width)) : 0
+                           ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:113:47: Member "implicitWidth" not found on type "QObject" [missing-property]
+            width: item ? (root.strip ? (item.implicitWidth || item.width) : Math.min(parent.width - Style.space(12), item.implicitWidth || item.width)) : 0
+                                              ^^^^^^^^^^^^^
+Warning: BarSpecimen.qml:113:69: Member "width" not found on type "QObject" [missing-property]
+            width: item ? (root.strip ? (item.implicitWidth || item.width) : Math.min(parent.width - Style.space(12), item.implicitWidth || item.width)) : 0
+                                                                    ^^^^^
+Warning: BarSpecimen.qml:113:124: Member "implicitWidth" not found on type "QObject" [missing-property]
+            width: item ? (root.strip ? (item.implicitWidth || item.width) : Math.min(parent.width - Style.space(12), item.implicitWidth || item.width)) : 0
+                                                                                                                           ^^^^^^^^^^^^^
+Warning: BarSpecimen.qml:113:146: Member "width" not found on type "QObject" [missing-property]
+            width: item ? (root.strip ? (item.implicitWidth || item.width) : Math.min(parent.width - Style.space(12), item.implicitWidth || item.width)) : 0
+                                                                                                                                                 ^^^^^
+Warning: BarSpecimen.qml:114:58: Unqualified access [unqualified]
+            sourceComponent: cell.modelData === "logo" ? logoFace
+                                                         ^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:115:51: Unqualified access [unqualified]
+              : cell.modelData === "workspaces" ? workspaceFace
+                                                  ^^^^^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:116:43: Unqualified access [unqualified]
+              : cell.modelData === "ai" ? quotaFace : statusFace
+                                          ^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:116:55: Unqualified access [unqualified]
+              : cell.modelData === "ai" ? quotaFace : statusFace
+                                                      ^^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:121:20: Unqualified access [unqualified]
+          enabled: root.interactive
+                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:123:49: Unqualified access [unqualified]
+          onClicked: { cell.forceActiveFocus(); root.partPicked(cell.modelData) }
+                                                ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:133:15: Unqualified access [unqualified]
+      height: root.barSize
+              ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:134:40: Unqualified access [unqualified]
+      readonly property bool numbered: root.opts.workspaces === "logo" && root.part !== "logo"
+                                       ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:134:75: Unqualified access [unqualified]
+      readonly property bool numbered: root.opts.workspaces === "logo" && root.part !== "logo"
+                                                                          ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:136:38: Unqualified access [unqualified]
+        visible: !parent.numbered && root.opts.logo === "omarchy"
+                                     ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:143:16: Unqualified access [unqualified]
+        color: root.strong
+               ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:142:36: Member "icon" not found on type "QObject" [missing-property]
+        font.pixelSize: Style.font.icon + (Style.fontPixelGrid ? 0 : 2)
+                                   ^^^^
+Warning: BarSpecimen.qml:146:37: Unqualified access [unqualified]
+        active: !parent.numbered && root.opts.logo === "arch"
+                                    ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:148:81: Unqualified access [unqualified]
+        sourceComponent: Component { Modules.ArchLogo { size: 18 * 1.18; color: root.strong } }
+                                                                                ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:151:37: Unqualified access [unqualified]
+        active: !parent.numbered && root.opts.logo === "nerdibeard"
+                                    ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:153:24: Unqualified access [unqualified]
+        y: Math.round((root.barSize - 16) / 2) + 1
+                       ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:154:62: Unqualified access [unqualified]
+        sourceComponent: Component { Modules.SealLogo { ink: root.strong } }
+                                                             ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:157:20: Unqualified access [unqualified]
+        visible: !!root.metal && root.metal.logo === true && !parent.numbered
+                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:157:34: Unqualified access [unqualified]
+        visible: !!root.metal && root.metal.logo === true && !parent.numbered
+                                 ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:158:15: Unqualified access [unqualified]
+        spec: root.metal
+              ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:167:27: Unqualified access [unqualified]
+        width: Math.round(root.barSize * 0.68); height: width
+                          ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:169:68: Unqualified access [unqualified]
+        border.width: Math.max(1, Style.space(1.5)); border.color: root.strong
+                                                                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:174:17: Unqualified access [unqualified]
+          text: root.hasWorkspaces ? (root.ws.active === 10 ? "0" : String(root.ws.active)) : "–"
+                ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:174:39: Unqualified access [unqualified]
+          text: root.hasWorkspaces ? (root.ws.active === 10 ? "0" : String(root.ws.active)) : "–"
+                                      ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:174:76: Unqualified access [unqualified]
+          text: root.hasWorkspaces ? (root.ws.active === 10 ? "0" : String(root.ws.active)) : "–"
+                                                                           ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:176:18: Unqualified access [unqualified]
+          color: root.accent
+                 ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:175:35: Member "family" not found on type "QObject" [missing-property]
+          font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.body + 1
+                                  ^^^^^^
+Warning: BarSpecimen.qml:175:87: Member "body" not found on type "QObject" [missing-property]
+          font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.body + 1
+                                                                                      ^^^^
+Warning: BarSpecimen.qml:184:48: Member "implicitWidth" not found on type "QObject" [missing-property]
+      implicitWidth: loader.item ? loader.item.implicitWidth : 0
+                                               ^^^^^^^^^^^^^
+Warning: BarSpecimen.qml:187:17: Unqualified access [unqualified]
+        height: root.barSize
+                ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:188:26: Unqualified access [unqualified]
+        sourceComponent: root.opts.workspaces === "today" || !root.hasWorkspaces ? noWorkspaces
+                         ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:188:63: Unqualified access [unqualified]
+        sourceComponent: root.opts.workspaces === "today" || !root.hasWorkspaces ? noWorkspaces
+                                                              ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:188:84: Unqualified access [unqualified]
+        sourceComponent: root.opts.workspaces === "today" || !root.hasWorkspaces ? noWorkspaces
+                                                                                   ^^^^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:189:13: Unqualified access [unqualified]
+          : root.part === "workspaces" && root.opts.workspaces === "logo" ? numberedWorkspaces : realWorkspaces
+            ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:189:43: Unqualified access [unqualified]
+          : root.part === "workspaces" && root.opts.workspaces === "logo" ? numberedWorkspaces : realWorkspaces
+                                          ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:189:77: Unqualified access [unqualified]
+          : root.part === "workspaces" && root.opts.workspaces === "logo" ? numberedWorkspaces : realWorkspaces
+                                                                            ^^^^^^^^^^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:189:98: Unqualified access [unqualified]
+          : root.part === "workspaces" && root.opts.workspaces === "logo" ? numberedWorkspaces : realWorkspaces
+                                                                                                 ^^^^^^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:196:15: Unqualified access [unqualified]
+      height: root.barSize
+              ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:198:24: Unqualified access [unqualified]
+      Loader { height: root.barSize; sourceComponent: logoFace }
+                       ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:198:55: Unqualified access [unqualified]
+      Loader { height: root.barSize; sourceComponent: logoFace }
+                                                      ^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:199:24: Unqualified access [unqualified]
+      Loader { height: root.barSize; sourceComponent: realWorkspaces }
+                       ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:199:55: Unqualified access [unqualified]
+      Loader { height: root.barSize; sourceComponent: realWorkspaces }
+                                                      ^^^^^^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:204:53: Unqualified access [unqualified]
+    Item { implicitWidth: Style.space(142); height: root.barSize; Missing { text: root.opts.workspaces === "today" ? "Native workspaces" : "No live workspaces" } }
+                                                    ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:204:83: Unqualified access [unqualified]
+    Item { implicitWidth: Style.space(142); height: root.barSize; Missing { text: root.opts.workspaces === "today" ? "Native workspaces" : "No live workspaces" } }
+                                                                                  ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:209:16: Unqualified access [unqualified]
+      variant: root.opts.workspaces
+               ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:210:12: Unqualified access [unqualified]
+      ids: root.ws.ids || []
+           ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:211:20: Unqualified access [unqualified]
+      occupiedIds: root.ws.occupiedIds || []
+                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:212:15: Unqualified access [unqualified]
+      active: root.ws.active || 1
+              ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:213:21: Unqualified access [unqualified]
+      windowCounts: root.ws.windowCounts || ({})
+                    ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:214:18: Unqualified access [unqualified]
+      urgentIds: root.ws.urgentIds || []
+                 ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:215:17: Unqualified access [unqualified]
+      geometry: root.ws.geometry || ({})
+                ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:216:24: Unqualified access [unqualified]
+      workspaceLabels: root.ws.workspaceLabels || ({})
+                       ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:217:16: Unqualified access [unqualified]
+      barSize: root.barSize
+               ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:218:11: Unqualified access [unqualified]
+      fg: root.foreground; accent: root.accent; strong: root.strong; urgentColor: root.urgent
+          ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:218:36: Unqualified access [unqualified]
+      fg: root.foreground; accent: root.accent; strong: root.strong; urgentColor: root.urgent
+                                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:218:57: Unqualified access [unqualified]
+      fg: root.foreground; accent: root.accent; strong: root.strong; urgentColor: root.urgent
+                                                        ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:218:83: Unqualified access [unqualified]
+      fg: root.foreground; accent: root.accent; strong: root.strong; urgentColor: root.urgent
+                                                                                  ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:219:25: Unqualified access [unqualified]
+      textBackgrounds: [root.background]
+                        ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:220:17: Unqualified access [unqualified]
+      barColor: root.background
+                ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:221:26: Unqualified access [unqualified]
+      barLight: 0.2126 * root.background.r + 0.7152 * root.background.g + 0.0722 * root.background.b > 0.55
+                         ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:221:55: Unqualified access [unqualified]
+      barLight: 0.2126 * root.background.r + 0.7152 * root.background.g + 0.0722 * root.background.b > 0.55
+                                                      ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:221:84: Unqualified access [unqualified]
+      barLight: 0.2126 * root.background.r + 0.7152 * root.background.g + 0.0722 * root.background.b > 0.55
+                                                                                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:228:48: Member "implicitWidth" not found on type "QObject" [missing-property]
+      implicitWidth: loader.item ? loader.item.implicitWidth : 0
+                                               ^^^^^^^^^^^^^
+Warning: BarSpecimen.qml:229:36: Unqualified access [unqualified]
+      Loader { id: loader; height: root.barSize; sourceComponent: root.opts.ai === "today" || !root.hasQuota ? noQuota : realQuota }
+                                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:229:67: Unqualified access [unqualified]
+      Loader { id: loader; height: root.barSize; sourceComponent: root.opts.ai === "today" || !root.hasQuota ? noQuota : realQuota }
+                                                                  ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:229:96: Unqualified access [unqualified]
+      Loader { id: loader; height: root.barSize; sourceComponent: root.opts.ai === "today" || !root.hasQuota ? noQuota : realQuota }
+                                                                                               ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:229:112: Unqualified access [unqualified]
+      Loader { id: loader; height: root.barSize; sourceComponent: root.opts.ai === "today" || !root.hasQuota ? noQuota : realQuota }
+                                                                                                               ^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:229:122: Unqualified access [unqualified]
+      Loader { id: loader; height: root.barSize; sourceComponent: root.opts.ai === "today" || !root.hasQuota ? noQuota : realQuota }
+                                                                                                                         ^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:234:53: Unqualified access [unqualified]
+    Item { implicitWidth: Style.space(145); height: root.barSize; Missing { text: root.opts.ai === "today" ? "Native AI widgets" : "No live quota data" } }
+                                                    ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:234:83: Unqualified access [unqualified]
+    Item { implicitWidth: Style.space(145); height: root.barSize; Missing { text: root.opts.ai === "today" ? "Native AI widgets" : "No live quota data" } }
+                                                                                  ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:240:15: Unqualified access [unqualified]
+      height: root.barSize
+              ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:243:18: Unqualified access [unqualified]
+        variant: root.opts.ai; barSize: root.barSize
+                 ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:243:41: Unqualified access [unqualified]
+        variant: root.opts.ai; barSize: root.barSize
+                                        ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:244:13: Unqualified access [unqualified]
+        fg: root.foreground; textBackgrounds: [root.background]; accent: root.accent; urgent: root.urgent
+            ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:244:48: Unqualified access [unqualified]
+        fg: root.foreground; textBackgrounds: [root.background]; accent: root.accent; urgent: root.urgent
+                                               ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:244:74: Unqualified access [unqualified]
+        fg: root.foreground; textBackgrounds: [root.background]; accent: root.accent; urgent: root.urgent
+                                                                         ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:244:95: Unqualified access [unqualified]
+        fg: root.foreground; textBackgrounds: [root.background]; accent: root.accent; urgent: root.urgent
+                                                                                              ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:245:14: Unqualified access [unqualified]
+        pal: root.quota.pal || ({})
+             ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:246:16: Unqualified access [unqualified]
+        metal: root.metal
+               ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:247:16: Unqualified access [unqualified]
+        items: root.quota.items || []
+               ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:248:20: Unqualified access [unqualified]
+        ringItems: root.quota.ringItems || []
+                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:256:48: Member "implicitWidth" not found on type "QObject" [missing-property]
+      implicitWidth: loader.item ? loader.item.implicitWidth : 0
+                                               ^^^^^^^^^^^^^
+Warning: BarSpecimen.qml:257:36: Unqualified access [unqualified]
+      Loader { id: loader; height: root.barSize; sourceComponent: root.opts.right === "today" || !root.hasStatus ? noStatus : realStatus }
+                                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:257:67: Unqualified access [unqualified]
+      Loader { id: loader; height: root.barSize; sourceComponent: root.opts.right === "today" || !root.hasStatus ? noStatus : realStatus }
+                                                                  ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:257:99: Unqualified access [unqualified]
+      Loader { id: loader; height: root.barSize; sourceComponent: root.opts.right === "today" || !root.hasStatus ? noStatus : realStatus }
+                                                                                                  ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:257:116: Unqualified access [unqualified]
+      Loader { id: loader; height: root.barSize; sourceComponent: root.opts.right === "today" || !root.hasStatus ? noStatus : realStatus }
+                                                                                                                   ^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:257:127: Unqualified access [unqualified]
+      Loader { id: loader; height: root.barSize; sourceComponent: root.opts.right === "today" || !root.hasStatus ? noStatus : realStatus }
+                                                                                                                              ^^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:262:53: Unqualified access [unqualified]
+    Item { implicitWidth: Style.space(145); height: root.barSize; Missing { text: root.opts.right === "today" ? "Native status widgets" : "No live status data" } }
+                                                    ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:262:83: Unqualified access [unqualified]
+    Item { implicitWidth: Style.space(145); height: root.barSize; Missing { text: root.opts.right === "today" ? "Native status widgets" : "No live status data" } }
+                                                                                  ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:267:15: Unqualified access [unqualified]
+      height: root.barSize
+              ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:269:36: Unqualified access [unqualified]
+      readonly property var faces: root.opts.right === "groups"
+                                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:270:12: Unqualified access [unqualified]
+        ? (root.status.groups || ["net", "phone", "system"]).map(function(group) { return {group:group} })
+           ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:271:12: Unqualified access [unqualified]
+        : (root.status.deviations || []).map(function(d) { return {glyph:d.glyph || "", chip:!!d.chip, tone:d.color || root.foreground} })
+           ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:272:56: Unqualified access [unqualified]
+          .concat([{glyph:"\u{f01d8}", tone:Util.alpha(root.foreground,0.7)}])
+                                                       ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:271:120: Unqualified access [unqualified]
+        : (root.status.deviations || []).map(function(d) { return {glyph:d.glyph || "", chip:!!d.chip, tone:d.color || root.foreground} })
+                                                                                                                       ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:277:66: Unqualified access [unqualified]
+          width: modelData.group === "phone" ? Style.space(58) : root.barSize + Style.space(2)
+                                                                 ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:278:19: Unqualified access [unqualified]
+          height: root.barSize
+                  ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:282:16: Unqualified access [unqualified]
+          ink: root.foreground
+               ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:283:29: Unqualified access [unqualified]
+          textBackgrounds: [root.background]
+                            ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:284:39: Unqualified access [unqualified]
+          glyphInk: modelData.tone || root.foreground
+                                      ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:285:19: Unqualified access [unqualified]
+          accent: root.accent; urgent: root.urgent
+                  ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:285:40: Unqualified access [unqualified]
+          accent: root.accent; urgent: root.urgent
+                                       ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:286:41: Member "border" not found on type "QObject" [missing-property]
+          linkInk: Commons.Color.popups.border || root.foreground
+                                        ^^^^^^
+Warning: BarSpecimen.qml:286:51: Unqualified access [unqualified]
+          linkInk: Commons.Color.popups.border || root.foreground
+                                                  ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:287:20: Unqualified access [unqualified]
+          barSize: root.barSize
+                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:288:21: Unqualified access [unqualified]
+          wifiUp: !!root.status.wifiUp; vpnUp: !!root.status.vpnUp
+                    ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:288:50: Unqualified access [unqualified]
+          wifiUp: !!root.status.wifiUp; vpnUp: !!root.status.vpnUp
+                                                 ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:289:26: Unqualified access [unqualified]
+          tailscaleUp: !!root.status.tailscaleUp
+                         ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:290:33: Unqualified access [unqualified]
+          bluetoothConnected: !!root.status.bluetoothConnected
+                                ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:291:18: Unqualified access [unqualified]
+          phone: root.status.phone || null
+                 ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:292:16: Unqualified access [unqualified]
+          cpu: root.status.cpu || 0; sysHot: !!root.status.sysHot
+               ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: BarSpecimen.qml:292:48: Unqualified access [unqualified]
+          cpu: root.status.cpu || 0; sysHot: !!root.status.sysHot
+                                               ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Centre.qml:49:15: var declaration in block scope is hoisted to function scope
+Replace it with const or let to silence the warning
+ [block-scope-var-declaration]
+          var t = JSON.parse(text).current.temperature_2m
+              ^
+Warning: modules/Centre.qml:19:79: Member "sizeHorizontal" not found on type "QObject" [missing-property]
+  readonly property int barSize: bar && bar.barSize ? bar.barSize : Style.bar.sizeHorizontal
+                                                                              ^^^^^^^^^^^^^^
+Warning: modules/Centre.qml:20:96: Member "text" not found on type "QObject" [missing-property]
+  readonly property color fg: bar && bar.barForeground ? bar.barForeground : Commons.Color.bar.text
+                                                                                               ^^^^
+Warning: modules/Centre.qml:31:29: Member "family" not found on type "QObject" [missing-property]
+    font.family: Style.font.family; font.pixelSize: Style.font.bodySmall
+                            ^^^^^^
+Warning: modules/Centre.qml:31:64: Member "bodySmall" not found on type "QObject" [missing-property]
+    font.family: Style.font.family; font.pixelSize: Style.font.bodySmall
+                                                               ^^^^^^^^^
+Warning: modules/Quota.qml:581:37: Member "natural" not found on type "QQuickItem" [missing-property]
+                if (t) natural += t.natural
+                                    ^^^^^^^
+Warning: modules/Quota.qml:601:65: Unqualified access [unqualified]
+                  readonly property bool current: modelData === root.shownId
+                                                                ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:603:44: Unqualified access [unqualified]
+                  readonly property var r: root.providers[modelData]
+                                           ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:604:51: Unqualified access [unqualified]
+                  readonly property string label: root.names[modelData] || (r ? r.name : modelData)
+                                                  ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:607:48: Unqualified access [unqualified]
+                  readonly property real lit: !tabLens.visible ? (current ? 1 : 0)
+                                               ^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:608:57: Unqualified access [unqualified]
+                    : Math.max(0, Math.min(1, (Math.min(tabLens.edgeRight, x + width) - Math.max(tabLens.edgeLeft, x)) / Math.max(1, width)))
+                                                        ^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:608:98: Unqualified access [unqualified]
+                    : Math.max(0, Math.min(1, (Math.min(tabLens.edgeRight, x + width) - Math.max(tabLens.edgeLeft, x)) / Math.max(1, width)))
+                                                                                                 ^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:609:50: Unqualified access [unqualified]
+                  onCurrentChanged: if (current) tabs.currentTab = tab
+                                                 ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:612:36: Unqualified access [unqualified]
+                  width: natural + tabs.share
+                                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:615:74: Unqualified access [unqualified]
+                  color: !current && tabMouse.containsMouse ? Util.alpha(popupKeys.ink, 0.05) : "transparent"
+                                                                         ^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:610:55: Unqualified access [unqualified]
+                  Component.onCompleted: if (current) tabs.currentTab = tab
+                                                      ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:623:28: Unqualified access [unqualified]
+                      ink: popupKeys.ink
+                           ^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:624:56: Member "caption" not found on type "QObject" [missing-property]
+                      letterPx: Math.max(8, Style.font.caption - 2)
+                                                       ^^^^^^^
+Warning: modules/Quota.qml:625:32: Unqualified access [unqualified]
+                      percent: root.peakOf(tab.r)
+                               ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:626:31: Unqualified access [unqualified]
+                      letter: root.letters[tab.modelData] || "?"
+                              ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:635:43: Unqualified access [unqualified]
+                        color: Util.alpha(popupKeys.ink, 0.6) }
+                                          ^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:634:49: Member "family" not found on type "QObject" [missing-property]
+                        font.family: Style.font.family; font.pixelSize: Style.font.bodySmall
+                                                ^^^^^^
+Warning: modules/Quota.qml:634:84: Member "bodySmall" not found on type "QObject" [missing-property]
+                        font.family: Style.font.family; font.pixelSize: Style.font.bodySmall
+                                                                                   ^^^^^^^^^
+Warning: modules/Quota.qml:639:32: Unqualified access [unqualified]
+                        color: popupKeys.ink }
+                               ^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:638:49: Member "family" not found on type "QObject" [missing-property]
+                        font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.bodySmall
+                                                ^^^^^^
+Warning: modules/Quota.qml:638:101: Member "bodySmall" not found on type "QObject" [missing-property]
+                        font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.bodySmall
+                                                                                                    ^^^^^^^^^
+Warning: modules/Quota.qml:642:134: Unqualified access [unqualified]
+                  MouseArea { id: tabMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.selectedId = tab.modelData }
+                                                                                                                                     ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:659:37: Member "family" not found on type "QObject" [missing-property]
+            font.family: Style.font.family; font.pixelSize: Style.font.body; color: popupKeys.ink }
+                                    ^^^^^^
+Warning: modules/Quota.qml:659:72: Member "body" not found on type "QObject" [missing-property]
+            font.family: Style.font.family; font.pixelSize: Style.font.body; color: popupKeys.ink }
+                                                                       ^^^^
+Warning: modules/Quota.qml:670:170: Member "family" not found on type "QObject" [missing-property]
+              Text { id: agentName; renderType: Text.NativeRendering; textFormat: Text.PlainText; text: popupKeys.rec ? popupKeys.rec.name : ""; font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.title; color: popupKeys.ink }
+                                                                                                                                                                         ^^^^^^
+Warning: modules/Quota.qml:670:222: Member "title" not found on type "QObject" [missing-property]
+              Text { id: agentName; renderType: Text.NativeRendering; textFormat: Text.PlainText; text: popupKeys.rec ? popupKeys.rec.name : ""; font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.title; color: popupKeys.ink }
+                                                                                                                                                                                                                             ^^^^^
+Warning: modules/Quota.qml:672:107: Member "family" not found on type "QObject" [missing-property]
+                text: popupKeys.rec ? String(popupKeys.rec.tierLabel || "") : ""; font.family: Style.font.family; font.pixelSize: Style.font.body; color: Util.alpha(popupKeys.ink, 0.6) }
+                                                                                                          ^^^^^^
+Warning: modules/Quota.qml:672:142: Member "body" not found on type "QObject" [missing-property]
+                text: popupKeys.rec ? String(popupKeys.rec.tierLabel || "") : ""; font.family: Style.font.family; font.pixelSize: Style.font.body; color: Util.alpha(popupKeys.ink, 0.6) }
+                                                                                                                                             ^^^^
+Warning: modules/Quota.qml:680:37: Member "family" not found on type "QObject" [missing-property]
+            font.family: Style.font.family; font.pixelSize: Style.font.bodySmall
+                                    ^^^^^^
+Warning: modules/Quota.qml:680:72: Member "bodySmall" not found on type "QObject" [missing-property]
+            font.family: Style.font.family; font.pixelSize: Style.font.bodySmall
+                                                                       ^^^^^^^^^
+Warning: modules/Quota.qml:693:39: Member "family" not found on type "QObject" [missing-property]
+              font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.title
+                                      ^^^^^^
+Warning: modules/Quota.qml:693:91: Member "title" not found on type "QObject" [missing-property]
+              font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.title
+                                                                                          ^^^^^
+Warning: modules/Quota.qml:710:22: Unqualified access [unqualified]
+              width: list.width
+                     ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:716:25: Unqualified access [unqualified]
+                  text: modelData.label; font.family: Style.font.family; font.pixelSize: Style.font.body; color: popupKeys.ink }
+                        ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+                  text: <id>.modelData.label; font.family: Style.font.family; font.pixelSize: Style.font.body; color: popupKeys.ink }
+                        ^^^^^
+Warning: modules/Quota.qml:716:114: Unqualified access [unqualified]
+                  text: modelData.label; font.family: Style.font.family; font.pixelSize: Style.font.body; color: popupKeys.ink }
+                                                                                                                 ^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:716:66: Member "family" not found on type "QObject" [missing-property]
+                  text: modelData.label; font.family: Style.font.family; font.pixelSize: Style.font.body; color: popupKeys.ink }
+                                                                 ^^^^^^
+Warning: modules/Quota.qml:716:101: Member "body" not found on type "QObject" [missing-property]
+                  text: modelData.label; font.family: Style.font.family; font.pixelSize: Style.font.body; color: popupKeys.ink }
+                                                                                                    ^^^^
+Warning: modules/Quota.qml:717:123: Unqualified access [unqualified]
+                Caption { id: limReset; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; text: modelData.noQuota ? "" : root.resetLine(modelData) }
+                                                                                                                          ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+                Caption { id: limReset; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; text: <id>.modelData.noQuota ? "" : root.resetLine(modelData) }
+                                                                                                                          ^^^^^
+Warning: modules/Quota.qml:717:148: Unqualified access [unqualified]
+                Caption { id: limReset; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; text: modelData.noQuota ? "" : root.resetLine(modelData) }
+                                                                                                                                                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:717:163: Unqualified access [unqualified]
+                Caption { id: limReset; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; text: modelData.noQuota ? "" : root.resetLine(modelData) }
+                                                                                                                                                                  ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+                Caption { id: limReset; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; text: modelData.noQuota ? "" : root.resetLine(<id>.modelData) }
+                                                                                                                                                                  ^^^^^
+Warning: modules/Quota.qml:720:27: Unqualified access [unqualified]
+                visible: !modelData.noQuota
+                          ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+                visible: !<id>.modelData.noQuota
+                          ^^^^^
+Warning: modules/Quota.qml:723:132: Unqualified access [unqualified]
+                Meter { anchors.verticalCenter: parent.verticalCenter; width: parent.width - limPct.width - Style.space(8); value: modelData.percent; fill: root.tone(modelData.percent) }
+                                                                                                                                   ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+                Meter { anchors.verticalCenter: parent.verticalCenter; width: parent.width - limPct.width - Style.space(8); value: <id>.modelData.percent; fill: root.tone(modelData.percent) }
+                                                                                                                                   ^^^^^
+Warning: modules/Quota.qml:723:157: Unqualified access [unqualified]
+                Meter { anchors.verticalCenter: parent.verticalCenter; width: parent.width - limPct.width - Style.space(8); value: modelData.percent; fill: root.tone(modelData.percent) }
+                                                                                                                                                            ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:723:167: Unqualified access [unqualified]
+                Meter { anchors.verticalCenter: parent.verticalCenter; width: parent.width - limPct.width - Style.space(8); value: modelData.percent; fill: root.tone(modelData.percent) }
+                                                                                                                                                                      ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+                Meter { anchors.verticalCenter: parent.verticalCenter; width: parent.width - limPct.width - Style.space(8); value: modelData.percent; fill: root.tone(<id>.modelData.percent) }
+                                                                                                                                                                      ^^^^^
+Warning: modules/Quota.qml:725:36: Unqualified access [unqualified]
+                  text: Math.round(modelData.percent * 100) + "%"; font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.body; color: popupKeys.ink }
+                                   ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+                  text: Math.round(<id>.modelData.percent * 100) + "%"; font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.body; color: popupKeys.ink }
+                                   ^^^^^
+Warning: modules/Quota.qml:725:157: Unqualified access [unqualified]
+                  text: Math.round(modelData.percent * 100) + "%"; font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.body; color: popupKeys.ink }
+                                                                                                                                                            ^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:725:92: Member "family" not found on type "QObject" [missing-property]
+                  text: Math.round(modelData.percent * 100) + "%"; font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.body; color: popupKeys.ink }
+                                                                                           ^^^^^^
+Warning: modules/Quota.qml:725:144: Member "body" not found on type "QObject" [missing-property]
+                  text: Math.round(modelData.percent * 100) + "%"; font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.body; color: popupKeys.ink }
+                                                                                                                                               ^^^^
+Warning: modules/Quota.qml:727:93: Unqualified access [unqualified]
+              Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; visible: modelData.noQuota && modelData.value !== ""
+                                                                                            ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+              Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; visible: <id>.modelData.noQuota && modelData.value !== ""
+                                                                                            ^^^^^
+Warning: modules/Quota.qml:727:114: Unqualified access [unqualified]
+              Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; visible: modelData.noQuota && modelData.value !== ""
+                                                                                                                 ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+              Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; visible: modelData.noQuota && <id>.modelData.value !== ""
+                                                                                                                 ^^^^^
+Warning: modules/Quota.qml:728:23: Unqualified access [unqualified]
+                text: modelData.value.replace(/^USD\s*/, "$"); font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.title; color: popupKeys.ink }
+                      ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+                text: <id>.modelData.value.replace(/^USD\s*/, "$"); font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.title; color: popupKeys.ink }
+                      ^^^^^
+Warning: modules/Quota.qml:728:154: Unqualified access [unqualified]
+                text: modelData.value.replace(/^USD\s*/, "$"); font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.title; color: popupKeys.ink }
+                                                                                                                                                         ^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:728:88: Member "family" not found on type "QObject" [missing-property]
+                text: modelData.value.replace(/^USD\s*/, "$"); font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.title; color: popupKeys.ink }
+                                                                                       ^^^^^^
+Warning: modules/Quota.qml:728:140: Member "title" not found on type "QObject" [missing-property]
+                text: modelData.value.replace(/^USD\s*/, "$"); font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.title; color: popupKeys.ink }
+                                                                                                                                           ^^^^^
+Warning: modules/Quota.qml:729:34: Unqualified access [unqualified]
+              Caption { visible: modelData.noQuota && modelData.detail !== ""; width: parent.width; wrapMode: Text.WordWrap; text: modelData.detail }
+                                 ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+              Caption { visible: <id>.modelData.noQuota && modelData.detail !== ""; width: parent.width; wrapMode: Text.WordWrap; text: modelData.detail }
+                                 ^^^^^
+Warning: modules/Quota.qml:729:55: Unqualified access [unqualified]
+              Caption { visible: modelData.noQuota && modelData.detail !== ""; width: parent.width; wrapMode: Text.WordWrap; text: modelData.detail }
+                                                      ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+              Caption { visible: modelData.noQuota && <id>.modelData.detail !== ""; width: parent.width; wrapMode: Text.WordWrap; text: modelData.detail }
+                                                      ^^^^^
+Warning: modules/Quota.qml:729:132: Unqualified access [unqualified]
+              Caption { visible: modelData.noQuota && modelData.detail !== ""; width: parent.width; wrapMode: Text.WordWrap; text: modelData.detail }
+                                                                                                                                   ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+              Caption { visible: modelData.noQuota && modelData.detail !== ""; width: parent.width; wrapMode: Text.WordWrap; text: <id>.modelData.detail }
+                                                                                                                                   ^^^^^
+Warning: modules/Quota.qml:740:37: Member "family" not found on type "QObject" [missing-property]
+            font.family: Style.font.family; font.pixelSize: Style.font.body; color: popupKeys.ink }
+                                    ^^^^^^
+Warning: modules/Quota.qml:740:72: Member "body" not found on type "QObject" [missing-property]
+            font.family: Style.font.family; font.pixelSize: Style.font.body; color: popupKeys.ink }
+                                                                       ^^^^
+Warning: modules/Quota.qml:745:22: Unqualified access [unqualified]
+              width: list.width
+                     ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:748:23: Unqualified access [unqualified]
+                text: modelData.name; font.family: Style.font.family; font.pixelSize: Style.font.bodySmall; color: Util.alpha(popupKeys.ink, 0.8) }
+                      ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+                text: <id>.modelData.name; font.family: Style.font.family; font.pixelSize: Style.font.bodySmall; color: Util.alpha(popupKeys.ink, 0.8) }
+                      ^^^^^
+Warning: modules/Quota.qml:748:127: Unqualified access [unqualified]
+                text: modelData.name; font.family: Style.font.family; font.pixelSize: Style.font.bodySmall; color: Util.alpha(popupKeys.ink, 0.8) }
+                                                                                                                              ^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:748:63: Member "family" not found on type "QObject" [missing-property]
+                text: modelData.name; font.family: Style.font.family; font.pixelSize: Style.font.bodySmall; color: Util.alpha(popupKeys.ink, 0.8) }
+                                                              ^^^^^^
+Warning: modules/Quota.qml:748:98: Member "bodySmall" not found on type "QObject" [missing-property]
+                text: modelData.name; font.family: Style.font.family; font.pixelSize: Style.font.bodySmall; color: Util.alpha(popupKeys.ink, 0.8) }
+                                                                                                 ^^^^^^^^^
+Warning: modules/Quota.qml:750:24: Unqualified access [unqualified]
+                value: modelData.tokens / Math.max(1, popupKeys.today[0].tokens); fill: Util.alpha(popupKeys.ink, 0.6); alarm: false }
+                       ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+                value: <id>.modelData.tokens / Math.max(1, popupKeys.today[0].tokens); fill: Util.alpha(popupKeys.ink, 0.6); alarm: false }
+                       ^^^^^
+Warning: modules/Quota.qml:750:55: Unqualified access [unqualified]
+                value: modelData.tokens / Math.max(1, popupKeys.today[0].tokens); fill: Util.alpha(popupKeys.ink, 0.6); alarm: false }
+                                                      ^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:750:100: Unqualified access [unqualified]
+                value: modelData.tokens / Math.max(1, popupKeys.today[0].tokens); fill: Util.alpha(popupKeys.ink, 0.6); alarm: false }
+                                                                                                   ^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:751:154: Unqualified access [unqualified]
+              Caption { id: todayTok; width: Style.space(48); horizontalAlignment: Text.AlignRight; anchors.verticalCenter: parent.verticalCenter; text: root.tokens(modelData.tokens) }
+                                                                                                                                                         ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:751:166: Unqualified access [unqualified]
+              Caption { id: todayTok; width: Style.space(48); horizontalAlignment: Text.AlignRight; anchors.verticalCenter: parent.verticalCenter; text: root.tokens(modelData.tokens) }
+                                                                                                                                                                     ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+              Caption { id: todayTok; width: Style.space(48); horizontalAlignment: Text.AlignRight; anchors.verticalCenter: parent.verticalCenter; text: root.tokens(<id>.modelData.tokens) }
+                                                                                                                                                                     ^^^^^
+Warning: modules/Quota.qml:773:25: Unqualified access [unqualified]
+                width: (list.width - Style.space(6) * (popupKeys.days.length - 1)) / Math.max(1, popupKeys.days.length)
+                        ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:773:56: Unqualified access [unqualified]
+                width: (list.width - Style.space(6) * (popupKeys.days.length - 1)) / Math.max(1, popupKeys.days.length)
+                                                       ^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:773:98: Unqualified access [unqualified]
+                width: (list.width - Style.space(6) * (popupKeys.days.length - 1)) / Math.max(1, popupKeys.days.length)
+                                                                                                 ^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:779:78: Unqualified access [unqualified]
+                    width: parent.width; height: Math.max(1, parent.height * modelData.tokens / popupKeys.dayMax)
+                                                                             ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+                    width: parent.width; height: Math.max(1, parent.height * <id>.modelData.tokens / popupKeys.dayMax)
+                                                                             ^^^^^
+Warning: modules/Quota.qml:779:97: Unqualified access [unqualified]
+                    width: parent.width; height: Math.max(1, parent.height * modelData.tokens / popupKeys.dayMax)
+                                                                                                ^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:781:39: Unqualified access [unqualified]
+                    color: Util.alpha(popupKeys.ink, index === popupKeys.days.length - 1 ? 0.85 : 0.35)
+                                      ^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:781:54: Unqualified access [unqualified]
+                    color: Util.alpha(popupKeys.ink, index === popupKeys.days.length - 1 ? 0.85 : 0.35)
+                                                     ^^^^^
+Info: index is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+                    color: Util.alpha(popupKeys.ink, <id>.index === popupKeys.days.length - 1 ? 0.85 : 0.35)
+                                                     ^^^^^
+Warning: modules/Quota.qml:781:64: Unqualified access [unqualified]
+                    color: Util.alpha(popupKeys.ink, index === popupKeys.days.length - 1 ? 0.85 : 0.35)
+                                                               ^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Quota.qml:784:94: Unqualified access [unqualified]
+                Caption { width: parent.width; horizontalAlignment: Text.AlignHCenter; text: modelData.day }
+                                                                                             ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+                Caption { width: parent.width; horizontalAlignment: Text.AlignHCenter; text: <id>.modelData.day }
+                                                                                             ^^^^^
+Warning: modules/Quota.qml:796:37: Member "family" not found on type "QObject" [missing-property]
+            font.family: Style.font.family; font.pixelSize: Style.font.bodySmall; color: Util.alpha(popupKeys.ink, 0.8) }
+                                    ^^^^^^
+Warning: modules/Quota.qml:796:72: Member "bodySmall" not found on type "QObject" [missing-property]
+            font.family: Style.font.family; font.pixelSize: Style.font.bodySmall; color: Util.alpha(popupKeys.ink, 0.8) }
+                                                                       ^^^^^^^^^
+Warning: modules/QuotaFace.qml:177:93: Member "play" not found on type "QQuickItem" [missing-property]
+      function play() { for (var i = 0; i < ringRepeater.count; ++i) ringRepeater.itemAt(i).play() }
+                                                                                            ^^^^
+Warning: modules/QuotaFace.qml:180:16: Unqualified access [unqualified]
+        model: root.ringItems
+               ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:185:18: Unqualified access [unqualified]
+          width: root.metal && Number(root.metal.ringSize) > 0 ? Number(root.metal.ringSize) : Math.round(root.barSize * 0.66); height: width
+                 ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:185:39: Unqualified access [unqualified]
+          width: root.metal && Number(root.metal.ringSize) > 0 ? Number(root.metal.ringSize) : Math.round(root.barSize * 0.66); height: width
+                                      ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:185:73: Unqualified access [unqualified]
+          width: root.metal && Number(root.metal.ringSize) > 0 ? Number(root.metal.ringSize) : Math.round(root.barSize * 0.66); height: width
+                                                                        ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:185:107: Unqualified access [unqualified]
+          width: root.metal && Number(root.metal.ringSize) > 0 ? Number(root.metal.ringSize) : Math.round(root.barSize * 0.66); height: width
+                                                                                                          ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:187:19: Unqualified access [unqualified]
+          letter: root.letters[modelData.provider] || "?"
+                  ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:188:18: Unqualified access [unqualified]
+          boost: root.hoverBoost
+                 ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:200:15: Unqualified access [unqualified]
+      height: root.barSize
+              ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:203:16: Unqualified access [unqualified]
+        model: root.ringItems
+               ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:212:20: Unqualified access [unqualified]
+            text: (root.letters[modelData.provider] || "?").toLowerCase()
+                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:212:33: Unqualified access [unqualified]
+            text: (root.letters[modelData.provider] || "?").toLowerCase()
+                                ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+            text: (root.letters[<id>.modelData.provider] || "?").toLowerCase()
+                                ^^^^^
+Warning: modules/QuotaFace.qml:214:20: Unqualified access [unqualified]
+            color: root.secondary(0.6)
+                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:213:37: Member "family" not found on type "QObject" [missing-property]
+            font.family: Style.font.family; font.pixelSize: Style.font.body
+                                    ^^^^^^
+Warning: modules/QuotaFace.qml:213:72: Member "body" not found on type "QObject" [missing-property]
+            font.family: Style.font.family; font.pixelSize: Style.font.body
+                                                                       ^^^^
+Warning: modules/QuotaFace.qml:223:58: Unqualified access [unqualified]
+                width: 4; height: Math.max(8, Math.round(root.barSize * 0.32))
+                                                         ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:225:38: Member "p" not found on type "QQuickItem" [missing-property]
+                color: parent.parent.p >= 0 && (index + 0.5) / 6 <= parent.parent.p ? root.tone(parent.parent.p) : Util.alpha(root.fg, 0.16)
+                                     ^
+Warning: modules/QuotaFace.qml:225:83: Member "p" not found on type "QQuickItem" [missing-property]
+                color: parent.parent.p >= 0 && (index + 0.5) / 6 <= parent.parent.p ? root.tone(parent.parent.p) : Util.alpha(root.fg, 0.16)
+                                                                                  ^
+Warning: modules/QuotaFace.qml:225:87: Unqualified access [unqualified]
+                color: parent.parent.p >= 0 && (index + 0.5) / 6 <= parent.parent.p ? root.tone(parent.parent.p) : Util.alpha(root.fg, 0.16)
+                                                                                      ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:225:111: Member "p" not found on type "QQuickItem" [missing-property]
+                color: parent.parent.p >= 0 && (index + 0.5) / 6 <= parent.parent.p ? root.tone(parent.parent.p) : Util.alpha(root.fg, 0.16)
+                                                                                                              ^
+Warning: modules/QuotaFace.qml:225:127: Unqualified access [unqualified]
+                color: parent.parent.p >= 0 && (index + 0.5) / 6 <= parent.parent.p ? root.tone(parent.parent.p) : Util.alpha(root.fg, 0.16)
+                                                                                                                              ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:234:36: Unqualified access [unqualified]
+            color: parent.p >= 0 ? root.tone(parent.p) : root.secondary(0.45)
+                                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:234:58: Unqualified access [unqualified]
+            color: parent.p >= 0 ? root.tone(parent.p) : root.secondary(0.45)
+                                                         ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:233:37: Member "family" not found on type "QObject" [missing-property]
+            font.family: Style.font.family; font.pixelSize: Style.font.body
+                                    ^^^^^^
+Warning: modules/QuotaFace.qml:233:72: Member "body" not found on type "QObject" [missing-property]
+            font.family: Style.font.family; font.pixelSize: Style.font.body
+                                                                       ^^^^
+Warning: modules/QuotaFace.qml:246:26: Unqualified access [unqualified]
+      height: Math.round(root.barSize * 0.72)
+                         ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:247:22: Unqualified access [unqualified]
+      y: Math.round((root.barSize - height) / 2)
+                     ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:249:25: Unqualified access [unqualified]
+      color: Util.alpha(root.tightest ? root.tone(root.tightest.percent) : root.accent, 0.16)
+                        ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:249:41: Unqualified access [unqualified]
+      color: Util.alpha(root.tightest ? root.tone(root.tightest.percent) : root.accent, 0.16)
+                                        ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:249:51: Unqualified access [unqualified]
+      color: Util.alpha(root.tightest ? root.tone(root.tightest.percent) : root.accent, 0.16)
+                                                  ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:249:76: Unqualified access [unqualified]
+      color: Util.alpha(root.tightest ? root.tone(root.tightest.percent) : root.accent, 0.16)
+                                                                           ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:254:169: Unqualified access [unqualified]
+        Text { textFormat: Text.PlainText; renderType: Text.NativeRendering; text: "\u{f04c5}"; font.family: Style.font.family; font.pixelSize: Style.font.icon; color: root.tightest ? root.tone(root.tightest.percent) : root.fg }
+                                                                                                                                                                        ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:254:185: Unqualified access [unqualified]
+        Text { textFormat: Text.PlainText; renderType: Text.NativeRendering; text: "\u{f04c5}"; font.family: Style.font.family; font.pixelSize: Style.font.icon; color: root.tightest ? root.tone(root.tightest.percent) : root.fg }
+                                                                                                                                                                                        ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:254:195: Unqualified access [unqualified]
+        Text { textFormat: Text.PlainText; renderType: Text.NativeRendering; text: "\u{f04c5}"; font.family: Style.font.family; font.pixelSize: Style.font.icon; color: root.tightest ? root.tone(root.tightest.percent) : root.fg }
+                                                                                                                                                                                                  ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:254:220: Unqualified access [unqualified]
+        Text { textFormat: Text.PlainText; renderType: Text.NativeRendering; text: "\u{f04c5}"; font.family: Style.font.family; font.pixelSize: Style.font.icon; color: root.tightest ? root.tone(root.tightest.percent) : root.fg }
+                                                                                                                                                                                                                           ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:254:121: Member "family" not found on type "QObject" [missing-property]
+        Text { textFormat: Text.PlainText; renderType: Text.NativeRendering; text: "\u{f04c5}"; font.family: Style.font.family; font.pixelSize: Style.font.icon; color: root.tightest ? root.tone(root.tightest.percent) : root.fg }
+                                                                                                                        ^^^^^^
+Warning: modules/QuotaFace.qml:254:156: Member "icon" not found on type "QObject" [missing-property]
+        Text { textFormat: Text.PlainText; renderType: Text.NativeRendering; text: "\u{f04c5}"; font.family: Style.font.family; font.pixelSize: Style.font.icon; color: root.tightest ? root.tone(root.tightest.percent) : root.fg }
+                                                                                                                                                           ^^^^
+Warning: modules/QuotaFace.qml:255:84: Unqualified access [unqualified]
+        Text { textFormat: Text.PlainText; renderType: Text.NativeRendering; text: root.tightest ? root.tightest.name + " " + root.shortLabel(root.tightest.label) + " " + Math.round(root.tightest.percent * 100) + "%" : ""; font.family: Style.font.family; font.pixelSize: Style.font.bodySmall; color: root.fg }
+                                                                                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:255:100: Unqualified access [unqualified]
+        Text { textFormat: Text.PlainText; renderType: Text.NativeRendering; text: root.tightest ? root.tightest.name + " " + root.shortLabel(root.tightest.label) + " " + Math.round(root.tightest.percent * 100) + "%" : ""; font.family: Style.font.family; font.pixelSize: Style.font.bodySmall; color: root.fg }
+                                                                                                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:255:127: Unqualified access [unqualified]
+        Text { textFormat: Text.PlainText; renderType: Text.NativeRendering; text: root.tightest ? root.tightest.name + " " + root.shortLabel(root.tightest.label) + " " + Math.round(root.tightest.percent * 100) + "%" : ""; font.family: Style.font.family; font.pixelSize: Style.font.bodySmall; color: root.fg }
+                                                                                                                              ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:255:143: Unqualified access [unqualified]
+        Text { textFormat: Text.PlainText; renderType: Text.NativeRendering; text: root.tightest ? root.tightest.name + " " + root.shortLabel(root.tightest.label) + " " + Math.round(root.tightest.percent * 100) + "%" : ""; font.family: Style.font.family; font.pixelSize: Style.font.bodySmall; color: root.fg }
+                                                                                                                                              ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:255:183: Unqualified access [unqualified]
+        Text { textFormat: Text.PlainText; renderType: Text.NativeRendering; text: root.tightest ? root.tightest.name + " " + root.shortLabel(root.tightest.label) + " " + Math.round(root.tightest.percent * 100) + "%" : ""; font.family: Style.font.family; font.pixelSize: Style.font.bodySmall; color: root.fg }
+                                                                                                                                                                                      ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:255:301: Unqualified access [unqualified]
+        Text { textFormat: Text.PlainText; renderType: Text.NativeRendering; text: root.tightest ? root.tightest.name + " " + root.shortLabel(root.tightest.label) + " " + Math.round(root.tightest.percent * 100) + "%" : ""; font.family: Style.font.family; font.pixelSize: Style.font.bodySmall; color: root.fg }
+                                                                                                                                                                                                                                                                                                            ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/QuotaFace.qml:255:248: Member "family" not found on type "QObject" [missing-property]
+        Text { textFormat: Text.PlainText; renderType: Text.NativeRendering; text: root.tightest ? root.tightest.name + " " + root.shortLabel(root.tightest.label) + " " + Math.round(root.tightest.percent * 100) + "%" : ""; font.family: Style.font.family; font.pixelSize: Style.font.bodySmall; color: root.fg }
+                                                                                                                                                                                                                                                       ^^^^^^
+Warning: modules/QuotaFace.qml:255:283: Member "bodySmall" not found on type "QObject" [missing-property]
+        Text { textFormat: Text.PlainText; renderType: Text.NativeRendering; text: root.tightest ? root.tightest.name + " " + root.shortLabel(root.tightest.label) + " " + Math.round(root.tightest.percent * 100) + "%" : ""; font.family: Style.font.family; font.pixelSize: Style.font.bodySmall; color: root.fg }
+                                                                                                                                                                                                                                                                                          ^^^^^^^^^
+Warning: modules/Status.qml:333:24: Member "iconSlot" not found on type "QObject" [missing-property]
+      width: Style.bar.iconSlot
+                       ^^^^^^^^
+Warning: modules/Status.qml:345:17: Unqualified access [unqualified]
+        active: root.popupGroup === modelData.id && root.popupOpen
+                ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:345:53: Unqualified access [unqualified]
+        active: root.popupGroup === modelData.id && root.popupOpen
+                                                    ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:347:20: Unqualified access [unqualified]
+        onClicked: root.openGroup(modelData.id, groupCell)
+                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:348:27: Unqualified access [unqualified]
+        onRightClicked: { root.popupAnchor = groupCell; root.openMember(modelData.members[0]) }
+                          ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:348:57: Unqualified access [unqualified]
+        onRightClicked: { root.popupAnchor = groupCell; root.openMember(modelData.members[0]) }
+                                                        ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:350:71: Member "iconSlot" not found on type "QObject" [missing-property]
+        width: modelData.id === "phone" ? Style.space(58) : Style.bar.iconSlot
+                                                                      ^^^^^^^^
+Warning: modules/Status.qml:352:40: Unqualified access [unqualified]
+          anchors.fill: parent; group: modelData.id
+                                       ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning.
+
+Suggested change:
+          anchors.fill: parent; group: groupCell.modelData.id
+                                       ^^^^^^^^^^
+Warning: modules/Status.qml:353:61: Unqualified access [unqualified]
+          textBackgrounds: Bridge.ModuleBus.textBackgrounds(root, root.fg); ink: root.fg; accent: Commons.Color.accent; urgent: Commons.Color.urgent; linkInk: Commons.Color.popups.border || root.fg
+                                                            ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:353:67: Unqualified access [unqualified]
+          textBackgrounds: Bridge.ModuleBus.textBackgrounds(root, root.fg); ink: root.fg; accent: Commons.Color.accent; urgent: Commons.Color.urgent; linkInk: Commons.Color.popups.border || root.fg
+                                                                  ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:353:82: Unqualified access [unqualified]
+          textBackgrounds: Bridge.ModuleBus.textBackgrounds(root, root.fg); ink: root.fg; accent: Commons.Color.accent; urgent: Commons.Color.urgent; linkInk: Commons.Color.popups.border || root.fg
+                                                                                 ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:353:181: Member "border" not found on type "QObject" [missing-property]
+          textBackgrounds: Bridge.ModuleBus.textBackgrounds(root, root.fg); ink: root.fg; accent: Commons.Color.accent; urgent: Commons.Color.urgent; linkInk: Commons.Color.popups.border || root.fg
+                                                                                                                                                                                    ^^^^^^
+Warning: modules/Status.qml:353:191: Unqualified access [unqualified]
+          textBackgrounds: Bridge.ModuleBus.textBackgrounds(root, root.fg); ink: root.fg; accent: Commons.Color.accent; urgent: Commons.Color.urgent; linkInk: Commons.Color.popups.border || root.fg
+                                                                                                                                                                                              ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:354:20: Unqualified access [unqualified]
+          barSize: root.barSize; wifiUp: root.wifiUp; vpnUp: root.vpnUp; tailscaleUp: root.tailscaleUp
+                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:354:42: Unqualified access [unqualified]
+          barSize: root.barSize; wifiUp: root.wifiUp; vpnUp: root.vpnUp; tailscaleUp: root.tailscaleUp
+                                         ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:354:62: Unqualified access [unqualified]
+          barSize: root.barSize; wifiUp: root.wifiUp; vpnUp: root.vpnUp; tailscaleUp: root.tailscaleUp
+                                                             ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:354:87: Unqualified access [unqualified]
+          barSize: root.barSize; wifiUp: root.wifiUp; vpnUp: root.vpnUp; tailscaleUp: root.tailscaleUp
+                                                                                      ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:355:31: Unqualified access [unqualified]
+          bluetoothConnected: root.btConnected.length > 0; phone: root.phone; cpu: root.cpu; sysHot: root.sysHot
+                              ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:355:67: Unqualified access [unqualified]
+          bluetoothConnected: root.btConnected.length > 0; phone: root.phone; cpu: root.cpu; sysHot: root.sysHot
+                                                                  ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:355:84: Unqualified access [unqualified]
+          bluetoothConnected: root.btConnected.length > 0; phone: root.phone; cpu: root.cpu; sysHot: root.sysHot
+                                                                                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:355:102: Unqualified access [unqualified]
+          bluetoothConnected: root.btConnected.length > 0; phone: root.phone; cpu: root.cpu; sysHot: root.sysHot
+                                                                                                     ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:366:22: Unqualified access [unqualified]
+        onClicked: { root.popupAnchor = devCell; root.openMember(modelData.member) }
+                     ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:366:50: Unqualified access [unqualified]
+        onClicked: { root.popupAnchor = devCell; root.openMember(modelData.member) }
+                                                 ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:368:26: Member "iconSlot" not found on type "QObject" [missing-property]
+        width: Style.bar.iconSlot
+                         ^^^^^^^^
+Warning: modules/Status.qml:370:40: Unqualified access [unqualified]
+          anchors.fill: parent; glyph: modelData.glyph || ""; chip: !!modelData.chip
+                                       ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning.
+
+Suggested change:
+          anchors.fill: parent; glyph: devCell.modelData.glyph || ""; chip: !!modelData.chip
+                                       ^^^^^^^^
+Warning: modules/Status.qml:370:71: Unqualified access [unqualified]
+          anchors.fill: parent; glyph: modelData.glyph || ""; chip: !!modelData.chip
+                                                                      ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning.
+
+Suggested change:
+          anchors.fill: parent; glyph: modelData.glyph || ""; chip: !!devCell.modelData.chip
+                                                                      ^^^^^^^^
+Warning: modules/Status.qml:371:61: Unqualified access [unqualified]
+          textBackgrounds: Bridge.ModuleBus.textBackgrounds(root, root.fg); ink: root.fg; glyphInk: modelData.color; urgent: Commons.Color.urgent
+                                                            ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:371:67: Unqualified access [unqualified]
+          textBackgrounds: Bridge.ModuleBus.textBackgrounds(root, root.fg); ink: root.fg; glyphInk: modelData.color; urgent: Commons.Color.urgent
+                                                                  ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:371:82: Unqualified access [unqualified]
+          textBackgrounds: Bridge.ModuleBus.textBackgrounds(root, root.fg); ink: root.fg; glyphInk: modelData.color; urgent: Commons.Color.urgent
+                                                                                 ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:371:101: Unqualified access [unqualified]
+          textBackgrounds: Bridge.ModuleBus.textBackgrounds(root, root.fg); ink: root.fg; glyphInk: modelData.color; urgent: Commons.Color.urgent
+                                                                                                    ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning.
+
+Suggested change:
+          textBackgrounds: Bridge.ModuleBus.textBackgrounds(root, root.fg); ink: root.fg; glyphInk: devCell.modelData.color; urgent: Commons.Color.urgent
+                                                                                                    ^^^^^^^^
+Warning: modules/Status.qml:372:20: Unqualified access [unqualified]
+          barSize: root.barSize; cpu: root.cpu; sysHot: root.sysHot
+                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:372:39: Unqualified access [unqualified]
+          barSize: root.barSize; cpu: root.cpu; sysHot: root.sysHot
+                                      ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:372:57: Unqualified access [unqualified]
+          barSize: root.barSize; cpu: root.cpu; sysHot: root.sysHot
+                                                        ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:383:24: Member "iconSlot" not found on type "QObject" [missing-property]
+      width: Style.bar.iconSlot
+                       ^^^^^^^^
+Warning: modules/Status.qml:391:10: Unqualified access [unqualified]
+    bar: root.bar
+         ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:400:34: Unqualified access [unqualified]
+    onActiveChanged: if (active) cellEdges.target = cell; else cellEdges.release(cell, function() { return cell.active })
+                                 ^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:400:64: Unqualified access [unqualified]
+    onActiveChanged: if (active) cellEdges.target = cell; else cellEdges.release(cell, function() { return cell.active })
+                                                               ^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:402:13: Unqualified access [unqualified]
+    height: root.barSize
+            ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:401:40: Unqualified access [unqualified]
+    Component.onCompleted: if (active) cellEdges.target = cell
+                                       ^^^^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:405:15: Unqualified access [unqualified]
+      radius: root.cellRadius
+              ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:406:65: Unqualified access [unqualified]
+      color: !cell.active && hover.hovered ? Style.hoverFillFor(root.fg, Commons.Color.accent, Commons.Color.urgent) : "transparent"
+                                                                ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:452:28: Member "popupPadding" not found on type "QObject" [missing-property]
+    padding: Style.spacing.popupPadding
+                           ^^^^^^^^^^^^
+Warning: modules/Status.qml:455:46: Id for object Column shadows property "content". Rename one or the other. [id-shadows-member]
+    contentHeight: popup.fittedContentHeight(content.implicitHeight)
+                                             ^^^^^^^
+Warning: modules/Status.qml:467:13: Note: Id defined here [id-shadows-member]
+        id: content
+            ^^^^^^^
+Warning: modules/Status.qml:497:39: Member "text" not found on type "QObject" [missing-property]
+          color: Commons.Color.popups.text
+                                      ^^^^
+Warning: modules/Status.qml:496:35: Member "family" not found on type "QObject" [missing-property]
+          font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.title
+                                  ^^^^^^
+Warning: modules/Status.qml:496:87: Member "title" not found on type "QObject" [missing-property]
+          font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.title
+                                                                                      ^^^^^
+Warning: modules/Status.qml:505:20: Unqualified access [unqualified]
+            width: content.width; height: Style.space(40)
+                   ^^^^^^^
+Info: content is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+            width: <id>.content.width; height: Style.space(40)
+                   ^^^^^
+Warning: modules/Status.qml:507:79: Unqualified access [unqualified]
+            radius: GlassMath.concentric(Style, GlassMath.popupRadius(Style), popup.padding + 1)
+                                                                              ^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:508:79: Member "text" not found on type "QObject" [missing-property]
+            color: rowHover.hovered ? Style.hoverFillFor(Commons.Color.popups.text, Commons.Color.accent, Commons.Color.urgent) : "transparent"
+                                                                              ^^^^
+Warning: modules/Status.qml:512:161: Unqualified access [unqualified]
+              Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter; width: Style.space(20); text: root.catalogue[modelData].glyph; font.family: Style.font.family; font.pixelSize: Style.font.icon + (Style.fontPixelGrid ? 0 : 2); color: root.memberAlert(modelData) ? Commons.Color.urgent : Commons.Color.popups.text }
+                                                                                                                                                                ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:512:176: Unqualified access [unqualified]
+              Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter; width: Style.space(20); text: root.catalogue[modelData].glyph; font.family: Style.font.family; font.pixelSize: Style.font.icon + (Style.fontPixelGrid ? 0 : 2); color: root.memberAlert(modelData) ? Commons.Color.urgent : Commons.Color.popups.text }
+                                                                                                                                                                               ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+              Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter; width: Style.space(20); text: root.catalogue[<id>.modelData].glyph; font.family: Style.font.family; font.pixelSize: Style.font.icon + (Style.fontPixelGrid ? 0 : 2); color: root.memberAlert(modelData) ? Commons.Color.urgent : Commons.Color.popups.text }
+                                                                                                                                                                               ^^^^^
+Warning: modules/Status.qml:512:298: Unqualified access [unqualified]
+              Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter; width: Style.space(20); text: root.catalogue[modelData].glyph; font.family: Style.font.family; font.pixelSize: Style.font.icon + (Style.fontPixelGrid ? 0 : 2); color: root.memberAlert(modelData) ? Commons.Color.urgent : Commons.Color.popups.text }
+                                                                                                                                                                                                                                                                                                         ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:512:315: Unqualified access [unqualified]
+              Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter; width: Style.space(20); text: root.catalogue[modelData].glyph; font.family: Style.font.family; font.pixelSize: Style.font.icon + (Style.fontPixelGrid ? 0 : 2); color: root.memberAlert(modelData) ? Commons.Color.urgent : Commons.Color.popups.text }
+                                                                                                                                                                                                                                                                                                                          ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+              Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter; width: Style.space(20); text: root.catalogue[modelData].glyph; font.family: Style.font.family; font.pixelSize: Style.font.icon + (Style.fontPixelGrid ? 0 : 2); color: root.memberAlert(<id>.modelData) ? Commons.Color.urgent : Commons.Color.popups.text }
+                                                                                                                                                                                                                                                                                                                          ^^^^^
+Warning: modules/Status.qml:512:372: Member "text" not found on type "QObject" [missing-property]
+              Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter; width: Style.space(20); text: root.catalogue[modelData].glyph; font.family: Style.font.family; font.pixelSize: Style.font.icon + (Style.fontPixelGrid ? 0 : 2); color: root.memberAlert(modelData) ? Commons.Color.urgent : Commons.Color.popups.text }
+                                                                                                                                                                                                                                                                                                                                                                                   ^^^^
+Warning: modules/Status.qml:512:218: Member "family" not found on type "QObject" [missing-property]
+              Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter; width: Style.space(20); text: root.catalogue[modelData].glyph; font.family: Style.font.family; font.pixelSize: Style.font.icon + (Style.fontPixelGrid ? 0 : 2); color: root.memberAlert(modelData) ? Commons.Color.urgent : Commons.Color.popups.text }
+                                                                                                                                                                                                                         ^^^^^^
+Warning: modules/Status.qml:512:253: Member "icon" not found on type "QObject" [missing-property]
+              Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter; width: Style.space(20); text: root.catalogue[modelData].glyph; font.family: Style.font.family; font.pixelSize: Style.font.icon + (Style.fontPixelGrid ? 0 : 2); color: root.memberAlert(modelData) ? Commons.Color.urgent : Commons.Color.popups.text }
+                                                                                                                                                                                                                                                            ^^^^
+Warning: modules/Status.qml:515:92: Unqualified access [unqualified]
+                Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; text: root.catalogue[modelData].name; font.family: Style.font.family; font.pixelSize: Style.font.body; color: Commons.Color.popups.text }
+                                                                                           ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:515:107: Unqualified access [unqualified]
+                Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; text: root.catalogue[modelData].name; font.family: Style.font.family; font.pixelSize: Style.font.body; color: Commons.Color.popups.text }
+                                                                                                          ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+                Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; text: root.catalogue[<id>.modelData].name; font.family: Style.font.family; font.pixelSize: Style.font.body; color: Commons.Color.popups.text }
+                                                                                                          ^^^^^
+Warning: modules/Status.qml:515:217: Member "text" not found on type "QObject" [missing-property]
+                Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; text: root.catalogue[modelData].name; font.family: Style.font.family; font.pixelSize: Style.font.body; color: Commons.Color.popups.text }
+                                                                                                                                                                                                                        ^^^^
+Warning: modules/Status.qml:515:148: Member "family" not found on type "QObject" [missing-property]
+                Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; text: root.catalogue[modelData].name; font.family: Style.font.family; font.pixelSize: Style.font.body; color: Commons.Color.popups.text }
+                                                                                                                                                   ^^^^^^
+Warning: modules/Status.qml:515:183: Member "body" not found on type "QObject" [missing-property]
+                Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; text: root.catalogue[modelData].name; font.family: Style.font.family; font.pixelSize: Style.font.body; color: Commons.Color.popups.text }
+                                                                                                                                                                                      ^^^^
+Warning: modules/Status.qml:516:114: Unqualified access [unqualified]
+                Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; visible: text !== ""; text: root.memberState(modelData); font.family: Style.font.family; font.pixelSize: Style.font.caption; color: root.memberAlert(modelData) ? Commons.Color.urgent : Util.alpha(Commons.Color.popups.text, 0.6) }
+                                                                                                                 ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:516:131: Unqualified access [unqualified]
+                Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; visible: text !== ""; text: root.memberState(modelData); font.family: Style.font.family; font.pixelSize: Style.font.caption; color: root.memberAlert(modelData) ? Commons.Color.urgent : Util.alpha(Commons.Color.popups.text, 0.6) }
+                                                                                                                                  ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+                Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; visible: text !== ""; text: root.memberState(<id>.modelData); font.family: Style.font.family; font.pixelSize: Style.font.caption; color: root.memberAlert(modelData) ? Commons.Color.urgent : Util.alpha(Commons.Color.popups.text, 0.6) }
+                                                                                                                                  ^^^^^
+Warning: modules/Status.qml:516:218: Unqualified access [unqualified]
+                Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; visible: text !== ""; text: root.memberState(modelData); font.family: Style.font.family; font.pixelSize: Style.font.caption; color: root.memberAlert(modelData) ? Commons.Color.urgent : Util.alpha(Commons.Color.popups.text, 0.6) }
+                                                                                                                                                                                                                         ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Status.qml:516:235: Unqualified access [unqualified]
+                Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; visible: text !== ""; text: root.memberState(modelData); font.family: Style.font.family; font.pixelSize: Style.font.caption; color: root.memberAlert(modelData) ? Commons.Color.urgent : Util.alpha(Commons.Color.popups.text, 0.6) }
+                                                                                                                                                                                                                                          ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+                Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; visible: text !== ""; text: root.memberState(modelData); font.family: Style.font.family; font.pixelSize: Style.font.caption; color: root.memberAlert(<id>.modelData) ? Commons.Color.urgent : Util.alpha(Commons.Color.popups.text, 0.6) }
+                                                                                                                                                                                                                                          ^^^^^
+Warning: modules/Status.qml:516:303: Member "text" not found on type "QObject" [missing-property]
+                Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; visible: text !== ""; text: root.memberState(modelData); font.family: Style.font.family; font.pixelSize: Style.font.caption; color: root.memberAlert(modelData) ? Commons.Color.urgent : Util.alpha(Commons.Color.popups.text, 0.6) }
+                                                                                                                                                                                                                                                                                                              ^^^^
+Warning: modules/Status.qml:516:167: Member "family" not found on type "QObject" [missing-property]
+                Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; visible: text !== ""; text: root.memberState(modelData); font.family: Style.font.family; font.pixelSize: Style.font.caption; color: root.memberAlert(modelData) ? Commons.Color.urgent : Util.alpha(Commons.Color.popups.text, 0.6) }
+                                                                                                                                                                      ^^^^^^
+Warning: modules/Status.qml:516:202: Member "caption" not found on type "QObject" [missing-property]
+                Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; visible: text !== ""; text: root.memberState(modelData); font.family: Style.font.family; font.pixelSize: Style.font.caption; color: root.memberAlert(modelData) ? Commons.Color.urgent : Util.alpha(Commons.Color.popups.text, 0.6) }
+                                                                                                                                                                                                         ^^^^^^^
+Warning: modules/Status.qml:519:312: Member "text" not found on type "QObject" [missing-property]
+            Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; anchors.right: parent.right; anchors.rightMargin: Style.space(10); anchors.verticalCenter: parent.verticalCenter; text: "›"; font.family: Style.font.family; font.pixelSize: Style.font.title; color: Util.alpha(Commons.Color.popups.text, 0.5) }
+                                                                                                                                                                                                                                                                                                                       ^^^^
+Warning: modules/Status.qml:519:231: Member "family" not found on type "QObject" [missing-property]
+            Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; anchors.right: parent.right; anchors.rightMargin: Style.space(10); anchors.verticalCenter: parent.verticalCenter; text: "›"; font.family: Style.font.family; font.pixelSize: Style.font.title; color: Util.alpha(Commons.Color.popups.text, 0.5) }
+                                                                                                                                                                                                                                      ^^^^^^
+Warning: modules/Status.qml:519:266: Member "title" not found on type "QObject" [missing-property]
+            Text { renderType: Text.NativeRendering; textFormat: Text.PlainText; anchors.right: parent.right; anchors.rightMargin: Style.space(10); anchors.verticalCenter: parent.verticalCenter; text: "›"; font.family: Style.font.family; font.pixelSize: Style.font.title; color: Util.alpha(Commons.Color.popups.text, 0.5) }
+                                                                                                                                                                                                                                                                         ^^^^^
+Warning: modules/Status.qml:521:94: Unqualified access [unqualified]
+            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.openMember(parent.modelData) }
+                                                                                             ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/StatusFace.qml:40:12: Unqualified access [unqualified]
+    color: root.ink
+           ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/StatusFace.qml:38:29: Member "family" not found on type "QObject" [missing-property]
+    font.family: Style.font.family
+                            ^^^^^^
+Warning: modules/StatusFace.qml:39:32: Member "icon" not found on type "QObject" [missing-property]
+    font.pixelSize: Style.font.icon + (Style.fontPixelGrid ? 0 : 2)
+                               ^^^^
+Warning: modules/StatusFace.qml:69:31: Member "family" not found on type "QObject" [missing-property]
+      font.family: Style.font.family
+                              ^^^^^^
+Warning: modules/StatusFace.qml:70:34: Member "bodySmall" not found on type "QObject" [missing-property]
+      font.pixelSize: Style.font.bodySmall
+                                 ^^^^^^^^^
+Warning: modules/StatusFace.qml:82:65: Member "icon" not found on type "QObject" [missing-property]
+    readonly property int u: Math.max(1, Math.round((Style.font.icon + 2) / 18))
+                                                                ^^^^
+Warning: modules/StatusFace.qml:83:34: Unqualified access [unqualified]
+    readonly property color ink: root.ink
+                                 ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/StatusFace.qml:84:38: Unqualified access [unqualified]
+    readonly property color fillInk: root.sysHot ? root.urgent : root.ink
+                                     ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/StatusFace.qml:84:52: Unqualified access [unqualified]
+    readonly property color fillInk: root.sysHot ? root.urgent : root.ink
+                                                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/StatusFace.qml:84:66: Unqualified access [unqualified]
+    readonly property color fillInk: root.sysHot ? root.urgent : root.ink
+                                                                 ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/StatusFace.qml:92:16: Unqualified access [unqualified]
+        color: chip.ink
+               ^^^^
+Info: chip is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+        color: <id>.chip.ink
+               ^^^^^
+Warning: modules/StatusFace.qml:94:37: Unqualified access [unqualified]
+        width: (side < 2 ? 2 : 1) * chip.u; height: (side < 2 ? 1 : 2) * chip.u
+                                    ^^^^
+Info: chip is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+        width: (side < 2 ? 2 : 1) * <id>.chip.u; height: (side < 2 ? 1 : 2) * chip.u
+                                    ^^^^^
+Warning: modules/StatusFace.qml:94:74: Unqualified access [unqualified]
+        width: (side < 2 ? 2 : 1) * chip.u; height: (side < 2 ? 1 : 2) * chip.u
+                                                                         ^^^^
+Info: chip is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+        width: (side < 2 ? 2 : 1) * chip.u; height: (side < 2 ? 1 : 2) * <id>.chip.u
+                                                                         ^^^^^
+Warning: modules/StatusFace.qml:95:61: Unqualified access [unqualified]
+        x: (side === 0 ? 0 : side === 1 ? 14 : 4 + k * 3) * chip.u
+                                                            ^^^^
+Info: chip is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+        x: (side === 0 ? 0 : side === 1 ? 14 : 4 + k * 3) * <id>.chip.u
+                                                            ^^^^^
+Warning: modules/StatusFace.qml:96:61: Unqualified access [unqualified]
+        y: (side === 2 ? 0 : side === 3 ? 14 : 4 + k * 3) * chip.u
+                                                            ^^^^
+Info: chip is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+        y: (side === 2 ? 0 : side === 3 ? 14 : 4 + k * 3) * <id>.chip.u
+                                                            ^^^^^
+Warning: modules/StatusFace.qml:103:37: Unqualified access [unqualified]
+        readonly property int rows: root.chipLevel(chip.level)
+                                    ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/WorkspacePopout.qml:560:21: Unqualified access [unqualified]
+                    popout.windowPicked(tile.wsId, bestAddr)
+                    ^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/WorkspacePopout.qml:564:17: Unqualified access [unqualified]
+                popout.workspacePicked(tile.wsId)
+                ^^^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: modules/Workspaces.qml:354:93: Member "searchMode" not found on type QQuickLoader::item with type QObject [missing-property]
+  function toggleDrop() { if (dropOpen) { close(); return } var m = dropLoader.item; if (m) m.searchMode = false; open() }
+                                                                                            ^
+Warning: modules/Workspaces.qml:361:5: Member "searchMode" not found on type QQuickLoader::item with type QObject [missing-property]
+    m.searchMode = true
+    ^
+Warning: modules/Workspaces.qml:412:73: Member "tracks" not found on type "QObject" [missing-property]
+  function dropTracks(token) { var m = dropLoader.item; return !!m && m.tracks(token) }
+                                                                        ^^^^^^
+Warning: modules/Workspaces.qml:415:36: Member "takeRequest" not found on type "QObject" [missing-property]
+    if (!dropAvailable || !m || !m.takeRequest(request)) return false
+                                   ^^^^^^^^^^^
+Warning: modules/Workspaces.qml:416:11: Member "hasPending" not found on type "QObject" [missing-property]
+    if (m.hasPending()) open()
+          ^^^^^^^^^^
+Warning: modules/Workspaces.qml:421:30: Member "requests" not found on type "QObject" [missing-property]
+    return m ? { requests: m.requests.length, launches: m.launches.length } : null
+                             ^^^^^^^^
+Warning: modules/Workspaces.qml:421:59: Member "launches" not found on type "QObject" [missing-property]
+    return m ? { requests: m.requests.length, launches: m.launches.length } : null
+                                                          ^^^^^^^^
+Warning: modules/Workspaces.qml:442:31: Member "family" not found on type "QObject" [missing-property]
+      font.family: Style.font.family
+                              ^^^^^^
+Warning: modules/Workspaces.qml:443:34: Member "caption" not found on type "QObject" [missing-property]
+      font.pixelSize: Style.font.caption
+                                 ^^^^^^^
+Warning: modules/Workspaces.qml:464:31: Member "family" not found on type "QObject" [missing-property]
+      font.family: Style.font.family
+                              ^^^^^^
+Warning: modules/Workspaces.qml:465:34: Member "caption" not found on type "QObject" [missing-property]
+      font.pixelSize: Style.font.caption
+                                 ^^^^^^^
+Warning: modules/Workspaces.qml:483:106: Member "cardPresence" not found on type "QObject" [missing-property]
+    readonly property bool inverted: !!source && (root.dropOpen || (!!dropLoader.item && dropLoader.item.cardPresence > 0.01))
+                                                                                                         ^^^^^^^^^^^^
+Warning: modules/Workspaces.qml:544:34: Member "icon" not found on type "QObject" [missing-property]
+      font.pixelSize: Style.font.icon + (Style.fontPixelGrid ? 0 : 2)
+                                 ^^^^
+Warning: modules/Workspaces.qml:626:33: Member "family" not found on type "QObject" [missing-property]
+        font.family: Style.font.family; font.bold: true
+                                ^^^^^^
+Warning: modules/Workspaces.qml:627:36: Member "body" not found on type "QObject" [missing-property]
+        font.pixelSize: Style.font.body + 1
+                                   ^^^^
+Warning: modules/WorkspacesFace.qml:65:84: Member "childHovered" not found on type "QObject" [missing-property]
+  readonly property bool hovered: faceHover.hovered || (loader.item && loader.item.childHovered === true)
+                                                                                   ^^^^^^^^^^^^
+Warning: modules/WorkspacesFace.qml:91:44: Member "implicitWidth" not found on type "QObject" [missing-property]
+  implicitWidth: loader.item ? loader.item.implicitWidth : 0
+                                           ^^^^^^^^^^^^^
+Warning: modules/WorkspacesFace.qml:155:30: Unqualified access [unqualified]
+            text: root.label(modelData)
+                             ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+            text: root.label(<id>.modelData)
+                             ^^^^^
+Warning: modules/WorkspacesFace.qml:156:37: Member "family" not found on type "QObject" [missing-property]
+            font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.bodySmall
+                                    ^^^^^^
+Warning: modules/WorkspacesFace.qml:156:89: Member "bodySmall" not found on type "QObject" [missing-property]
+            font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.bodySmall
+                                                                                        ^^^^^^^^^
+Warning: modules/WorkspacesFace.qml:178:35: Member "family" not found on type "QObject" [missing-property]
+          font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.bodySmall
+                                  ^^^^^^
+Warning: modules/WorkspacesFace.qml:178:87: Member "bodySmall" not found on type "QObject" [missing-property]
+          font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.bodySmall
+                                                                                      ^^^^^^^^^
+Warning: modules/WorkspacesFace.qml:222:37: Member "family" not found on type "QObject" [missing-property]
+            font.family: Style.font.family
+                                    ^^^^^^
+Warning: modules/WorkspacesFace.qml:223:40: Member "body" not found on type "QObject" [missing-property]
+            font.pixelSize: Style.font.body
+                                       ^^^^
+Warning: modules/WorkspacesFace.qml:245:43: Member "others" not found on type "Repeater" [missing-property]
+          readonly property int n: parent.others.length - index
+                                          ^^^^^^
+Warning: modules/WorkspacesFace.qml:247:37: Member "box" not found on type "Repeater" [missing-property]
+          y: (root.barSize - parent.box) / 2 - n * Style.space(2) + Style.space(2)
+                                    ^^^
+Info: Did you mean "top"?
+Suggested change:
+          y: (root.barSize - parent.top) / 2 - n * Style.space(2) + Style.space(2)
+                                    ^^^
+Warning: modules/WorkspacesFace.qml:248:25: Member "box" not found on type "Repeater" [missing-property]
+          width: parent.box; height: parent.box
+                        ^^^
+Info: Did you mean "top"?
+Suggested change:
+          width: parent.top; height: parent.box
+                        ^^^
+Warning: modules/WorkspacesFace.qml:248:45: Member "box" not found on type "Repeater" [missing-property]
+          width: parent.box; height: parent.box
+                                            ^^^
+Info: Did you mean "top"?
+Suggested change:
+          width: parent.box; height: parent.top
+                                            ^^^
+Warning: modules/WorkspacesFace.qml:251:44: Member "others" not found on type "Repeater" [missing-property]
+          border.color: root.urgent(parent.others[n - 1]) ? root.urgentColor : root.dim
+                                           ^^^^^^
+Warning: modules/WorkspacesFace.qml:261:131: Member "family" not found on type "QObject" [missing-property]
+        Text { renderType: Text.NativeRendering; anchors.centerIn: parent; text: root.label(root.active); font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.body; color: root.strong }
+                                                                                                                                  ^^^^^^
+Warning: modules/WorkspacesFace.qml:261:183: Member "body" not found on type "QObject" [missing-property]
+        Text { renderType: Text.NativeRendering; anchors.centerIn: parent; text: root.label(root.active); font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.body; color: root.strong }
+                                                                                                                                                                                      ^^^^
+Warning: modules/WorkspacesFace.qml:291:30: Member "dot" not found on type "Repeater" [missing-property]
+          x: index * (parent.dot + Style.space(2))
+                             ^^^
+Info: Did you mean "data"?
+Suggested change:
+          x: index * (parent.data + Style.space(2))
+                             ^^^^
+Warning: modules/WorkspacesFace.qml:293:25: Member "dot" not found on type "Repeater" [missing-property]
+          width: parent.dot; height: parent.dot
+                        ^^^
+Info: Did you mean "data"?
+Suggested change:
+          width: parent.data; height: parent.dot
+                        ^^^^
+Warning: modules/WorkspacesFace.qml:293:45: Member "dot" not found on type "Repeater" [missing-property]
+          width: parent.dot; height: parent.dot
+                                            ^^^
+Info: Did you mean "data"?
+Suggested change:
+          width: parent.dot; height: parent.data
+                                            ^^^^
+Warning: modules/WorkspacesFace.qml:340:37: Member "family" not found on type "QObject" [missing-property]
+            font.family: Style.font.family
+                                    ^^^^^^
+Warning: modules/WorkspacesFace.qml:341:40: Member "bodySmall" not found on type "QObject" [missing-property]
+            font.pixelSize: Style.font.bodySmall
+                                       ^^^^^^^^^

@@ -1,0 +1,11 @@
+{
+  "root": "/tmp/strand-f-lx3df76z",
+  "removed": true,
+  "pids": [
+    3200457,
+    3201800,
+    3201862,
+    3212571
+  ],
+  "reaped": true
+}

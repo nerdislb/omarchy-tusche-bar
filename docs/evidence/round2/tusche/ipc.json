@@ -1,0 +1,17 @@
+[
+  [
+    "channels",
+    "off",
+    "ok"
+  ],
+  [
+    "channels",
+    "on",
+    "ok"
+  ],
+  [
+    "channelNames",
+    "MAIN,BUILD,WEB,CHAT,MEDIA,STUDIO,NOTES,PLAY,AUX,NIGHT",
+    "ok"
+  ]
+]

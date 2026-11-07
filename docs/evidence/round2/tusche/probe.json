@@ -1,0 +1,91 @@
+{
+  "workspace": {
+    "ids": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "occupiedIds": [
+      2
+    ],
+    "active": 2,
+    "channel": "02 BUILD",
+    "channelWidth": 65,
+    "channels": true,
+    "windowCounts": {
+      "2": 0
+    },
+    "urgentIds": [],
+    "geometry": {
+      "2": {
+        "available": true,
+        "rectangles": [],
+        "offscreen": {
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "bottom": 0,
+          "total": 0
+        },
+        "aspect": 1.8285714285714285,
+        "monitor": "HEADLESS-1"
+      }
+    },
+    "workspaceLabels": {
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5"
+    }
+  },
+  "popout": null,
+  "texts": [
+    {
+      "text": "02 BUILD",
+      "color": "#1a1715"
+    },
+    {
+      "text": "scrolling",
+      "color": "#a71a1715"
+    },
+    {
+      "text": "\ue900",
+      "color": "#1a1715"
+    },
+    {
+      "text": "2",
+      "color": "#b8321f"
+    },
+    {
+      "text": "1",
+      "color": "#1a1715"
+    },
+    {
+      "text": "2",
+      "color": "#1a1715"
+    },
+    {
+      "text": "3",
+      "color": "#1a1715"
+    },
+    {
+      "text": "4",
+      "color": "#1a1715"
+    },
+    {
+      "text": "5",
+      "color": "#1a1715"
+    },
+    {
+      "text": "2",
+      "color": "#f3eee3"
+    },
+    {
+      "text": "X 67.5k cr",
+      "color": "#a71a1715"
+    }
+  ]
+}
