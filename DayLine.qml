@@ -22,8 +22,8 @@ Scope {
       && (root.bar.position === "top" || root.bar.position === "bottom")
     color: "transparent"; surfaceFormat.opaque: false
     anchors { left: true; right: true; top: line.top; bottom: !line.top }
-    margins.top: top ? Math.max(0, barSize - implicitHeight) : 0
-    margins.bottom: top ? 0 : Math.max(0, barSize - implicitHeight)
+    margins.top: 0
+    margins.bottom: 0
     implicitHeight: Math.max(2, Math.ceil(2 / scale))
     exclusionMode: ExclusionMode.Ignore
     mask: Region {}
@@ -33,11 +33,32 @@ Scope {
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     ScreenMoveRemap { id: remap; window: line }
-    Rectangle {
-      y: line.top ? parent.height - height : 0
+    // Light of the day: the gradient spans 24 h across the full width and the
+    // clip reveals it up to now, so the line's colour at any point is the
+    // colour of the sky at that time (night grey, dawn blue, red, midday
+    // yellow, evening orange, night grey).
+    Item {
+      y: line.top ? 0 : parent.height - height
       height: 1 / line.scale
       width: Math.floor(parent.width * (clock.date.getHours() * 60 + clock.date.getMinutes()) / 1440 * line.scale) / line.scale
-      color: Commons.Color.accent; opacity: 0.65
+      clip: true
+      opacity: 0.8
+      Rectangle {
+        height: parent.height
+        width: line.width
+        gradient: Gradient {
+          orientation: Gradient.Horizontal
+          GradientStop { position: 0.00; color: "#2b2b33" }
+          GradientStop { position: 0.17; color: "#3b4a7a" }
+          GradientStop { position: 0.23; color: "#6f9bff" }
+          GradientStop { position: 0.31; color: "#ff6b7d" }
+          GradientStop { position: 0.45; color: "#ffd68f" }
+          GradientStop { position: 0.58; color: "#ffe27a" }
+          GradientStop { position: 0.75; color: "#ffb27a" }
+          GradientStop { position: 0.87; color: "#6a4a4a" }
+          GradientStop { position: 1.00; color: "#2b2b33" }
+        }
+      }
     }
   }
 }
