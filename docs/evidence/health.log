@@ -1,0 +1,11 @@
+PASS: every existing check is still reported, and the new ones come with them
+PASS: the notification safety net says armed, suspicious or handed back
+PASS: a stale loaded generation is an issue; equal or unknown is not
+PASS: generation names are read strictly from the code directory and installed-generation.json
+PASS: Hyprland data: native is fine, the snapshot is expected here, nothing at all is an issue
+PASS: focus mode: visible, hidden by you, parked by focus mode, and a broken record
+PASS: focus-mode.py status output is parsed strictly
+PASS: menu model: identical, drifted and not comparable
+PASS: the centre anchor must be a centre widget; a renamed island is recognised and named
+PASS: the new probes only read: a status call, a byte comparison and a file print
+10 health checks passed

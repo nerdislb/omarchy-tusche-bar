@@ -1,0 +1,14 @@
+PASS: off, reduced motion, a busy face and an active user all stay still
+PASS: the first glance comes soon after the idle report, and he looks ahead again after it
+PASS: before the fidgets begin there are only glances, after it the whole repertoire
+PASS: one yawn at 150 s, sleep at 300 s of absence, and then nothing until he is woken
+PASS: a glance still pending when he yawns or falls asleep is put right first
+PASS: while an agent works he still glances and fidgets, but neither yawns nor sleeps
+PASS: gentle is slower than lively: later, rarer
+PASS: the small hours bring yawn and sleep forward by half
+PASS: never the same fidget twice in a row, and none while another is still playing
+PASS: a pack without a mode never gets it asked for
+PASS: the first sign of you wakes him: with a start from sleep, quietly from a fidget
+PASS: anything else to say wakes him without a start and he starts over afterwards
+PASS: the model is not mutated and survives odd input
+13 idle director checks passed

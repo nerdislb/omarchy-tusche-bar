@@ -1,0 +1,1 @@
+PASS: all presets preserve six sections, future sections and metadata; native additions and folded settings round-trip; recovery and island discovery

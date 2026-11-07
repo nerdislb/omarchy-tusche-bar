@@ -1,0 +1,14 @@
+PASS: only "ok" and "nomarker" are answers; everything else counts as silence
+PASS: without the island's marker nothing is ever counted or handed back
+PASS: an answer clears the count and records when the island last spoke
+PASS: the service goes back exactly at the third silent answer
+PASS: a single silent answer between good ones never hands anything back
+PASS: after a hand-back the pause holds, then the next silent answer retries
+PASS: handedBack counts a real hand-back and leaves its input alone
+PASS: the look is quick only while a silence is being confirmed
+PASS: a takeover is the island's only when the service is disabled and the marker is there
+PASS: Health text tells armed, suspicious and handed-back apart
+PASS: the QML passes the marker as an argument, limits the ping and uses the island's own two-step hand-back
+PASS: the real probe and hand-back scripts, run against fake omarchy programs, behave as promised
+PASS: the engine arms it only while Omarchy's notification service is disabled
+13 watchdog checks passed

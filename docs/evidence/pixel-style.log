@@ -1,0 +1,8 @@
+../home/nerdi/Data/Development/projects/tusche-bar-looks-20261107/tests/pixel_style.py:310: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/pixel-style-6x9iumx3/home/.local/state/tusche-bar/pixel-backgrounds/abendrot-grid-40b673f9e1.png'>
+  self.assertEqual(Image.open(out['background']).size, (2560, 1600))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+........
+----------------------------------------------------------------------
+Ran 10 tests in 22.560s
+
+OK

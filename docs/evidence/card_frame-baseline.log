@@ -1,0 +1,33 @@
+Exit: 1
+  INFO: Launching config: "/tmp/card-frame-e9_nin0v/test.qml"
+  INFO: Shell ID: "c73f5daf64a4f69f247184f118a65cd2" Path ID "c73f5daf64a4f69f247184f118a65cd2"
+  INFO: Saving logs to "/tmp/codex-B-shell-bar-run/quickshell/by-id/kair13mc5ot/log.qslog"
+  WARN quickshell.qmlscanner: Ignoring unresolvable import "/tmp/card-frame-e9_nin0v/bridge" from "/tmp/card-frame-e9_nin0v/BarMaterialCard.qml"
+  WARN quickshell.qmlscanner: Ignoring unresolvable import "/tmp/card-frame-e9_nin0v/bridge" from "/tmp/card-frame-e9_nin0v/GlassBackdrop.qml"
+  WARN quickshell.qmlscanner: Ignoring unresolvable import "/tmp/card-frame-e9_nin0v/bridge" from "/tmp/card-frame-e9_nin0v/GlassSurface.qml"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  WARN scene: @BarMaterialCard.qml[12:3]: Unable to assign [undefined] to bool
+  INFO: Configuration Loaded
+  WARN: This plugin does not support setting window masks
+  WARN quickshell.hyprland.ipc: Error making request: QLocalSocket::ServerNotFoundError request: "j/monitors"
+ DEBUG qml: PASS real Qt: Papier/Tusche persistent four-sided 2 px frame, reopen, null restoration, metal, Lavur, Frost/Smoke, Reduced Motion
+Traceback (most recent call last):
+  File "/home/nerdi/Data/Development/projects/tusche-bar-looks-20261107/docs/evidence/B-bar-baseline-qixe5n70/tests/card_frame.py", line 152, in <module>
+    run()
+    ~~~^^
+  File "/home/nerdi/Data/Development/projects/tusche-bar-looks-20261107/docs/evidence/B-bar-baseline-qixe5n70/tests/card_frame.py", line 148, in run
+    assert not any(error in result.stdout for error in ("ReferenceError:", "TypeError:", "Unable to assign", "Binding loop", "is not a type")), result.stdout
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError:   INFO: Launching config: "/tmp/card-frame-e9_nin0v/test.qml"
+  INFO: Shell ID: "c73f5daf64a4f69f247184f118a65cd2" Path ID "c73f5daf64a4f69f247184f118a65cd2"
+  INFO: Saving logs to "/tmp/codex-B-shell-bar-run/quickshell/by-id/kair13mc5ot/log.qslog"
+  WARN quickshell.qmlscanner: Ignoring unresolvable import "/tmp/card-frame-e9_nin0v/bridge" from "/tmp/card-frame-e9_nin0v/BarMaterialCard.qml"
+  WARN quickshell.qmlscanner: Ignoring unresolvable import "/tmp/card-frame-e9_nin0v/bridge" from "/tmp/card-frame-e9_nin0v/GlassBackdrop.qml"
+  WARN quickshell.qmlscanner: Ignoring unresolvable import "/tmp/card-frame-e9_nin0v/bridge" from "/tmp/card-frame-e9_nin0v/GlassSurface.qml"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  WARN scene: @BarMaterialCard.qml[12:3]: Unable to assign [undefined] to bool
+  INFO: Configuration Loaded
+  WARN: This plugin does not support setting window masks
+  WARN quickshell.hyprland.ipc: Error making request: QLocalSocket::ServerNotFoundError request: "j/monitors"
+ DEBUG qml: PASS real Qt: Papier/Tusche persistent four-sided 2 px frame, reopen, null restoration, metal, Lavur, Frost/Smoke, Reduced Motion
+

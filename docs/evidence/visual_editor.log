@@ -1,0 +1,6 @@
+PASS hover is an isolated normalized copy and does not mutate staged options
+PASS unknown, nonvisual and invalid variant hovers cannot alter options
+PASS preset differences keep every look option and report only actual changes
+PASS quiet preview never changes live material or theme timing
+PASS all visual parts and their legal values are accepted without inventing options
+5 visual editor model checks passed

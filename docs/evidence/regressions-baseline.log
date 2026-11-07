@@ -1,0 +1,375 @@
+Exit: 1
+PASS: bar-only variant B wiring and special-theme isolation
+PASS: presets, native-widget preservation, embedded settings round-trip, startup alarms, shell quoting, focused-output routing
+PASS: stationary/recreated hover ignored; physical pointer motion accepted
+PASS: legacy preset ids (k1 → tidy, no k2) and legacy module ids (amiga.*)
+PASS: base reconstruction
+PASS: keepLook keeps the edge out of presets
+PASS: status variants (normalisation, folding, build/restoration) and the slot-free edge
+node:internal/assert/utils:146
+  throw error;
+  ^
+
+AssertionError [ERR_ASSERTION]: both MaterialCard copies alike
++ actual - expected
+... Skipped lines
+
+  'import QtQuick\n' +
+    'import QtQuick.Effects\n' +
+    'import qs.Commons\n' +
+    'import qs.Commons as Commons\n' +
+    'import "GlassMath.js" as GlassMath\n' +
+...
+    "  // The card's fill and frame give way to the bloom; its opacity carries\n" +
++   '  // the content (k'... 31125 more characters
+-   '  // the content (k'... 31482 more characters
+
+    at Object.<anonymous> (/home/nerdi/Data/Development/projects/tusche-bar-looks-20261107/docs/evidence/B-bar-baseline-qixe5n70/tests/regressions.cjs:230:41)
+    at Module._compile (node:internal/modules/cjs/loader:1968:14)
+    at Object..js (node:internal/modules/cjs/loader:2108:10)
+    at Module.load (node:internal/modules/cjs/loader:1690:32)
+    at Module._load (node:internal/modules/cjs/loader:1480:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'import QtQuick\n' +
+    'import QtQuick.Effects\n' +
+    'import qs.Commons\n' +
+    'import qs.Commons as Commons\n' +
+    'import "GlassMath.js" as GlassMath\n' +
+    '\n' +
+    "// The theme material for an Omarchy KeyboardPanel's card. With a theme\n" +
+    `// material (edge option "theme": the theme's bar-material.json, Tusche &\n` +
+    "// Papier) the card takes the theme's light and shadow – a hard ink shadow\n" +
+    '// (Papier), a light halo (Tusche) – and rolls out of the bar from the top,\n' +
+    '// and back up when it closes.\n' +
+    '// A material card with `bloom` (the Lavur themes) blooms instead: it takes\n' +
+    "// the card's own fill and frame away and grows out of the bar behind it as\n" +
+    "// a sheet of wet paper (InkSheet) – a drop under the anchor, then the card's\n" +
+    '// size; ink fills it, the water clears it, and the pigment dries into a rim\n' +
+    '// at its calm edge (frame round 03.10.2026), standing still once dry. The\n' +
+    '// content fades in last. Closing: the content fades, the sheet shrinks back\n' +
+    '// into the bar and a faint trace lingers for a moment. Top bars only.\n' +
+    '// The metal family (Chrom & Platin: material.metal) keeps the rolling card\n' +
+    "// and frames it with a chrome tube (MetalShape) instead of Omarchy's line; a\n" +
+    '// glint runs along it once when the card opens.\n' +
+    "// Without a material the card stays Omarchy's own, flat (a faint extra line\n" +
+    '// and a soft shadow only with `edge`), and moves on springs: it pops out of\n' +
+    '// its anchor, and a switch to another popup keeps the plate standing (see\n' +
+    '// "Flat motion" below).\n' +
+    '// Declare it inside the panel.\n' +
+    '\n' +
+    'Item {\n' +
+    '  id: fp\n' +
+    '\n' +
+    '  property var panel: null\n' +
+    '  // Give the opening gesture more time without slowing dismissal or frame glints.\n' +
+    '  // Shared by the rolling, spring-glass and wet-bloom entry paths.\n' +
+    '  readonly property real openingTimeScale: 1.35\n' +
+    '  // The colour the bar ends in (opaque).\n' +
+    '  property color color: Qt.rgba(Commons.Color.bar.background.r, Commons.Color.bar.background.g, Commons.Color.bar.background.b, 1)\n' +
+    '  // Edge (opt-in): a faint line in the text colour and a soft shadow, so a\n' +
+    "  // popup in the bar's colour stands apart from windows of the same colour\n" +
+    '  // behind it. Off by default: without a material the card is drawn like\n' +
+    "  // Omarchy's own popups (flat, its one theme line, no shadow).\n" +
+    '  property bool edge: false\n' +
+    '  readonly property bool lightTheme: 0.2126 * Commons.Color.popups.background.r + 0.7152 * Commons.Color.popups.background.g + 0.0722 * Commons.Color.popups.background.b > 0.55\n' +
+    '  readonly property color rimColor: Util.alpha(Commons.Color.popups.text, lightTheme ? 0.24 : 0.22)\n' +
+    "  // the bloom's pigment: the tide colour\n" +
+    '  readonly property var tide: bloom && material && material.card ? material.card.tide || null : null\n' +
+    '\n' +
+    '  // Wet bloom (Lavur): the ink fills the bloom, the water clears it from the\n' +
+    '  // source outward and pushes the pigment into the edge, where it dries into\n' +
+    '  // the rim (InkSheet); while wet the edge is soft and drifts, drying it\n' +
+    '  // sharpens and stills.\n' +
+    '  property real clearing: 1  // 0 = all ink, 1 = cleared up to the edge\n' +
+    '  property real wet: 0       // 1 = wet, 0 = dry\n' +
+    "  property real phase: 0     // the wet edge's movement\n" +
+    '  readonly property color inkColor: tide ? rgba(tide.color, 1) : Commons.Color.popups.text\n' +
+    "  // the clearing front's reach: the farthest corner of the card seen from the source, plus a margin\n" +
+    '  readonly property real clearFar: {\n' +
+    '    if (!card) return 1\n' +
+    '    var sx = dropCx, sy = barBottom, far = 0\n' +
+    '    var xs = [card.x, card.x + card.width], ys = [card.y, card.y + card.height]\n' +
+    '    for (var i = 0; i < 2; i++) for (var j = 0; j < 2; j++) far = Math.max(far, Math.hypot(xs[i] - sx, ys[j] - sy))\n' +
+    '    return far + 30\n' +
+    '  }\n' +
+    '  ParallelAnimation {\n' +
+    '    id: wetting\n' +
+    '    // the water follows the ink: it starts clearing once the drop spreads\n' +
+    '    // (the first ~30 % of the growth is the drop) and passes the far corner\n' +
+    '    // after the bloom has reached its size\n' +
+    '    SequentialAnimation {\n' +
+    '      PauseAnimation { duration: 200 * fp.openingTimeScale }\n' +
+    '      NumberAnimation { target: fp; property: "clearing"; from: 0; to: 1; duration: 720 * fp.openingTimeScale; easing.type: Easing.InOutQuad }\n' +
+    '    }\n' +
+    '    NumberAnimation { target: fp; property: "wet"; from: 1; to: 0; duration: 1700 * fp.openingTimeScale; easing.type: Easing.InQuad }\n' +
+    '    NumberAnimation { target: fp; property: "phase"; from: 0; to: 6.283; duration: 1700 * fp.openingTimeScale }\n' +
+    '  }\n' +
+    '  function settle() { wetting.stop(); clearing = 1; wet = 0 }\n' +
+    '  readonly property real shadowOpacity: lightTheme ? 0.22 : 0.55\n' +
+    '\n' +
+    '  // Inside the panel we sit in its content holder; its parent is the card,\n' +
+    "  // and the card's parent the panel window's root item.\n" +
+    '  readonly property Item card: parent && parent.parent && parent.parent.borderSpec !== undefined ? parent.parent : null\n' +
+    '  readonly property Item surface: card ? card.parent : null\n' +
+    '  // Lavur material: the card grows out of the bar as a bloom\n' +
+    '  readonly property bool bloomWanted: !!material && !!material.card && material.card.bloom === true\n' +
+    '  readonly property bool active: bloomWanted && !!card && !!surface && !!panel && panel.barPos === "top"\n' +
+    '  readonly property bool bloom: active\n' +
+    '  readonly property bool reduced: Style.reduceMotion\n' +
+    '\n' +
+    '  // Theme material (bar-material.json; set while the edge option is "theme").\n' +
+    '  property var material: null\n' +
+    '  readonly property var mat: material && material.card ? material.card : null\n' +
+    '  readonly property bool matOn: !!mat && mat.bloom !== true && !!card && !!surface && !!panel\n' +
+    '  readonly property bool rolls: matOn && mat.roll !== false && panel.barPos === "top"\n' +
+    '  // metal family: a chrome rim around the card\n' +
+    '  readonly property var metalSpec: material && material.metal ? material.metal : null\n' +
+    '  readonly property bool metalOn: matOn && !!metalSpec && !glassOn\n' +
+    '  readonly property var glassSpec: material && material.glass ? material.glass : null\n' +
+    '  readonly property bool glassOn: matOn && !!glassSpec && glassSpec.enabled !== false\n' +
+    '  readonly property bool springOn: rolls && !!glassSpec && glassSpec.spring !== false\n' +
+    '  property real roll: 0      // 0 = rolled up into the bar, 1 = open\n' +
+    '  property real rollVelocity: 0\n' +
+    '  property real rollTarget: 0\n' +
+    '  // Change natural frequency, not delta time: retargeting retains physical\n' +
+    '  // position/velocity and closing keeps the original theme frequency.\n' +
+    '  readonly property real springOmega: (glassSpec && glassSpec.omega ? Number(glassSpec.omega) : 22)\n' +
+    '                                     / (rollTarget > 0.5 ? openingTimeScale : 1)\n' +
+    '  property bool springRunning: false\n' +
+    '  // Geometry consumers use [0,1], the spring itself retains its overshoot\n' +
+    '  // and velocity so a close/reopen never restarts from an endpoint.\n' +
+    '  readonly property real reveal: Math.max(0, Math.min(1, roll))\n' +
+    '  // only while it is out or on its way, and on closing until the rolled-in\n' +
+    '  // card has faded: released earlier, the whole card flashed up at full\n' +
+    "  // height for the panel's fade (closed, the card and its mask need no layer)\n" +
+    '  readonly property bool rolling: rolls && roll < 0.999 && (panel.open || roll > 0.001 || (!!card && card.opacity > 0.001))\n' +
+    "  // How far the card is out (0–1): the roll, the bloom's growth,\n" +
+    '  // else its fade – a source tab stays until its card is back in the bar.\n' +
+    '  readonly property real presence: rolls ? roll : active ? grow : (card ? card.opacity : 0)\n' +
+    '  // Closing a rolling card: some panels drop part of their content the\n' +
+    "  // moment they close (Omarchy's audio panel detaches its device lists), so\n" +
+    '  // the card jumped to a smaller size before rolling in. While the card is\n' +
+    '  // open a snapshot follows it, clipped away; on closing it freezes as it\n' +
+    '  // was and rolls in instead of the card.\n' +
+    '  readonly property bool rollingIn: rolls && !panel.open && roll > 0.001\n' +
+    '  property real snapX: 0\n' +
+    '  property real snapY: 0\n' +
+    '  property real snapW: 1\n' +
+    '  property real snapH: 1\n' +
+    '  // taken a moment later, once the change has settled: a panel that drops\n' +
+    "  // content on closing changes the card's size in the same breath as its\n" +
+    '  // `open`, which may still read true at that instant\n' +
+    '  function keepSnap() { Qt.callLater(fp.takeSnap) }\n' +
+    '  function takeSnap() {\n' +
+    '    if (!card || !panel || !panel.open) return\n' +
+    '    snapX = card.x; snapY = card.y; snapW = card.width; snapH = card.height\n' +
+    '  }\n' +
+    '  Connections {\n' +
+    '    target: fp.card\n' +
+    '    function onXChanged() { fp.keepSnap() }\n' +
+    '    function onYChanged() { fp.keepSnap() }\n' +
+    '    function onWidthChanged() { fp.keepSnap() }\n' +
+    '    function onHeightChanged() { fp.keepSnap() }\n' +
+    '  }\n' +
+    '  // where the card is drawn: the frozen snapshot while it rolls in\n' +
+    '  readonly property real frameX: rollingIn ? snapX : (card ? card.x : 0)\n' +
+    '  readonly property real frameY: rollingIn ? snapY : (card ? card.y : 0)\n' +
+    '  readonly property real frameW: rollingIn ? snapW : (card ? card.width : 0)\n' +
+    '  readonly property real frameH: rollingIn ? snapH : (card ? card.height : 0)\n' +
+    '  function rgba(hex, alpha) { var c = Qt.color(hex || "#000000"); return Qt.rgba(c.r, c.g, c.b, alpha === undefined ? 1 : alpha) }\n' +
+    "  // the card's own shadow/halo from the material (null: the default soft shadow)\n" +
+    '  readonly property var matShadow: !mat ? null : (mat.shadow ? { color: rgba(mat.shadow.color, mat.shadow.alpha), dx: mat.shadow.dx || 0, dy: mat.shadow.dy || 0, blur: 0 }\n' +
+    '    : mat.halo ? { color: rgba(mat.halo.color, mat.halo.alpha), dx: 0, dy: 6, blur: mat.halo.blur || 40 }\n' +
+    '    : mat.glow ? { color: rgba(mat.glow.color, mat.glow.alpha), dx: 0, dy: 0, blur: mat.glow.blur || 18 } : null)\n' +
+    '\n' +
+    "  property real grow: 0      // 0 = inside the bar, 1 = the card's size\n" +
+    "  property real ink: 1       // the content's opacity\n" +
+    '\n' +
+    '  readonly property real margin: 32\n' +
+    '  readonly property real dropW: 52\n' +
+    '  readonly property real dropH: 28\n' +
+    '  readonly property real barBottom: card && panel ? card.y - panel.gap : 0\n' +
+    '  readonly property real dropCx: {\n' +
+    '    if (!card || !panel) return 0\n' +
+    '    var cx = panel.centerOnBar ? card.x + card.width / 2 : panel.anchorScreenPos.x + panel.anchorW / 2\n' +
+    '    return Math.max(card.x + dropW / 2, Math.min(card.x + card.width - dropW / 2, cx))\n' +
+    '  }\n' +
+    '\n' +
+    "  // The card's fill and frame give way to the bloom; its opacity carries\n" +
+    '  // the content (k'... 31125 more characters,
+  expected: 'import QtQuick\n' +
+    'import QtQuick.Effects\n' +
+    'import qs.Commons\n' +
+    'import qs.Commons as Commons\n' +
+    'import "GlassMath.js" as GlassMath\n' +
+    '\n' +
+    "// The theme material for an Omarchy KeyboardPanel's card. With a theme\n" +
+    `// material (edge option "theme": the theme's bar-material.json, Tusche &\n` +
+    "// Papier) the card takes the theme's light and shadow – a hard ink shadow\n" +
+    '// (Papier), a light halo (Tusche) – and rolls out of the bar from the top,\n' +
+    '// and back up when it closes.\n' +
+    '// A material card with `bloom` (the Lavur themes) blooms instead: it takes\n' +
+    "// the card's own fill and frame away and grows out of the bar behind it as\n" +
+    "// a sheet of wet paper (InkSheet) – a drop under the anchor, then the card's\n" +
+    '// size; ink fills it, the water clears it, and the pigment dries into a rim\n' +
+    '// at its calm edge (frame round 03.10.2026), standing still once dry. The\n' +
+    '// content fades in last. Closing: the content fades, the sheet shrinks back\n' +
+    '// into the bar and a faint trace lingers for a moment. Top bars only.\n' +
+    '// The metal family (Chrom & Platin: material.metal) keeps the rolling card\n' +
+    "// and frames it with a chrome tube (MetalShape) instead of Omarchy's line; a\n" +
+    '// glint runs along it once when the card opens.\n' +
+    "// Without a material the card stays Omarchy's own, flat (a faint extra line\n" +
+    '// and a soft shadow only with `edge`), and moves on springs: it pops out of\n' +
+    '// its anchor, and a switch to another popup keeps the plate standing (see\n' +
+    '// "Flat motion" below).\n' +
+    '// Declare it inside the panel.\n' +
+    '\n' +
+    'Item {\n' +
+    '  id: fp\n' +
+    '\n' +
+    '  property var panel: null\n' +
+    '  // Give the opening gesture more time without slowing dismissal or frame glints.\n' +
+    '  // Shared by the rolling, spring-glass and wet-bloom entry paths.\n' +
+    '  readonly property real openingTimeScale: 1.35\n' +
+    '  // The colour the bar ends in (opaque).\n' +
+    '  property color color: Qt.rgba(Commons.Color.bar.background.r, Commons.Color.bar.background.g, Commons.Color.bar.background.b, 1)\n' +
+    '  // Edge (opt-in): a faint line in the text colour and a soft shadow, so a\n' +
+    "  // popup in the bar's colour stands apart from windows of the same colour\n" +
+    '  // behind it. Off by default: without a material the card is drawn like\n' +
+    "  // Omarchy's own popups (flat, its one theme line, no shadow).\n" +
+    '  property bool edge: false\n' +
+    '  readonly property bool lightTheme: 0.2126 * Commons.Color.popups.background.r + 0.7152 * Commons.Color.popups.background.g + 0.0722 * Commons.Color.popups.background.b > 0.55\n' +
+    '  readonly property color rimColor: Util.alpha(Commons.Color.popups.text, lightTheme ? 0.24 : 0.22)\n' +
+    "  // the bloom's pigment: the tide colour\n" +
+    '  readonly property var tide: bloom && material && material.card ? material.card.tide || null : null\n' +
+    '\n' +
+    '  // Wet bloom (Lavur): the ink fills the bloom, the water clears it from the\n' +
+    '  // source outward and pushes the pigment into the edge, where it dries into\n' +
+    '  // the rim (InkSheet); while wet the edge is soft and drifts, drying it\n' +
+    '  // sharpens and stills.\n' +
+    '  property real clearing: 1  // 0 = all ink, 1 = cleared up to the edge\n' +
+    '  property real wet: 0       // 1 = wet, 0 = dry\n' +
+    "  property real phase: 0     // the wet edge's movement\n" +
+    '  readonly property color inkColor: tide ? rgba(tide.color, 1) : Commons.Color.popups.text\n' +
+    "  // the clearing front's reach: the farthest corner of the card seen from the source, plus a margin\n" +
+    '  readonly property real clearFar: {\n' +
+    '    if (!card) return 1\n' +
+    '    var sx = dropCx, sy = barBottom, far = 0\n' +
+    '    var xs = [card.x, card.x + card.width], ys = [card.y, card.y + card.height]\n' +
+    '    for (var i = 0; i < 2; i++) for (var j = 0; j < 2; j++) far = Math.max(far, Math.hypot(xs[i] - sx, ys[j] - sy))\n' +
+    '    return far + 30\n' +
+    '  }\n' +
+    '  ParallelAnimation {\n' +
+    '    id: wetting\n' +
+    '    // the water follows the ink: it starts clearing once the drop spreads\n' +
+    '    // (the first ~30 % of the growth is the drop) and passes the far corner\n' +
+    '    // after the bloom has reached its size\n' +
+    '    SequentialAnimation {\n' +
+    '      PauseAnimation { duration: 200 * fp.openingTimeScale }\n' +
+    '      NumberAnimation { target: fp; property: "clearing"; from: 0; to: 1; duration: 720 * fp.openingTimeScale; easing.type: Easing.InOutQuad }\n' +
+    '    }\n' +
+    '    NumberAnimation { target: fp; property: "wet"; from: 1; to: 0; duration: 1700 * fp.openingTimeScale; easing.type: Easing.InQuad }\n' +
+    '    NumberAnimation { target: fp; property: "phase"; from: 0; to: 6.283; duration: 1700 * fp.openingTimeScale }\n' +
+    '  }\n' +
+    '  function settle() { wetting.stop(); clearing = 1; wet = 0 }\n' +
+    '  readonly property real shadowOpacity: lightTheme ? 0.22 : 0.55\n' +
+    '\n' +
+    '  // Inside the panel we sit in its content holder; its parent is the card,\n' +
+    "  // and the card's parent the panel window's root item.\n" +
+    '  readonly property Item card: parent && parent.parent && parent.parent.borderSpec !== undefined ? parent.parent : null\n' +
+    '  readonly property Item surface: card ? card.parent : null\n' +
+    '  // Lavur material: the card grows out of the bar as a bloom\n' +
+    '  readonly property bool bloomWanted: !!material && !!material.card && material.card.bloom === true\n' +
+    '  readonly property bool active: bloomWanted && !!card && !!surface && !!panel && panel.barPos === "top"\n' +
+    '  readonly property bool bloom: active\n' +
+    '  readonly property bool reduced: Style.reduceMotion\n' +
+    '\n' +
+    '  // Theme material (bar-material.json; set while the edge option is "theme").\n' +
+    '  property var material: null\n' +
+    '  readonly property var mat: material && material.card ? material.card : null\n' +
+    '  readonly property bool matOn: !!mat && mat.bloom !== true && !!card && !!surface && !!panel\n' +
+    '  readonly property bool rolls: matOn && mat.roll !== false && panel.barPos === "top"\n' +
+    '  // metal family: a chrome rim around the card\n' +
+    '  readonly property var metalSpec: material && material.metal ? material.metal : null\n' +
+    '  readonly property bool metalOn: matOn && !!metalSpec && !glassOn\n' +
+    '  readonly property var glassSpec: material && material.glass ? material.glass : null\n' +
+    '  readonly property bool glassOn: matOn && !!glassSpec && glassSpec.enabled !== false\n' +
+    '  readonly property bool springOn: rolls && !!glassSpec && glassSpec.spring !== false\n' +
+    '  property real roll: 0      // 0 = rolled up into the bar, 1 = open\n' +
+    '  property real rollVelocity: 0\n' +
+    '  property real rollTarget: 0\n' +
+    '  // Change natural frequency, not delta time: retargeting retains physical\n' +
+    '  // position/velocity and closing keeps the original theme frequency.\n' +
+    '  readonly property real springOmega: (glassSpec && glassSpec.omega ? Number(glassSpec.omega) : 22)\n' +
+    '                                     / (rollTarget > 0.5 ? openingTimeScale : 1)\n' +
+    '  property bool springRunning: false\n' +
+    '  // Geometry consumers use [0,1], the spring itself retains its overshoot\n' +
+    '  // and velocity so a close/reopen never restarts from an endpoint.\n' +
+    '  readonly property real reveal: Math.max(0, Math.min(1, roll))\n' +
+    '  // only while it is out or on its way, and on closing until the rolled-in\n' +
+    '  // card has faded: released earlier, the whole card flashed up at full\n' +
+    "  // height for the panel's fade (closed, the card and its mask need no layer)\n" +
+    '  readonly property bool rolling: rolls && roll < 0.999 && (panel.open || roll > 0.001 || (!!card && card.opacity > 0.001))\n' +
+    "  // How far the card is out (0–1): the roll, the bloom's growth,\n" +
+    '  // else its fade – a source tab stays until its card is back in the bar.\n' +
+    '  readonly property real presence: rolls ? roll : active ? grow : (card ? card.opacity : 0)\n' +
+    '  // Closing a rolling card: some panels drop part of their content the\n' +
+    "  // moment they close (Omarchy's audio panel detaches its device lists), so\n" +
+    '  // the card jumped to a smaller size before rolling in. While the card is\n' +
+    '  // open a snapshot follows it, clipped away; on closing it freezes as it\n' +
+    '  // was and rolls in instead of the card.\n' +
+    '  readonly property bool rollingIn: rolls && !panel.open && roll > 0.001\n' +
+    '  property real snapX: 0\n' +
+    '  property real snapY: 0\n' +
+    '  property real snapW: 1\n' +
+    '  property real snapH: 1\n' +
+    '  // taken a moment later, once the change has settled: a panel that drops\n' +
+    "  // content on closing changes the card's size in the same breath as its\n" +
+    '  // `open`, which may still read true at that instant\n' +
+    '  function keepSnap() { Qt.callLater(fp.takeSnap) }\n' +
+    '  function takeSnap() {\n' +
+    '    if (!card || !panel || !panel.open) return\n' +
+    '    snapX = card.x; snapY = card.y; snapW = card.width; snapH = card.height\n' +
+    '  }\n' +
+    '  Connections {\n' +
+    '    target: fp.card\n' +
+    '    function onXChanged() { fp.keepSnap() }\n' +
+    '    function onYChanged() { fp.keepSnap() }\n' +
+    '    function onWidthChanged() { fp.keepSnap() }\n' +
+    '    function onHeightChanged() { fp.keepSnap() }\n' +
+    '  }\n' +
+    '  // where the card is drawn: the frozen snapshot while it rolls in\n' +
+    '  readonly property real frameX: rollingIn ? snapX : (card ? card.x : 0)\n' +
+    '  readonly property real frameY: rollingIn ? snapY : (card ? card.y : 0)\n' +
+    '  readonly property real frameW: rollingIn ? snapW : (card ? card.width : 0)\n' +
+    '  readonly property real frameH: rollingIn ? snapH : (card ? card.height : 0)\n' +
+    '  function rgba(hex, alpha) { var c = Qt.color(hex || "#000000"); return Qt.rgba(c.r, c.g, c.b, alpha === undefined ? 1 : alpha) }\n' +
+    "  // the card's own shadow/halo from the material (null: the default soft shadow)\n" +
+    '  readonly property var matShadow: !mat ? null : (mat.shadow ? { color: rgba(mat.shadow.color, mat.shadow.alpha), dx: mat.shadow.dx || 0, dy: mat.shadow.dy || 0, blur: 0 }\n' +
+    '    : mat.halo ? { color: rgba(mat.halo.color, mat.halo.alpha), dx: 0, dy: 6, blur: mat.halo.blur || 40 }\n' +
+    '    : mat.glow ? { color: rgba(mat.glow.color, mat.glow.alpha), dx: 0, dy: 0, blur: mat.glow.blur || 18 } : null)\n' +
+    '\n' +
+    "  property real grow: 0      // 0 = inside the bar, 1 = the card's size\n" +
+    "  property real ink: 1       // the content's opacity\n" +
+    '\n' +
+    '  readonly property real margin: 32\n' +
+    '  readonly property real dropW: 52\n' +
+    '  readonly property real dropH: 28\n' +
+    '  readonly property real barBottom: card && panel ? card.y - panel.gap : 0\n' +
+    '  readonly property real dropCx: {\n' +
+    '    if (!card || !panel) return 0\n' +
+    '    var cx = panel.centerOnBar ? card.x + card.width / 2 : panel.anchorScreenPos.x + panel.anchorW / 2\n' +
+    '    return Math.max(card.x + dropW / 2, Math.min(card.x + card.width - dropW / 2, cx))\n' +
+    '  }\n' +
+    '\n' +
+    "  // The card's fill and frame give way to the bloom; its opacity carries\n" +
+    '  // the content (k'... 31482 more characters,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.13.0

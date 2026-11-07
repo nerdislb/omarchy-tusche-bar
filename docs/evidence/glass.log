@@ -1,0 +1,108 @@
+PASS spring settles and stops at 30 fps
+PASS spring settles and stops at 60 fps
+PASS spring settles and stops at 144 fps
+PASS mid-entry reverse and reopen preserve position and velocity
+PASS suspend-sized delta is bounded, not unstable
+PASS capture uses global logical geometry, including output offsets
+PASS parked, hidden, invalid and other-workspace windows are excluded
+PASS an open special workspace can be captured
+PASS material and motion switches are independent and never mutate source
+node:internal/assert/utils:146
+  throw error;
+  ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+... Skipped lines
+
+  "-- chrom: a still chrome border, the bar's studio stripes on a diagonal (no borderangle turn:\n" +
+    "-- it looked uneven; focus shows as the border fade, or as the Tusche Bar's frame glint);\n" +
++   '-- the window shadow a soft dark, as Frost — a light shadow read as a white halo around the\n' +
++   '-- focused window and was dropped (see brain: glass-fokus-schatten-2026-10-15).\n' +
+-   '-- the window shadow a faint light.\n' +
+    'local active_border_color = { colors = { "rgba(3b3c41ff)", "rgba(f2f3f7ff)", "rgba(6a6c72ff)", "rgba(1c1d20ff)", "rgba(2a2b2fff)", "rgba(e8e9edff)", "rgba(8a8c92ff)", "rgba(1c1d20ff)", "rgba(5a5c62ff)", "rgba(f2f3f7ff)" }, angle = 45 }\n' +
+    'local inactive_border_color = "rgba(26272aff)"\n' +
+    '\n' +
+    'hl.config({\n' +
+    '  general = {\n' +
+...
+    '  decoration = {\n' +
++   '    shadow = { enabled = true, range = 24, render_power = 3, offset = { 0, 4 }, color = "rgba(1112142a)", color_inactive = "rgba(00000000)" },\n' +
+-   '    shadow = { enabled = true, range = 22, render_power = 3, offset = { 0, 4 }, color = "rgba(ffffff1c)", color_inactive = "rgba(00000000)" },\n' +
+    '  },\n' +
+    '})\n' +
+    '\n' +
+    'hl.animation({ leaf = "borderangle", enabled = false })\n'
+
+    at /home/nerdi/Data/Development/projects/tusche-bar-looks-20261107/tests/glass.cjs:61:12
+    at check (/home/nerdi/Data/Development/projects/tusche-bar-looks-20261107/tests/glass.cjs:10:32)
+    at Object.<anonymous> (/home/nerdi/Data/Development/projects/tusche-bar-looks-20261107/tests/glass.cjs:59:1)
+    at Module._compile (node:internal/modules/cjs/loader:1968:14)
+    at Object..js (node:internal/modules/cjs/loader:2108:10)
+    at Module.load (node:internal/modules/cjs/loader:1690:32)
+    at Module._load (node:internal/modules/cjs/loader:1480:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: "-- chrom: a still chrome border, the bar's studio stripes on a diagonal (no borderangle turn:\n" +
+    "-- it looked uneven; focus shows as the border fade, or as the Tusche Bar's frame glint);\n" +
+    '-- the window shadow a soft dark, as Frost — a light shadow read as a white halo around the\n' +
+    '-- focused window and was dropped (see brain: glass-fokus-schatten-2026-10-15).\n' +
+    'local active_border_color = { colors = { "rgba(3b3c41ff)", "rgba(f2f3f7ff)", "rgba(6a6c72ff)", "rgba(1c1d20ff)", "rgba(2a2b2fff)", "rgba(e8e9edff)", "rgba(8a8c92ff)", "rgba(1c1d20ff)", "rgba(5a5c62ff)", "rgba(f2f3f7ff)" }, angle = 45 }\n' +
+    'local inactive_border_color = "rgba(26272aff)"\n' +
+    '\n' +
+    'hl.config({\n' +
+    '  general = {\n' +
+    '    col = {\n' +
+    '      active_border = active_border_color,\n' +
+    '      inactive_border = inactive_border_color,\n' +
+    '    },\n' +
+    '  },\n' +
+    '\n' +
+    '  group = {\n' +
+    '    col = {\n' +
+    '      border_active = active_border_color,\n' +
+    '      border_inactive = inactive_border_color,\n' +
+    '    },\n' +
+    '  },\n' +
+    '\n' +
+    '  decoration = {\n' +
+    '    shadow = { enabled = true, range = 24, render_power = 3, offset = { 0, 4 }, color = "rgba(1112142a)", color_inactive = "rgba(00000000)" },\n' +
+    '  },\n' +
+    '})\n' +
+    '\n' +
+    'hl.animation({ leaf = "borderangle", enabled = false })\n',
+  expected: "-- chrom: a still chrome border, the bar's studio stripes on a diagonal (no borderangle turn:\n" +
+    "-- it looked uneven; focus shows as the border fade, or as the Tusche Bar's frame glint);\n" +
+    '-- the window shadow a faint light.\n' +
+    'local active_border_color = { colors = { "rgba(3b3c41ff)", "rgba(f2f3f7ff)", "rgba(6a6c72ff)", "rgba(1c1d20ff)", "rgba(2a2b2fff)", "rgba(e8e9edff)", "rgba(8a8c92ff)", "rgba(1c1d20ff)", "rgba(5a5c62ff)", "rgba(f2f3f7ff)" }, angle = 45 }\n' +
+    'local inactive_border_color = "rgba(26272aff)"\n' +
+    '\n' +
+    'hl.config({\n' +
+    '  general = {\n' +
+    '    col = {\n' +
+    '      active_border = active_border_color,\n' +
+    '      inactive_border = inactive_border_color,\n' +
+    '    },\n' +
+    '  },\n' +
+    '\n' +
+    '  group = {\n' +
+    '    col = {\n' +
+    '      border_active = active_border_color,\n' +
+    '      border_inactive = inactive_border_color,\n' +
+    '    },\n' +
+    '  },\n' +
+    '\n' +
+    '  decoration = {\n' +
+    '    shadow = { enabled = true, range = 22, render_power = 3, offset = { 0, 4 }, color = "rgba(ffffff1c)", color_inactive = "rgba(00000000)" },\n' +
+    '  },\n' +
+    '})\n' +
+    '\n' +
+    'hl.animation({ leaf = "borderangle", enabled = false })\n',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.13.0

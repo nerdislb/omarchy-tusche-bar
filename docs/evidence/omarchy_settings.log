@@ -1,0 +1,24 @@
+PASS: nothing before the guards answered
+PASS: a menu of checked entries is one choice row, the checked entry live, labels shortened
+PASS: two neighbours with opposite guards are one toggle row; live is the entry the menu does not offer
+PASS: an unknown toggle pair is found by its guards and named from its labels
+PASS: only real negations pair: complementary literals yes, other literal pairs and swapped negations no
+PASS: a reader menu reads its value through the reader batch
+PASS: lists the native menu fills from bash need their menu entry; values are quoted actions
+PASS: scripts behind sudo are read-only and show only the live value; terminals are never picked
+PASS: a script that restarts the shell (the window with it) is read-only with that reason
+PASS: a choice nobody checked is read-only with a reason; hardware that is not there has no row
+PASS: the reader batch prints lines parseReaders reads back
+PASS: Omarchy's own menu: the toggle pairs are exactly the known ones
+PASS: live state carries the Omarchy rows and the overrides
+PASS: override values are kept canonical; steps stay in range
+PASS: staging: only pickable Omarchy values, never on read-only rows; overrides only canonical
+PASS: Use: Omarchy actions first, one each, then the overrides as one step
+PASS: Cancel: touched Omarchy rows and overrides back to the state from opening
+PASS: Cancel runs in reverse and takes the action from opening for a row hidden now
+PASS: a late answer fills the snapshot, except for rows Use touched
+PASS: search finds Omarchy rows and overrides by command, option and menu path
+PASS: areas lay out their generic rows by section; advanced rows only on request
+PASS: Changed only: staged rows, set overrides, Tusche options away from defaults
+PASS: health: Omarchy settings and the override file
+23 omarchy settings checks passed

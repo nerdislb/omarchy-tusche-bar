@@ -1,0 +1,428 @@
+Warning: ControlCenter.qml:1070:48: Member "popupPadding" not found on type "QObject" [missing-property]
+      readonly property int pad: Style.spacing.popupPadding
+                                               ^^^^^^^^^^^^
+Warning: ControlCenter.qml:1077:20: Member "sizeHorizontal" not found on type "QObject" [missing-property]
+      y: Style.bar.sizeHorizontal + Style.gapsOut
+                   ^^^^^^^^^^^^^^
+Warning: ControlCenter.qml:1078:35: Member "background" not found on type "QObject" [missing-property]
+      color: Commons.Color.popups.background
+                                  ^^^^^^^^^^
+Warning: ControlCenter.qml:1079:79: Member "border" not found on type "QObject" [missing-property]
+      borderSpec: Border.surfaceSpec("popups", "border", Commons.Color.popups.border, Math.max(1, Style.space(2)))
+                                                                              ^^^^^^
+Warning: ControlCenter.qml:1101:38: Member "title" not found on type "QObject" [missing-property]
+          font.pixelSize: Style.font.title
+                                     ^^^^^
+Warning: ControlCenter.qml:1112:87: Member "text" not found on type "QObject" [missing-property]
+            color: closeMouse.containsMouse ? Style.hoverFillFor(Commons.Color.popups.text, Commons.Color.accent, Commons.Color.urgent) : "transparent"
+                                                                                      ^^^^
+Warning: ControlCenter.qml:1114:130: Member "text" not found on type "QObject" [missing-property]
+          Strong { anchors.centerIn: parent; text: "×"; font.pixelSize: Style.font.title; color: Util.alpha(Commons.Color.popups.text, 0.75) }
+                                                                                                                                 ^^^^
+Warning: ControlCenter.qml:1114:84: Member "title" not found on type "QObject" [missing-property]
+          Strong { anchors.centerIn: parent; text: "×"; font.pixelSize: Style.font.title; color: Util.alpha(Commons.Color.popups.text, 0.75) }
+                                                                                   ^^^^^
+Warning: ControlCenter.qml:1143:92: Member "background" not found on type "QObject" [missing-property]
+            Face { anchors.fill: parent; inset: true; fill: Qt.darker(Commons.Color.popups.background, 1.25) }
+                                                                                           ^^^^^^^^^^
+Warning: ControlCenter.qml:1153:214: Member "text" not found on type "QObject" [missing-property]
+              Rectangle { width: Math.round(parent.width * 0.72); height: width; radius: width / 2; color: "transparent"; border.width: Math.max(1, Style.space(1.5)); border.color: Util.alpha(Commons.Color.popups.text, 0.6) }
+                                                                                                                                                                                                                     ^^^^
+Warning: ControlCenter.qml:1154:222: Member "text" not found on type "QObject" [missing-property]
+              Rectangle { x: parent.width * 0.62; y: parent.height * 0.62; width: parent.width * 0.42; height: Math.max(1, Style.space(2)); rotation: 45; transformOrigin: Item.Left; color: Util.alpha(Commons.Color.popups.text, 0.6) }
+                                                                                                                                                                                                                             ^^^^
+Warning: ControlCenter.qml:1164:69: Member "text" not found on type "QObject" [missing-property]
+              placeholderTextColor: Util.alpha(Commons.Color.popups.text, 0.45)
+                                                                    ^^^^
+Warning: ControlCenter.qml:1168:43: Member "text" not found on type "QObject" [missing-property]
+              color: Commons.Color.popups.text
+                                          ^^^^
+Warning: ControlCenter.qml:1167:39: Member "family" not found on type "QObject" [missing-property]
+              font.family: Style.font.family; font.pixelSize: Style.font.body
+                                      ^^^^^^
+Warning: ControlCenter.qml:1167:74: Member "body" not found on type "QObject" [missing-property]
+              font.family: Style.font.family; font.pixelSize: Style.font.body
+                                                                         ^^^^
+Warning: ControlCenter.qml:1200:141: Member "text" not found on type "QObject" [missing-property]
+              readonly property color tone: win.health.issues ? Commons.Color.urgent : win.health.unknown ? Util.alpha(Commons.Color.popups.text, 0.6) : Commons.Color.accent
+                                                                                                                                            ^^^^
+Warning: ControlCenter.qml:1212:138: Member "text" not found on type "QObject" [missing-property]
+        Rectangle { id: rule; y: header.height + Style.space(10); width: parent.width; height: 1; color: Util.alpha(Commons.Color.popups.text, 0.12) }
+                                                                                                                                         ^^^^
+Warning: ControlCenter.qml:1282:114: Member "text" not found on type "QObject" [missing-property]
+                color: !current && areaMouse.containsMouse && !isGroup ? Style.hoverFillFor(Commons.Color.popups.text, Commons.Color.accent, Commons.Color.urgent) : "transparent"
+                                                                                                                 ^^^^
+Warning: ControlCenter.qml:1279:58: Member "text" not found on type "QObject" [missing-property]
+                  color: Util.alpha(Commons.Color.popups.text, 0.5)
+                                                         ^^^^
+Warning: ControlCenter.qml:1306:138: Member "text" not found on type "QObject" [missing-property]
+                  color: areaRow.modelData.id === "health" && win.health.issues ? Commons.Color.urgent : Util.alpha(Commons.Color.popups.text, 0.6)
+                                                                                                                                         ^^^^
+Warning: ControlCenter.qml:1319:132: Member "text" not found on type "QObject" [missing-property]
+          Rectangle { x: areaList.width + Style.space(10); width: 1; height: parent.height; color: Util.alpha(Commons.Color.popups.text, 0.12) }
+                                                                                                                                   ^^^^
+Warning: ControlCenter.qml:1369:46: Member "title" not found on type "QObject" [missing-property]
+                  font.pixelSize: Style.font.title
+                                             ^^^^^
+Warning: ControlCenter.qml:1460:102: Member "background" not found on type "QObject" [missing-property]
+                      Face { anchors.fill: parent; inset: true; fill: Qt.darker(Commons.Color.popups.background, 1.25) }
+                                                                                                     ^^^^^^^^^^
+Warning: ControlCenter.qml:1467:79: Member "text" not found on type "QObject" [missing-property]
+                        placeholderTextColor: Util.alpha(Commons.Color.popups.text, 0.45)
+                                                                              ^^^^
+Warning: ControlCenter.qml:1472:53: Member "text" not found on type "QObject" [missing-property]
+                        color: Commons.Color.popups.text
+                                                    ^^^^
+Warning: ControlCenter.qml:1471:49: Member "family" not found on type "QObject" [missing-property]
+                        font.family: Style.font.family; font.pixelSize: Style.font.body
+                                                ^^^^^^
+Warning: ControlCenter.qml:1471:84: Member "body" not found on type "QObject" [missing-property]
+                        font.family: Style.font.family; font.pixelSize: Style.font.body
+                                                                                   ^^^^
+Warning: ControlCenter.qml:1502:49: Member "text" not found on type "QObject" [missing-property]
+                    color: Commons.Color.popups.text
+                                                ^^^^
+Warning: ControlCenter.qml:1578:111: Member "text" not found on type "QObject" [missing-property]
+                  color: win.cardsStatus === "error" ? Commons.Color.urgent : Util.alpha(Commons.Color.popups.text, 0.6)
+                                                                                                              ^^^^
+Warning: ControlCenter.qml:1602:143: Member "text" not found on type "QObject" [missing-property]
+                color: win.omarchyState === "failed" || win.omarchyState === "empty" ? Commons.Color.urgent : Util.alpha(Commons.Color.popups.text, 0.6)
+                                                                                                                                              ^^^^
+Warning: ControlCenter.qml:1616:140: Member "text" not found on type "QObject" [missing-property]
+                  color: win.live.extras && win.live.extras.fullWidth === "error" ? Commons.Color.urgent : Util.alpha(Commons.Color.popups.text, 0.6)
+                                                                                                                                           ^^^^
+Warning: ControlCenter.qml:1650:115: Member "text" not found on type "QObject" [missing-property]
+                  color: win.live.extras && win.live.extras.sheet === "missing" ? Util.alpha(Commons.Color.popups.text, 0.75) : Util.alpha(Commons.Color.popups.text, 0.6)
+                                                                                                                  ^^^^
+Warning: ControlCenter.qml:1650:161: Member "text" not found on type "QObject" [missing-property]
+                  color: win.live.extras && win.live.extras.sheet === "missing" ? Util.alpha(Commons.Color.popups.text, 0.75) : Util.alpha(Commons.Color.popups.text, 0.6)
+                                                                                                                                                                ^^^^
+Warning: ControlCenter.qml:1754:92: Member "text" not found on type "QObject" [missing-property]
+                    color: win.health.issues ? Commons.Color.urgent : Commons.Color.popups.text
+                                                                                           ^^^^
+Warning: ControlCenter.qml:1774:177: Member "text" not found on type "QObject" [missing-property]
+                      color: check.modelData.state === "issue" ? Commons.Color.urgent : check.modelData.state === "ok" ? Commons.Color.accent : Util.alpha(Commons.Color.popups.text, 0.5)
+                                                                                                                                                                                ^^^^
+Warning: ControlCenter.qml:1801:94: Member "text" not found on type "QObject" [missing-property]
+          Rectangle { width: parent.width; height: 1; color: Util.alpha(Commons.Color.popups.text, 0.12) }
+                                                                                             ^^^^
+Warning: ControlCenter.qml:1831:47: Member "background" not found on type "QObject" [missing-property]
+          color: Qt.rgba(Commons.Color.popups.background.r, Commons.Color.popups.background.g, Commons.Color.popups.background.b, 1)
+                                              ^^^^^^^^^^
+Warning: ControlCenter.qml:1831:82: Member "background" not found on type "QObject" [missing-property]
+          color: Qt.rgba(Commons.Color.popups.background.r, Commons.Color.popups.background.g, Commons.Color.popups.background.b, 1)
+                                                                                 ^^^^^^^^^^
+Warning: ControlCenter.qml:1831:117: Member "background" not found on type "QObject" [missing-property]
+          color: Qt.rgba(Commons.Color.popups.background.r, Commons.Color.popups.background.g, Commons.Color.popups.background.b, 1)
+                                                                                                                    ^^^^^^^^^^
+Warning: ControlCenter.qml:1832:83: Member "border" not found on type "QObject" [missing-property]
+          borderSpec: Border.surfaceSpec("popups", "border", Commons.Color.popups.border, Math.max(1, Style.space(2)))
+                                                                                  ^^^^^^
+Warning: ControlCenter.qml:1850:86: Member "text" not found on type "QObject" [missing-property]
+                  : hitMouse.containsMouse ? Style.hoverFillFor(Commons.Color.popups.text, Commons.Color.accent, Commons.Color.urgent) : "transparent"
+                                                                                     ^^^^
+Warning: ControlCenter.qml:1866:110: Member "text" not found on type "QObject" [missing-property]
+                  color: hit.modelData.matchedValue ? Commons.Color.accent : Util.alpha(Commons.Color.popups.text, 0.6)
+                                                                                                             ^^^^
+Warning: ControlCenter.qml:1876:96: Member "text" not found on type "QObject" [missing-property]
+            Rectangle { width: parent.width; height: 1; color: Util.alpha(Commons.Color.popups.text, 0.1) }
+                                                                                               ^^^^
+Warning: ControlCenter.qml:1954:33: Member "text" not found on type "QObject" [missing-property]
+    color: Commons.Color.popups.text
+                                ^^^^
+Warning: ControlCenter.qml:1952:29: Member "family" not found on type "QObject" [missing-property]
+    font.family: Style.font.family
+                            ^^^^^^
+Warning: ControlCenter.qml:1953:32: Member "body" not found on type "QObject" [missing-property]
+    font.pixelSize: Style.font.body
+                               ^^^^
+Warning: ControlCenter.qml:1958:44: Member "text" not found on type "QObject" [missing-property]
+    color: Util.alpha(Commons.Color.popups.text, 0.6)
+                                           ^^^^
+Warning: ControlCenter.qml:1957:32: Member "caption" not found on type "QObject" [missing-property]
+    font.pixelSize: Style.font.caption
+                               ^^^^^^^
+Warning: ControlCenter.qml:1966:33: Member "text" not found on type "QObject" [missing-property]
+    color: Commons.Color.popups.text
+                                ^^^^
+Warning: ControlCenter.qml:1964:29: Member "family" not found on type "QObject" [missing-property]
+    font.family: Style.font.family
+                            ^^^^^^
+Warning: ControlCenter.qml:1965:32: Member "body" not found on type "QObject" [missing-property]
+    font.pixelSize: Style.font.body
+                               ^^^^
+Warning: ControlCenter.qml:1986:32: Member "caption" not found on type "QObject" [missing-property]
+    font.pixelSize: Style.font.caption
+                               ^^^^^^^
+Warning: ControlCenter.qml:2002:51: Member "text" not found on type "QObject" [missing-property]
+    border.color: Util.alpha(Commons.Color.popups.text, inset ? 0.3 : 0.14)
+                                                  ^^^^
+Warning: ControlCenter.qml:2032:43: Member "text" not found on type "QObject" [missing-property]
+        : Util.alpha(Commons.Color.popups.text, btn.primary ? 0.1 : 0.05)
+                                          ^^^^
+Warning: ControlCenter.qml:2039:50: Member "background" not found on type "QObject" [missing-property]
+      color: btn.selected ? Commons.Color.popups.background : Commons.Color.popups.text
+                                                 ^^^^^^^^^^
+Warning: ControlCenter.qml:2039:84: Member "text" not found on type "QObject" [missing-property]
+      color: btn.selected ? Commons.Color.popups.background : Commons.Color.popups.text
+                                                                                   ^^^^
+Warning: ControlCenter.qml:2051:72: Member "text" not found on type "QObject" [missing-property]
+    Face { anchors.fill: parent; fill: Util.alpha(Commons.Color.popups.text, 0.08) }
+                                                                       ^^^^
+Warning: ControlCenter.qml:2057:46: Member "text" not found on type "QObject" [missing-property]
+      color: Util.alpha(Commons.Color.popups.text, 0.75)
+                                             ^^^^
+Warning: ControlCenter.qml:2056:34: Member "caption" not found on type "QObject" [missing-property]
+      font.pixelSize: Style.font.caption
+                                 ^^^^^^^
+Warning: ControlCenter.qml:2079:73: Member "text" not found on type "QObject" [missing-property]
+        : chipMouse.pressed ? Style.pressedFillFor(Commons.Color.popups.text, Commons.Color.accent, Commons.Color.urgent)
+                                                                        ^^^^
+Warning: ControlCenter.qml:2080:77: Member "text" not found on type "QObject" [missing-property]
+        : chipMouse.containsMouse ? Style.hoverFillFor(Commons.Color.popups.text, Commons.Color.accent, Commons.Color.urgent)
+                                                                            ^^^^
+Warning: ControlCenter.qml:2081:43: Member "text" not found on type "QObject" [missing-property]
+        : Util.alpha(Commons.Color.popups.text, 0.06)
+                                          ^^^^
+Warning: ControlCenter.qml:2090:53: Member "background" not found on type "QObject" [missing-property]
+        color: chip.selected ? Commons.Color.popups.background : Commons.Color.popups.text
+                                                    ^^^^^^^^^^
+Warning: ControlCenter.qml:2090:87: Member "text" not found on type "QObject" [missing-property]
+        color: chip.selected ? Commons.Color.popups.background : Commons.Color.popups.text
+                                                                                      ^^^^
+Warning: ControlCenter.qml:2096:64: Member "background" not found on type "QObject" [missing-property]
+        color: chip.selected ? Util.alpha(Commons.Color.popups.background, 0.8) : Util.alpha(Commons.Color.popups.text, 0.55)
+                                                               ^^^^^^^^^^
+Warning: ControlCenter.qml:2096:115: Member "text" not found on type "QObject" [missing-property]
+        color: chip.selected ? Util.alpha(Commons.Color.popups.background, 0.8) : Util.alpha(Commons.Color.popups.text, 0.55)
+                                                                                                                  ^^^^
+Warning: ControlCenter.qml:2116:112: Member "text" not found on type "QObject" [missing-property]
+    readonly property color tone: text === "Override" ? Commons.Color.accent : Util.alpha(Commons.Color.popups.text, text === "Omarchy" ? 0.7 : 0.45)
+                                                                                                               ^^^^
+Warning: ControlCenter.qml:2118:125: Member "caption" not found on type "QObject" [missing-property]
+    Strong { id: tagText; anchors.centerIn: parent; text: tagBox.text.toUpperCase(); font.pixelSize: Math.max(8, Style.font.caption - 2); font.bold: true; color: tagBox.tone }
+                                                                                                                            ^^^^^^^
+Warning: ControlCenter.qml:2241:61: Member "text" not found on type "QObject" [missing-property]
+          color: nrow.current !== "" ? Commons.Color.popups.text : Util.alpha(Commons.Color.popups.text, 0.5)
+                                                            ^^^^
+Warning: ControlCenter.qml:2241:100: Member "text" not found on type "QObject" [missing-property]
+          color: nrow.current !== "" ? Commons.Color.popups.text : Util.alpha(Commons.Color.popups.text, 0.5)
+                                                                                                   ^^^^
+Warning: ControlCenter.qml:2294:66: Member "text" not found on type "QObject" [missing-property]
+        color: !lrow.available ? Util.alpha(Commons.Color.popups.text, 0.75) : Util.alpha(Commons.Color.popups.text, 0.6)
+                                                                 ^^^^
+Warning: ControlCenter.qml:2294:112: Member "text" not found on type "QObject" [missing-property]
+        color: !lrow.available ? Util.alpha(Commons.Color.popups.text, 0.75) : Util.alpha(Commons.Color.popups.text, 0.6)
+                                                                                                               ^^^^
+Warning: DayLine.qml:16:3: Type PanelWindow is not creatable. [uncreatable-type]
+  PanelWindow {
+  ^^^^^^^^^^^
+Warning: DayLine.qml:26:5: unknown grouped property scope margins. [unqualified]
+    margins.top: 0
+    ^^^^^^^
+Warning: DayLine.qml:26:5: Type margins is used but it is not resolved [unresolved-type]
+    margins.top: 0
+    ^^^^^^^
+Info: DayLine.qml:4:1: Unused import [unused-imports]
+import qs.Commons
+^^^^^^
+Warning: Engine.qml:90:30: Unqualified access [unqualified]
+    delegate: DayLine { bar: root.edgeBar }
+                             ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: Engine.qml:95:32: Unqualified access [unqualified]
+    delegate: DeskClock { bar: root.edgeBar }
+                               ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: Engine.qml:157:15: Unqualified access [unqualified]
+        spec: root.material ? root.material.edge : null
+              ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: Engine.qml:157:31: Unqualified access [unqualified]
+        spec: root.material ? root.material.edge : null
+                              ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: Engine.qml:158:19: Unqualified access [unqualified]
+        themeDir: root.themeDir
+                  ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: Engine.qml:159:16: Unqualified access [unqualified]
+        stamp: root.themeStamp
+               ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: Engine.qml:160:20: Unqualified access [unqualified]
+        barHeight: root.edgeBar ? root.edgeBar.barSize : Style.bar.sizeHorizontal
+                   ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: Engine.qml:160:35: Unqualified access [unqualified]
+        barHeight: root.edgeBar ? root.edgeBar.barSize : Style.bar.sizeHorizontal
+                                  ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+Suggested change:
+pragma ComponentBehavior: Bound
+import QtQuick
+Warning: Engine.qml:160:68: Member "sizeHorizontal" not found on type "QObject" [missing-property]
+        barHeight: root.edgeBar ? root.edgeBar.barSize : Style.bar.sizeHorizontal
+                                                                   ^^^^^^^^^^^^^^
+Warning: modules/Workspaces.qml:320:93: Member "searchMode" not found on type QQuickLoader::item with type QObject [missing-property]
+  function toggleDrop() { if (dropOpen) { close(); return } var m = dropLoader.item; if (m) m.searchMode = false; open() }
+                                                                                            ^
+Warning: modules/Workspaces.qml:327:5: Member "searchMode" not found on type QQuickLoader::item with type QObject [missing-property]
+    m.searchMode = true
+    ^
+Warning: modules/Workspaces.qml:378:73: Member "tracks" not found on type "QObject" [missing-property]
+  function dropTracks(token) { var m = dropLoader.item; return !!m && m.tracks(token) }
+                                                                        ^^^^^^
+Warning: modules/Workspaces.qml:381:36: Member "takeRequest" not found on type "QObject" [missing-property]
+    if (!dropAvailable || !m || !m.takeRequest(request)) return false
+                                   ^^^^^^^^^^^
+Warning: modules/Workspaces.qml:382:11: Member "hasPending" not found on type "QObject" [missing-property]
+    if (m.hasPending()) open()
+          ^^^^^^^^^^
+Warning: modules/Workspaces.qml:387:30: Member "requests" not found on type "QObject" [missing-property]
+    return m ? { requests: m.requests.length, launches: m.launches.length } : null
+                             ^^^^^^^^
+Warning: modules/Workspaces.qml:387:59: Member "launches" not found on type "QObject" [missing-property]
+    return m ? { requests: m.requests.length, launches: m.launches.length } : null
+                                                          ^^^^^^^^
+Warning: modules/Workspaces.qml:410:31: Member "family" not found on type "QObject" [missing-property]
+      font.family: Style.font.family
+                              ^^^^^^
+Warning: modules/Workspaces.qml:411:34: Member "caption" not found on type "QObject" [missing-property]
+      font.pixelSize: Style.font.caption
+                                 ^^^^^^^
+Warning: modules/Workspaces.qml:429:106: Member "cardPresence" not found on type "QObject" [missing-property]
+    readonly property bool inverted: !!source && (root.dropOpen || (!!dropLoader.item && dropLoader.item.cardPresence > 0.01))
+                                                                                                         ^^^^^^^^^^^^
+Warning: modules/Workspaces.qml:490:34: Member "icon" not found on type "QObject" [missing-property]
+      font.pixelSize: Style.font.icon + (Style.fontPixelGrid ? 0 : 2)
+                                 ^^^^
+Warning: modules/Workspaces.qml:577:33: Member "family" not found on type "QObject" [missing-property]
+        font.family: Style.font.family; font.bold: true
+                                ^^^^^^
+Warning: modules/Workspaces.qml:578:36: Member "body" not found on type "QObject" [missing-property]
+        font.pixelSize: Style.font.body + 1
+                                   ^^^^
+Warning: modules/WorkspacesFace.qml:56:84: Member "childHovered" not found on type "QObject" [missing-property]
+  readonly property bool hovered: faceHover.hovered || (loader.item && loader.item.childHovered === true)
+                                                                                   ^^^^^^^^^^^^
+Warning: modules/WorkspacesFace.qml:82:44: Member "implicitWidth" not found on type "QObject" [missing-property]
+  implicitWidth: loader.item ? loader.item.implicitWidth : 0
+                                           ^^^^^^^^^^^^^
+Warning: modules/WorkspacesFace.qml:146:19: Unqualified access [unqualified]
+            text: modelData === 10 ? "0" : String(modelData)
+                  ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+            text: <id>.modelData === 10 ? "0" : String(modelData)
+                  ^^^^^
+Warning: modules/WorkspacesFace.qml:146:51: Unqualified access [unqualified]
+            text: modelData === 10 ? "0" : String(modelData)
+                                                  ^^^^^^^^^
+Info: modelData is a member of a parent element.
+      You can qualify the access with its id to avoid this warning (You first have to give the element an id).
+
+Suggested change:
+            text: modelData === 10 ? "0" : String(<id>.modelData)
+                                                  ^^^^^
+Warning: modules/WorkspacesFace.qml:147:37: Member "family" not found on type "QObject" [missing-property]
+            font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.bodySmall
+                                    ^^^^^^
+Warning: modules/WorkspacesFace.qml:147:89: Member "bodySmall" not found on type "QObject" [missing-property]
+            font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.bodySmall
+                                                                                        ^^^^^^^^^
+Warning: modules/WorkspacesFace.qml:169:35: Member "family" not found on type "QObject" [missing-property]
+          font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.bodySmall
+                                  ^^^^^^
+Warning: modules/WorkspacesFace.qml:169:87: Member "bodySmall" not found on type "QObject" [missing-property]
+          font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.bodySmall
+                                                                                      ^^^^^^^^^
+Warning: modules/WorkspacesFace.qml:213:37: Member "family" not found on type "QObject" [missing-property]
+            font.family: Style.font.family
+                                    ^^^^^^
+Warning: modules/WorkspacesFace.qml:214:40: Member "body" not found on type "QObject" [missing-property]
+            font.pixelSize: Style.font.body
+                                       ^^^^
+Warning: modules/WorkspacesFace.qml:236:43: Member "others" not found on type "Repeater" [missing-property]
+          readonly property int n: parent.others.length - index
+                                          ^^^^^^
+Warning: modules/WorkspacesFace.qml:238:37: Member "box" not found on type "Repeater" [missing-property]
+          y: (root.barSize - parent.box) / 2 - n * Style.space(2) + Style.space(2)
+                                    ^^^
+Info: Did you mean "top"?
+Suggested change:
+          y: (root.barSize - parent.top) / 2 - n * Style.space(2) + Style.space(2)
+                                    ^^^
+Warning: modules/WorkspacesFace.qml:239:25: Member "box" not found on type "Repeater" [missing-property]
+          width: parent.box; height: parent.box
+                        ^^^
+Info: Did you mean "top"?
+Suggested change:
+          width: parent.top; height: parent.box
+                        ^^^
+Warning: modules/WorkspacesFace.qml:239:45: Member "box" not found on type "Repeater" [missing-property]
+          width: parent.box; height: parent.box
+                                            ^^^
+Info: Did you mean "top"?
+Suggested change:
+          width: parent.box; height: parent.top
+                                            ^^^
+Warning: modules/WorkspacesFace.qml:242:44: Member "others" not found on type "Repeater" [missing-property]
+          border.color: root.urgent(parent.others[n - 1]) ? root.urgentColor : root.dim
+                                           ^^^^^^
+Warning: modules/WorkspacesFace.qml:252:154: Member "family" not found on type "QObject" [missing-property]
+        Text { renderType: Text.NativeRendering; anchors.centerIn: parent; text: root.active === 10 ? "0" : String(root.active); font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.body; color: root.strong }
+                                                                                                                                                         ^^^^^^
+Warning: modules/WorkspacesFace.qml:252:206: Member "body" not found on type "QObject" [missing-property]
+        Text { renderType: Text.NativeRendering; anchors.centerIn: parent; text: root.active === 10 ? "0" : String(root.active); font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.body; color: root.strong }
+                                                                                                                                                                                                             ^^^^
+Warning: modules/WorkspacesFace.qml:282:30: Member "dot" not found on type "Repeater" [missing-property]
+          x: index * (parent.dot + Style.space(2))
+                             ^^^
+Info: Did you mean "data"?
+Suggested change:
+          x: index * (parent.data + Style.space(2))
+                             ^^^^
+Warning: modules/WorkspacesFace.qml:284:25: Member "dot" not found on type "Repeater" [missing-property]
+          width: parent.dot; height: parent.dot
+                        ^^^
+Info: Did you mean "data"?
+Suggested change:
+          width: parent.data; height: parent.dot
+                        ^^^^
+Warning: modules/WorkspacesFace.qml:284:45: Member "dot" not found on type "Repeater" [missing-property]
+          width: parent.dot; height: parent.dot
+                                            ^^^
+Info: Did you mean "data"?
+Suggested change:
+          width: parent.dot; height: parent.data
+                                            ^^^^
+Warning: modules/WorkspacesFace.qml:331:37: Member "family" not found on type "QObject" [missing-property]
+            font.family: Style.font.family
+                                    ^^^^^^
+Warning: modules/WorkspacesFace.qml:332:40: Member "bodySmall" not found on type "QObject" [missing-property]
+            font.pixelSize: Style.font.bodySmall
+                                       ^^^^^^^^^

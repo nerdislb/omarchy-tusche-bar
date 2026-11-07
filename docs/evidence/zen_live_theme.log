@@ -1,0 +1,28 @@
+Traceback (most recent call last):
+  File "/home/nerdi/Data/Development/projects/tusche-bar-looks-20261107/tests/zen_live_theme.py", line 65, in run
+    systemctl('daemon-reload')
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/nerdi/Data/Development/projects/tusche-bar-looks-20261107/tests/zen_live_theme.py", line 16, in systemctl
+    return subprocess.run(['systemctl', '--user', *args], check=True, capture_output=True, text=True)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/subprocess.py", line 578, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['systemctl', '--user', 'daemon-reload']' returned non-zero exit status 1.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/nerdi/Data/Development/projects/tusche-bar-looks-20261107/tests/zen_live_theme.py", line 98, in <module>
+    run()
+    ~~~^^
+  File "/home/nerdi/Data/Development/projects/tusche-bar-looks-20261107/tests/zen_live_theme.py", line 94, in run
+    systemctl('daemon-reload')
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/nerdi/Data/Development/projects/tusche-bar-looks-20261107/tests/zen_live_theme.py", line 16, in systemctl
+    return subprocess.run(['systemctl', '--user', *args], check=True, capture_output=True, text=True)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/subprocess.py", line 578, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['systemctl', '--user', 'daemon-reload']' returned non-zero exit status 1.

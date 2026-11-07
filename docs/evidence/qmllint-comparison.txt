@@ -1,0 +1,3 @@
+Baseline diagnostics: 352
+Candidate diagnostics: 119
+New messages:

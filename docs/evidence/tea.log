@@ -1,0 +1,16 @@
+PASS rooibos: a complete theme folder
+PASS rooibos: every text colour reaches 4.5:1 on its background
+PASS rooibos: red is the one signal colour of the UI chrome
+PASS rooibos: tea glass is the glass family (no chrome), with a complete frame glint
+PASS rooibos: a still amber stripe frame, a dark window shadow, no light focus halo
+PASS rooibos: its own three pictures, default first, exactly the generator's input
+PASS rooibos: neovim keeps red for errors only
+PASS kandis: a complete theme folder
+PASS kandis: every text colour reaches 4.5:1 on its background
+PASS kandis: red is the one signal colour of the UI chrome
+PASS kandis: tea glass is the glass family (no chrome), with a complete frame glint
+PASS kandis: a still amber stripe frame, a dark window shadow, no light focus halo
+PASS kandis: its own three pictures, default first, exactly the generator's input
+PASS kandis: neovim keeps red for errors only
+PASS the installer knows the tea pair
+15 tea checks passed

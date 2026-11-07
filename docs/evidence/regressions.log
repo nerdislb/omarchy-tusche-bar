@@ -1,0 +1,61 @@
+Exit: 1
+PASS: bar-only variant B wiring and special-theme isolation
+PASS: presets, native-widget preservation, embedded settings round-trip, startup alarms, shell quoting, focused-output routing
+PASS: stationary/recreated hover ignored; physical pointer motion accepted
+PASS: legacy preset ids (k1 → tidy, no k2) and legacy module ids (amiga.*)
+PASS: base reconstruction
+node:internal/assert/utils:146
+  throw error;
+  ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+... Skipped lines
+
+  [
+    'edge',
+    'keys',
+    'frames',
+    'glass',
+...
+    'dayline',
++   'daylineNow',
++   'workspacePing',
++   'logoImage',
+    'seal',
+    'sealIdle',
+    'sealShare'
+  ]
+
+    at Object.<anonymous> (/home/nerdi/Data/Development/projects/tusche-bar-looks-20261107/tests/regressions.cjs:145:10)
+    at Module._compile (node:internal/modules/cjs/loader:1968:14)
+    at Object..js (node:internal/modules/cjs/loader:2108:10)
+    at Module.load (node:internal/modules/cjs/loader:1690:32)
+    at Module._load (node:internal/modules/cjs/loader:1480:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: [
+    'edge',        'keys',
+    'frames',      'glass',
+    'glassMotion', 'motion',
+    'statusHints', 'dayline',
+    'daylineNow',  'workspacePing',
+    'logoImage',   'seal',
+    'sealIdle',    'sealShare'
+  ],
+  expected: [
+    'edge',        'keys',
+    'frames',      'glass',
+    'glassMotion', 'motion',
+    'statusHints', 'dayline',
+    'seal',        'sealIdle',
+    'sealShare'
+  ],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.13.0

@@ -1,0 +1,8 @@
+PASS: the extras live in Windows and Input & keys; the old Extras name opens Windows
+PASS: live state: unread facts leave the domain out; the sheet follows shell.json
+PASS: only known, valid values can be staged
+PASS: Use runs the extras after the card picker and before the bar
+PASS: Cancel restores only the extras Use touched, and only when it can
+PASS: search finds the extras by label and value
+PASS: the health row reports the extras from facts only
+7 extras checks passed

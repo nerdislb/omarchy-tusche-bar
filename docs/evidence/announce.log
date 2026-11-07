@@ -1,0 +1,27 @@
+PASS: disabled means no baselines and no hint
+PASS: every channel starts silently, including sources that arrive much later
+PASS: an output change names the new device once it is past the settle window
+PASS: renaming the same output, or reading it again, is not news
+PASS: each announcement gets its own sequence number; repeats do not
+PASS: losing the output clears that source only and its return begins silently
+PASS: invalid readings never become hints or baselines
+PASS: Bluetooth connects and disconnects carry the changed device name
+PASS: late BlueZ objects already connected establish silent per-device baselines
+PASS: Bluetooth readiness allows its native four-second enumeration burst
+PASS: Bluetooth reordering and friendly-name updates do not announce reconnection
+PASS: the Bluetooth radio switching wins over the disconnect churn; a new adapter stays quiet
+PASS: simultaneous device transitions summarize the final connected count
+PASS: a channel somebody else shows keeps its baseline moving without replaying later
+PASS: disable and re-enable discard the old line and give every source a fresh baseline
+PASS: device names are one plain bounded line: markup, control characters and length are removed
+PASS: device collections are bounded, deduplicated and prototype-shaped ids remain data
+PASS: reducers do not mutate previous snapshots or caller-owned samples
+PASS: unknown channels and bad clocks leave the state alone
+PASS: a waiting line is only still true while its source is there
+PASS: the gate lets one line through per gap; a waiting line is replaced by a newer one
+PASS: a quiet gap re-arms the gate and an empty hint changes nothing
+PASS: the OSD command line is a plain argv: a hostile name stays one element
+PASS: the island is taken to show Bluetooth unless it is off, disabled or not configured
+PASS: Announcer observes only public services, never polls, and goes through the engine's emit
+PASS: the bar module carries no announcement code any more
+26 announcement checks passed

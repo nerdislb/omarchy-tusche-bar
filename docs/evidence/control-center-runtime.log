@@ -1,0 +1,191 @@
+  INFO: Launching config: "/tmp/visual-editor-qt-sghmu4p6/shell.qml"
+  INFO: Shell ID: "d7070222d5ecc77b64339e7fe402d1b4" Path ID "d7070222d5ecc77b64339e7fe402d1b4"
+  INFO: Saving logs to "/tmp/codex-B-shell-bar-run/quickshell/by-id/n8gq1qfc5ot/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+ DEBUG qml: CC_REVIEW_BEGIN
+  INFO: Configuration Loaded
+ DEBUG qml: PASS native CC bar page opens
+ DEBUG qml: PASS native screen list available
+ DEBUG qml: PASS declarative CC stage available
+ DEBUG qml: PASS saved cc-bar
+ DEBUG qml: PASS declarative CC stage available
+ DEBUG qml: PASS saved cc-screens
+ DEBUG qml: PASS Screens to Motion popup control exists and is visible
+ DEBUG qml: PASS Screens to Motion popup control belongs to a live clipped viewport
+ DEBUG qml: VIEWPORT {"label":"Screens to Motion popup control","x":0,"y":81.99293518066406,"width":87.9375,"height":32,"viewportWidth":703,"viewportHeight":443,"contentY":0}
+ DEBUG qml: PASS Screens to Motion popup control is wholly inside the viewport
+ DEBUG qml: PASS Screens to Motion frame control exists and is visible
+ DEBUG qml: PASS Screens to Motion frame control belongs to a live clipped viewport
+ DEBUG qml: VIEWPORT {"label":"Screens to Motion frame control","x":95.9375,"y":81.99293518066406,"width":87.9375,"height":32,"viewportWidth":703,"viewportHeight":443,"contentY":0}
+ DEBUG qml: PASS Screens to Motion frame control is wholly inside the viewport
+ DEBUG qml: PASS declarative CC stage available
+ DEBUG qml: PASS saved cc-motion-after-screens
+ DEBUG qml: PASS Screens to Health refresh control exists and is visible
+ DEBUG qml: PASS Screens to Health refresh control belongs to a live clipped viewport
+ DEBUG qml: VIEWPORT {"label":"Screens to Health refresh control","x":570.703125,"y":34.93894958496094,"width":120.296875,"height":29,"viewportWidth":703,"viewportHeight":443,"contentY":0}
+ DEBUG qml: PASS Screens to Health refresh control is wholly inside the viewport
+ DEBUG qml: PASS Screens to Health first check exists and is visible
+ DEBUG qml: PASS Screens to Health first check belongs to a live clipped viewport
+ DEBUG qml: VIEWPORT {"label":"Screens to Health first check","x":0,"y":68.93894958496094,"width":691,"height":44,"viewportWidth":703,"viewportHeight":443,"contentY":0}
+ DEBUG qml: PASS Screens to Health first check is wholly inside the viewport
+ DEBUG qml: PASS declarative CC stage available
+ DEBUG qml: PASS saved cc-health-after-screens
+ DEBUG qml: PASS screen choice stages without writes
+ DEBUG qml: PASS Use commits screen profile
+ DEBUG qml: PASS applied screen is recorded for Cancel
+ DEBUG qml: PASS ModuleBus follows actual window screen and profile binding
+ DEBUG qml: PASS Cancel restores touched screen
+ DEBUG qml: PASS Cancel preserves external untouched screen change
+ DEBUG qml: PASS ModuleBus restores inherited variant
+ DEBUG qml: PASS Save removes override and closes
+ DEBUG qml: PASS motion component loads at usable size
+ DEBUG qml: PASS isolated motion plays inside actual CC
+ DEBUG qml: PASS page switch destroys motion preview
+ DEBUG qml: PASS close during Use completes and reverts screen change
+ DEBUG qml: PASS Health shows the armed notification safety net
+ DEBUG qml: PASS Health: the loaded generation is the installed one
+ DEBUG qml: PASS Health reads the focus status through its own helper
+ DEBUG qml: PASS Health flags a menu model that differs from Omarchy's
+ DEBUG qml: PASS Health: workspace data and centre anchor are fine on the fixture
+ DEBUG qml: PASS Health refresh control with the new rows exists and is visible
+ DEBUG qml: PASS Health refresh control with the new rows belongs to a live clipped viewport
+ DEBUG qml: VIEWPORT {"label":"Health refresh control with the new rows","x":570.703125,"y":35,"width":120.296875,"height":29,"viewportWidth":703,"viewportHeight":443,"contentY":0}
+ DEBUG qml: PASS Health refresh control with the new rows is wholly inside the viewport
+ DEBUG qml: PASS the safety-net row is part of the Health page
+ DEBUG qml: PASS Health closes cleanly
+ DEBUG qml: PASS the old Extras name opens Windows
+ DEBUG qml: PASS Extras read the toggle and find the installed sheet (off: not in shell.json)
+ DEBUG qml: PASS a toggle read after opening joins the snapshot
+ DEBUG qml: PASS Full width row exists and is visible
+ DEBUG qml: PASS Full width row belongs to a live clipped viewport
+ DEBUG qml: VIEWPORT {"label":"Full width row","x":0,"y":62,"width":691,"height":45,"viewportWidth":703,"viewportHeight":443,"contentY":0}
+ DEBUG qml: PASS Full width row is wholly inside the viewport
+ DEBUG qml: PASS Shortcut sheet row in Input & keys exists and is visible
+ DEBUG qml: PASS Shortcut sheet row in Input & keys belongs to a live clipped viewport
+ DEBUG qml: VIEWPORT {"label":"Shortcut sheet row in Input & keys","x":0,"y":300,"width":691,"height":45,"viewportWidth":703,"viewportHeight":443,"contentY":230}
+ DEBUG qml: PASS Shortcut sheet row in Input & keys is wholly inside the viewport
+ DEBUG qml: PASS Open the sheet waits while the sheet is off
+ DEBUG qml: PASS Health reports the extras
+ DEBUG qml: PASS declarative CC stage available
+ DEBUG qml: PASS saved cc-extras
+ DEBUG qml: PASS Full width stages without running the helper
+ DEBUG qml: PASS Use switches full width through the helper
+ DEBUG qml: PASS declarative CC stage available
+ DEBUG qml: PASS saved cc-extras-used
+ DEBUG qml: PASS Cancel switches full width back
+ DEBUG qml: PASS Windows area opens
+ DEBUG qml: PASS Omarchy's settings read from its menu
+ DEBUG qml: PASS corners live from the checked guard
+ DEBUG qml: PASS gaps toggle live from the entry the menu does not offer
+ DEBUG qml: PASS overrides read: none set
+ DEBUG qml: PASS Omarchy values read after opening join the snapshot
+ DEBUG qml: PASS Corners row exists and is visible
+ DEBUG qml: PASS Corners row belongs to a live clipped viewport
+ DEBUG qml: VIEWPORT {"label":"Corners row","x":0,"y":109,"width":691,"height":45,"viewportWidth":703,"viewportHeight":443,"contentY":0}
+ DEBUG qml: PASS Corners row is wholly inside the viewport
+ DEBUG qml: PASS Outer gap override row
+ DEBUG qml: PASS advanced rows hidden
+ DEBUG qml: PASS Advanced shows them
+ DEBUG qml: PASS declarative CC stage available
+ DEBUG qml: PASS saved cc-windows
+ DEBUG qml: PASS staging runs nothing
+ DEBUG qml: PASS two rows staged
+ DEBUG qml: PASS Use finished: Applied live · Save keeps it, Cancel restores the state from opening
+ DEBUG qml: PASS the corners action ran once, shim first on PATH
+ DEBUG qml: PASS Omarchy reports sharp
+ DEBUG qml: PASS the override is written
+ DEBUG qml: PASS Use records the touched rows
+ DEBUG qml: PASS Changed only lists the set override (Omarchy rows only while staged)
+ DEBUG qml: PASS declarative CC stage available
+ DEBUG qml: PASS saved cc-changed
+ DEBUG qml: PASS Cancel closes
+ DEBUG qml: PASS Cancel restores the corners and drops the override
+ DEBUG qml: PASS Cancel ran the action for the value from opening
+ DEBUG qml: PASS a refused action fails the step with the shim's reason: Omarchy · Corners: Rounded: omarchy-launch-floating-terminal-with-presentation: this needs a window or a question; use Omarchy's menu for it
+ DEBUG qml: PASS the refused action changed nothing
+ DEBUG qml: PASS a started action counts as touched
+ DEBUG qml: PASS Cancel compares and runs nothing where the state from opening holds
+ DEBUG qml: PASS a sudo script's row is read-only
+ DEBUG qml: PASS a read-only row does not stage
+ DEBUG qml: PASS DNS moved from System to Sound & network
+ DEBUG qml: PASS search finds an override by its Hyprland option
+ DEBUG qml: PASS search finds an Omarchy row by its command
+ DEBUG qml: PASS the FIDO2 terminal flow is a link in System
+ DEBUG qml: PASS declarative CC stage available
+ DEBUG qml: PASS saved cc-system
+ DEBUG qml: PASS read-only view closes without running anything
+ DEBUG qml: PASS cc wifi opens Sound & network
+ DEBUG qml: PASS opening reads the plugin list again
+ DEBUG qml: PASS row link.sound
+ DEBUG qml: PASS row link.network
+ DEBUG qml: PASS row link.tailscale
+ DEBUG qml: PASS row omarchy.setup.network.dns
+ DEBUG qml: PASS row link.bluetooth
+ DEBUG qml: PASS DNS row shown read-only exists and is visible
+ DEBUG qml: PASS DNS row shown read-only belongs to a live clipped viewport
+ DEBUG qml: VIEWPORT {"label":"DNS row shown read-only","x":0,"y":263,"width":691,"height":79,"viewportWidth":703,"viewportHeight":443,"contentY":0}
+ DEBUG qml: PASS DNS row shown read-only is wholly inside the viewport
+ DEBUG qml: PASS the network line comes from the device facts
+ DEBUG qml: PASS the Bluetooth row shows what is connected
+ DEBUG qml: PASS the sidebar names the network
+ DEBUG qml: PASS the current area in the scrolled sidebar exists and is visible
+ DEBUG qml: PASS the current area in the scrolled sidebar belongs to a live clipped viewport
+ DEBUG qml: VIEWPORT {"label":"the current area in the scrolled sidebar","x":0,"y":298,"width":200,"height":29,"viewportWidth":200,"viewportHeight":443,"contentY":124}
+ DEBUG qml: PASS the current area in the scrolled sidebar is wholly inside the viewport
+ DEBUG qml: PASS Sound Open button exists and is visible
+ DEBUG qml: PASS Sound Open button belongs to a live clipped viewport
+ DEBUG qml: VIEWPORT {"label":"Sound Open button","x":613,"y":66,"width":72,"height":29,"viewportWidth":703,"viewportHeight":443,"contentY":0}
+ DEBUG qml: PASS Sound Open button is wholly inside the viewport
+ DEBUG qml: PASS Open is ready with nothing staged
+ DEBUG qml: PASS declarative CC stage available
+ DEBUG qml: PASS saved cc-devices
+ DEBUG qml: PASS native click delivered
+ DEBUG qml: PASS Open closes the window first
+ DEBUG qml: PASS then the sound panel opens where it sits (in the bar: summoned)
+ DEBUG qml: PASS a panel link runs no command
+ DEBUG qml: PASS native click delivered
+ DEBUG qml: PASS Open closed the window
+ DEBUG qml: PASS opened again before the link ran: it does not run
+ DEBUG qml: PASS and never runs later
+ DEBUG qml: PASS Keyboard layouts link in Input & keys
+ DEBUG qml: PASS Keyboard layouts Open button exists and is visible
+ DEBUG qml: PASS Keyboard layouts Open button belongs to a live clipped viewport
+ DEBUG qml: VIEWPORT {"label":"Keyboard layouts Open button","x":613,"y":227,"width":72,"height":29,"viewportWidth":703,"viewportHeight":443,"contentY":230}
+ DEBUG qml: PASS Keyboard layouts Open button is wholly inside the viewport
+ DEBUG qml: PASS native click delivered
+ DEBUG qml: PASS the menu entry runs detached once the window has closed
+ DEBUG qml: PASS not through the shims
+ DEBUG qml: PASS idle times read from shell.json
+ DEBUG qml: PASS Lock after row exists and is visible
+ DEBUG qml: PASS Lock after row belongs to a live clipped viewport
+ DEBUG qml: VIEWPORT {"label":"Lock after row","x":0,"y":132,"width":691,"height":68,"viewportWidth":703,"viewportHeight":443,"contentY":0}
+ DEBUG qml: PASS Lock after row is wholly inside the viewport
+ DEBUG qml: PASS Power & sleep in the scrolled sidebar exists and is visible
+ DEBUG qml: PASS Power & sleep in the scrolled sidebar belongs to a live clipped viewport
+ DEBUG qml: VIEWPORT {"label":"Power & sleep in the scrolled sidebar","x":0,"y":328,"width":200,"height":29,"viewportWidth":200,"viewportHeight":443,"contentY":124}
+ DEBUG qml: PASS Power & sleep in the scrolled sidebar is wholly inside the viewport
+ DEBUG qml: PASS idle times stage without a write
+ DEBUG qml: PASS declarative CC stage available
+ DEBUG qml: PASS saved cc-power
+ DEBUG qml: PASS Open waits while something is staged
+ DEBUG qml: PASS native click delivered
+ DEBUG qml: PASS a disabled Open does nothing
+ DEBUG qml: PASS Use finished: Applied live · Save keeps it, Cancel restores the state from opening
+ DEBUG qml: PASS one write sets both
+ DEBUG qml: PASS Use records the touched idle times
+ DEBUG qml: PASS Open waits while Use is live
+ DEBUG qml: PASS Cancel closes
+ DEBUG qml: PASS Cancel writes the values from opening back in one step
+ DEBUG qml: PASS no link ran on the way
+ DEBUG qml: PASS Motion play button exists for native key test
+ DEBUG qml: PASS Motion play button owns native keyboard focus
+ DEBUG qml: PASS native Ctrl+K was delivered
+ DEBUG qml: PASS Ctrl+K from focused play button opens search
+ DEBUG qml: PASS native search Escape was delivered
+ DEBUG qml: PASS first Escape leaves search without closing CC
+ DEBUG qml: PASS Motion play button refocused for native Escape
+ DEBUG qml: PASS native play-button Escape was delivered
+ DEBUG qml: PASS Escape from focused play button closes CC without writes
+ DEBUG qml: PASS keyboard close destroys motion preview
+ DEBUG qml: VISUAL_RESULT {"checks":169,"applies":5,"closes":13}
+

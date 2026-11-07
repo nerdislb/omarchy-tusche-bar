@@ -1,0 +1,39 @@
+Exit: 1
+PASS: menu entries in LINKS become link rows, run as the menu runs them
+PASS: what a link opens and the command it shows
+PASS: no link where the menu does not offer the entry: its guard, disabled, a hidden menu above
+PASS: device panels open where they sit: in the bar or embedded in a status group
+PASS: device links: Omarchy panels, the display editor and brightness when installed
+PASS: links join the live state; they stage nothing and open only while placed
+PASS: the Sound & network area: sound, network (with DNS), Bluetooth
+PASS: search finds links by name, command and menu path
+PASS: idle times: what Omarchy runs with, what shell.json holds
+PASS: idle labels and choices; a value set elsewhere joins the choices
+PASS: idle staging: only offered values; Use writes both as one step
+PASS: Cancel puts back exactly what shell.json held at opening: the value, or no value
+PASS: a snapshot taken before shell.json was read gets its idle times when they arrive
+PASS: the Use step is confirmed from the host's copy of shell.json
+node:internal/assert/utils:146
+  throw error;
+  ^
+
+AssertionError [ERR_ASSERTION]: LINKS names setup.monitors, which the menu no longer has
+    at /home/nerdi/Data/Development/projects/tusche-bar-looks-20261107/docs/evidence/B-lint-e7s1d36m/baseline/tests/devices.cjs:244:14
+    at Array.forEach (<anonymous>)
+    at /home/nerdi/Data/Development/projects/tusche-bar-looks-20261107/docs/evidence/B-lint-e7s1d36m/baseline/tests/devices.cjs:243:27
+    at test (/home/nerdi/Data/Development/projects/tusche-bar-looks-20261107/docs/evidence/B-lint-e7s1d36m/baseline/tests/devices.cjs:27:28)
+    at Object.<anonymous> (/home/nerdi/Data/Development/projects/tusche-bar-looks-20261107/docs/evidence/B-lint-e7s1d36m/baseline/tests/devices.cjs:241:3)
+    at Module._compile (node:internal/modules/cjs/loader:1968:14)
+    at Object..js (node:internal/modules/cjs/loader:2108:10)
+    at Module.load (node:internal/modules/cjs/loader:1690:32)
+    at Module._load (node:internal/modules/cjs/loader:1480:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v26.13.0

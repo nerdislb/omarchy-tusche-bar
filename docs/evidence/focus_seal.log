@@ -1,0 +1,21 @@
+PASS: the seal is calm: no battery line while charging, full, or without a battery
+PASS: the line appears at 30 % and below while discharging, and turns urgent at 15 %
+PASS: charging calms even a low battery; the level is clamped and junk is zero
+PASS: the square marks an urgent workspace or an urgently low battery, nothing else
+PASS: the words for assistive technology list battery before workspaces
+PASS: urgent workspaces come from our module when there is one, else from the native list
+PASS: a click brings the bar back; only the middle button opens the Control Center
+PASS: the window reads public services only and wires clicks through the model
+PASS: the engine accepts toggle and maps it onto the existing guarded start and show
+PASS: the companion is calm without anything to say, and without an island at all
+PASS: island() is idempotent: the normalized reading can pass through it again
+PASS: the face follows the importance: battery, alert, waiting, workspace, drained, working
+PASS: battery and alert are urgent, the rest keeps the accent
+PASS: the badge counts unread notifications, caps at 99, hides in Do Not Disturb, turns urgent with an alert
+PASS: observe: a finished agent and a new notification are events; baselines and resets are not
+PASS: the companion is described for assistive technology
+PASS: the feed ignores a read that finishes after it was switched off
+PASS: the idle life asks the compositor only while Omi is on screen, respects inhibitors, and has an off switch
+PASS: the Omi install in use is a validated directory name from the pointer file, never a path
+PASS: the shared Omi is wired to the face and its own option, and runs only for an installed Omi
+20 focus seal checks passed

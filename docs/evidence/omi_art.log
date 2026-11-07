@@ -1,0 +1,14 @@
+PASS: every face has a mode in the pack
+PASS: a pack that dropped a mode falls back, ending at idle and the bare logo
+PASS: the bubble sits inside the view, on the grid, at its top right
+PASS: one digit makes a narrow bubble, two a wider one; counts are clamped to 1..99
+PASS: the digits are cut from inside the body and read as the number
+PASS: every digit 0-9 has its own 3 x 5 shape, and the colon its own 1 x 5
+PASS: the battery sits in the logo's frame, on the grid, and fills cell by cell
+PASS: a charge under 5 % shows an empty battery, anything above one cell
+PASS: the clock bubble holds HH:MM, sits at the corner and stays inside the view
+PASS: the fly comes in from afar, circles Omi on the grid, and leaves
+PASS: the eyes turn toward a thing, clamped to the unit square
+PASS: the eyes follow a pointer over the item, full at its edge, centred at its middle
+PASS: no pack data is bundled
+13 omi art checks passed

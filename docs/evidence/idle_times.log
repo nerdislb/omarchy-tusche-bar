@@ -1,0 +1,43 @@
+PASS status reads both values
+PASS set prints the values after the write
+PASS only the given key changes
+PASS everything else stays
+PASS key order stays
+PASS the file mode stays 0600
+PASS no temporary file is left behind
+PASS 0 turns a step off; a whole float is written as an integer
+PASS restore puts back 150.5
+PASS restore puts back 90000
+PASS restore puts back "300"
+PASS restore puts back null
+PASS restore puts back false
+PASS restore puts back {"odd": [1]}
+PASS restore puts back "                                       
+PASS restore absent removes the key
+PASS the idle object goes once it is empty
+PASS status without values: null
+PASS set refuses without a write: {"lock": -1}
+PASS set refuses without a write: {"lock": 1.5}
+PASS set refuses without a write: {"lock": true}
+PASS set refuses without a write: {"lock": 86401}
+PASS set refuses without a write: {"lock": "300"}
+PASS set refuses without a write: {"lock": null}
+PASS set refuses without a write: {"dim": 10}
+PASS set refuses without a write: {}
+PASS set refuses without a write: []
+PASS set refuses without a write: "lock"
+PASS restore refuses without a write: {"lock": 300}
+PASS restore refuses without a write: {"lock": {"value": 1, "x": 2}}
+PASS restore refuses without a write: {"lock": {"absent": false}}
+PASS restore refuses without a write: {"lock": {}}
+PASS restore refuses without a write: {"dim": {"absent": true}}
+PASS refuses text that is not JSON
+PASS usage on anything else
+PASS the helper waits while another writer holds the lock
+PASS then reads the file afresh: the other write stays
+PASS the lock lives in the runtime directory
+PASS apply-layout.py takes the same lock and keeps the idle times
+PASS an idle that is not an object is left alone
+PASS a broken shell.json is not overwritten
+PASS no shell.json: nothing is created
+42 idle-times checks passed

@@ -1,0 +1,15 @@
+PASS: logical monitor bounds preserve negative offsets and all reserved edges
+PASS: scale and every rotated/mirrored transform are applied once to dimensions
+PASS: real unequal two-dimensional tiles are not reduced to equal columns
+PASS: portrait fractional-scale map uses logical client positions without rotation twice
+PASS: fullscreen clips to usable monitor and floating windows remain distinct above tiles
+PASS: parked pages are counted per edge; partial intersections retain correct visible area
+PASS: hidden, unmapped, wrong-monitor/workspace and malformed clients never become tiles
+PASS: monitor source is workspace/client, never whichever display happens to be focused
+PASS: incomplete monitor updates cannot produce negative/NaN usable bounds
+PASS: all regular IDs, including high IDs and named workspaces, survive; special IDs do not
+PASS: geometry is translation invariant and input objects are not mutated
+PASS: geometry events are selective; title/keyboard/network noise does not refresh IPC
+PASS: native-metadata fallback parses concatenated JSON safely and discards private fields
+PASS: an Umbriel compositor snapshot maps windows onto their own output
+WORKSPACE_GEOMETRY_RESULT {"groups":14}

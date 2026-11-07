@@ -1,0 +1,14 @@
+PASS: the state starts as the plain logo, set at the start
+PASS: the socket is $OMI_SOCKET, else the runtime directory, else nowhere
+PASS: a set changes the state from the service's clock and tells everybody, the sender included
+PASS: instant carries over; setting the same mode changes nothing but is answered with the state
+PASS: for and then start a timer that replaces the old one
+PASS: a timer is at most a day
+PASS: the timer running out changes to then, unless that is where Omi already is
+PASS: bad input is answered with an error and changes nothing, timers included
+PASS: a service without a kit accepts any mode id
+PASS: get is answered with the state, hello names the sender, the rest is ignored
+PASS: the model is never mutated
+PASS: following another service: its state message is the state, anything else is nothing
+PASS: what the seal shows: nothing for the logo and idle, any kit mode otherwise
+13 omi share checks passed
