@@ -1,0 +1,2 @@
+      1 [31m ERROR[97m quickshell.service.pipewire.loop[0m: Failed to connect pipewire context. Errno: 112
+      1 [31m ERROR[97m quickshell.network[0m: Network will not work. Could not find an available backend.

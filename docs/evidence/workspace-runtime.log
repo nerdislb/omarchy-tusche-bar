@@ -12,6 +12,6 @@ PASS   : qmltestrunner::WorkspaceRendering::test_04d_umbriel_ignores_hyprland_mo
 PASS   : qmltestrunner::WorkspaceRendering::test_04e_layout_feedback_tracks_changes_without_startup_or_focus_noise()
 PASS   : qmltestrunner::WorkspaceRendering::test_05_optional_theme_gallery()
 PASS   : qmltestrunner::WorkspaceRendering::cleanupTestCase()
-Totals: 12 passed, 0 failed, 0 skipped, 0 blacklisted, 5024ms
+Totals: 12 passed, 0 failed, 0 skipped, 0 blacklisted, 4962ms
 ********* Finished testing of qmltestrunner *********
 

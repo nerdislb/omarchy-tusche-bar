@@ -1,0 +1,80 @@
+[32m  INFO[0m: Launching config: "/home/nerdi/Data/Development/projects/omarchy-umbriel-looks-20261107/shell/shell.qml"
+[32m  INFO[0m: Shell ID: "a435d174d0d772f8d1c538af65d131ab" Path ID "a435d174d0d772f8d1c538af65d131ab"
+[32m  INFO[0m: Saving logs to "/tmp/qss.cH45wS/run/quickshell/by-id/oj5s1wxc5ot/log.qslog"
+[33m  WARN[0m: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+[34m DEBUG[97m qml[0m: omarchy-shell paths omarchyPath=/home/nerdi/Data/Development/projects/omarchy-umbriel-looks-20261107 shellDir=/home/nerdi/Data/Development/projects/omarchy-umbriel-looks-20261107/shell firstPartyPluginsDir=/home/nerdi/Data/Development/projects/omarchy-umbriel-looks-20261107/shell/plugins defaultsPath=/home/nerdi/Data/Development/projects/omarchy-umbriel-looks-20261107/config/omarchy/shell.json userConfigPath=/tmp/qss.cH45wS/home/.config/omarchy/shell.json
+[34m DEBUG[97m qml[0m: omarchy startup started settled=false backgroundActive=false backgroundReady=false desktopReady=false
+[32m  INFO[0m: Configuration Loaded
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/nerdibeard.tusche-island/generations/fd532671b76c700d/modules" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/nerdibeard.tusche-bar/generations/06977aa01ae88c2e" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/nerdibeard.tusche-bar/generations/06977aa01ae88c2e/modules" is outside of the config folder.
+[33m  WARN[97m quickshell.bluetooth[0m: Could not connect to DBus. Bluetooth integration is not available.
+[33m  WARN[97m quickshell.io.socket[0m: Socket error for Socket(0x7f291f542780) QLocalSocket::ServerNotFoundError
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/community.plugin-manager" is outside of the config folder.
+[34m DEBUG[97m qml[0m: [PluginManager] Initialized with backend engine at: /tmp/qss.cH45wS/home/.config/omarchy/plugins/community.plugin-manager/backend/plugin_engine.py
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/io.github.iamfitsum.omarchy-proton-vpn" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/io.github.nerdislb.buds-control" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/nerdibeard.googledrive" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/nerdibeard.display-layout" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/nerdibeard.monitor" is outside of the config folder.
+[31m ERROR[97m quickshell.service.pipewire.loop[0m: Failed to connect pipewire context. Errno: 112
+[33m  WARN[97m quickshell.network.networkmanager[0m: Could not connect to DBus. NetworkManager backend will not work.
+[31m ERROR[97m quickshell.network[0m: Network will not work. Could not find an available backend.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/io.github.moizibnyousaf.omawhatsapp/plugins/omawhatsapp" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/nerdibeard.tesla/generations/ad583cf5e98eb9d4" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/nerdibeard.tusche-island/generations/fd532671b76c700d/views" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/nerdibeard.tusche-island/generations/fd532671b76c700d/sources" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/nerdibeard.tusche-island/generations/fd532671b76c700d" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/omamail/ui/providers" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/omamail/ui/cache" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/omamail/ui/account" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/omamail/ui/compose" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/omamail/ui/agent" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/omamail/ui/components" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/omamail/ui/calendar" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/omamail/ui/bar" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/omamail/ui/backend" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/omamail/ui/diagnostics" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/omamail/ui" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path contains invalid characters for a module name:  "/plugins/image-picker"
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/nb.gaming" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/nerdibeard.card-picker/generations/5808585f08768bac" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/nerdibeard.shortcut-sheet" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/typecraft.oma-cast.dev-1793525978433668462/services" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/typecraft.oma-cast.dev-1793525978433668462/ui" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/typecraft.oma-cast.dev-1793525978433668462" is outside of the config folder.
+[33m  WARN[97m quickshell.service.upower[0m: Could not connect to DBus. UPower service will not work.
+[33m  WARN[97m quickshell.service.powerprofiles[0m: Could not connect to DBus. PowerProfiles services will not work.
+[34m DEBUG[97m qml[0m: omarchy idle 2026-11-07T19:32:26.751Z service-ready
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path contains invalid characters for a module name:  "/plugins/services/remote-session"
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/io.github.deunnis.lacquer/ui" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/io.github.deunnis.lacquer/stores" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/io.github.deunnis.lacquer/sections" is outside of the config folder.
+[33m  WARN[97m quickshell.qmlscanner[0m: Module path "/tmp/qss.cH45wS/home/.config/omarchy/plugins/io.github.deunnis.lacquer" is outside of the config folder.
+[32m  INFO[97m qt.multimedia.ffmpeg[0m: Using Qt multimedia with FFmpeg version n9.0.2 GPL version 3 or later
+[33m  WARN[97m qt.multimedia.pipewire.registry[0m: Failed to connect to pipewire instance "Host is down"
+[33m  WARN[0m: PulseAudioService: pa_context_connect() failed
+[34m DEBUG[97m qml[0m: omarchy startup intro-settled settled=true backgroundActive=true backgroundReady=false desktopReady=true
+[33m  WARN[97m qt.qpa.services[0m: Failed to register with host portal QDBusError("org.freedesktop.portal.Error.Failed", "Could not register app ID: Connection already associated with an application ID")
+[33m  WARN[97m quickshell.service.polkit.listener[0m: failed to register listener: Could not connect: No such file or directory
+[33m  WARN[97m quickshell.service.polkit[0m: failed to register listener on path "/org/omarchy/PolkitAgent"
+[34m DEBUG[97m qml[0m: omarchy idle 2026-11-07T19:32:29.694Z stay-awake: disabled state-file
+[34m DEBUG[97m qml[0m: omarchy idle 2026-11-07T19:32:29.726Z idle-monitor: active
+[33m  WARN[0m: The active compositor does not support hyprland_global_shortcuts_v1.
+[33m  WARN[0m: GlobalShortcut will not work.
+[34m DEBUG[97m qml[0m: omarchy startup fade-started settled=true backgroundActive=true backgroundReady=true desktopReady=true
+[32m  INFO[97m qml[0m: [oma-cast] [info] [store] migrated /tmp/qss.cH45wS/home/.local/share/oma-cast/db/calculator.json {"applied":["calculator-history"],"from":0,"to":1}
+[32m  INFO[97m qml[0m: [oma-cast] [info] [store] migrated /tmp/qss.cH45wS/home/.local/share/oma-cast/db/frecency.json {"applied":["frecency"],"from":0,"to":1}
+[32m  INFO[97m qml[0m: [oma-cast] [info] [store] migrated /tmp/qss.cH45wS/home/.local/share/oma-cast/db/settings.json {"applied":["general-settings"],"from":0,"to":1}
+[33m  WARN[97m quickshell.io.socket[0m: Socket error for Socket(0x7f28ddc71d80) QLocalSocket::ServerNotFoundError
+[33m  WARN[97m quickshell.io.fileview[0m: got operation finished from dropped operation qs::io::FileViewOperation(0x7f28ddc03f20)
+[33m  WARN[97m quickshell.io.fileview[0m: got operation finished from dropped operation qs::io::FileViewOperation(0x7f29228bf880)
+[33m  WARN[97m quickshell.io.fileview[0m: got operation finished from dropped operation qs::io::FileViewOperation(0x7f28ddc04060)
+[34m DEBUG[97m qml[0m: omarchy startup revealed settled=true backgroundActive=true backgroundReady=true desktopReady=true
+[32m  INFO[97m qml[0m: [oma-cast] [info] [calculator] exchange rates updated {"currencies":29,"date":"2026-11-06"}
+[33m  WARN[97m scene[0m: QML FileView at qs:///tmp/qss.cH45wS/home/.config/omarchy/plugins/nerdibeard.tusche-island/generations/fd532671b76c700d/Notifications.qml[561:3]: Read of /tmp/qss.cH45wS/home/.local/state/omarchy/notifications.json failed: File does not exist.
+[33m  WARN[97m quickshell.io.socket[0m: Socket error for Socket(0x7f28ddfcf400) QLocalSocket::ServerNotFoundError
+[33m  WARN[97m scene[0m: QML FileView at qs:///tmp/qss.cH45wS/home/.config/omarchy/plugins/nerdibeard.tusche-bar/generations/06977aa01ae88c2e/OmiKit.qml[21:3]: Read of /tmp/qss.cH45wS/home/.local/share/tusche-bar/current failed: File does not exist.
+[33m  WARN[97m quickshell.io.socket[0m: Socket error for Socket(0x7f28cf811a00) QLocalSocket::PeerClosedError
+[33m  WARN[97m quickshell.io.socket[0m: Socket error for Socket(0x7f28ddfce780) QLocalSocket::ServerNotFoundError
+[33m  WARN[97m quickshell.io.socket[0m: Socket error for Socket(0x7f291db56880) QLocalSocket::ServerNotFoundError

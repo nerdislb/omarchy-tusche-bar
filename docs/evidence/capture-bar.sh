@@ -62,6 +62,9 @@ e=next(e for e in a['plugins'] if e['id']=='nerdibeard.tusche-bar')
 e.setdefault('options',{}).update(logoImage='/home/nerdi/Data/Work/eigener-look-2026-11-07/logos/A-sendeschluss-mark-transparent.svg', dayline='on', daylineNow='on', workspacePing='on')
 open(p,'w').write(json.dumps(a))
 PYCONFIG
+if [[ ${B_MATERIAL_FIXTURE:-} == 1 ]]; then
+  cp "$BAR_SRC/themes/tusche/bar-material.json" "$home/.local/state/omarchy/current/theme/bar-material.json"
+fi
 # headless compositor: the live configuration, without its session autostarts
 cat > "$home/.config/umbriel/shot.toml" <<EOF
 [include]

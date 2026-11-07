@@ -1,0 +1,36 @@
+20:32:17.163 [[32mINF[0m] [[34mfdlimit[0m] RLIMIT_NOFILE already at hard limit (524288)
+20:32:17.163 [[32mINF[0m] [[34mmain[0m] starting umbriel version=0.1.0 commit=97192cc98070
+20:32:17.188 [[32mINF[0m] [[34mdrm[0m] configuration is inactive because the selected backend is nested or headless
+20:32:17.188 [[32mINF[0m] [[34mwlr[0m] [backend/backend.c:342] Loading user-specified backends due to WLR_BACKENDS: headless
+20:32:17.188 [[32mINF[0m] [[34mwlr[0m] [backend/headless/backend.c:60] Creating headless backend
+20:32:17.188 [[32mINF[0m] [[34mwlr[0m] [render/fx_renderer/util.c:71] Opening DRM render node '/dev/dri/renderD129' from WLR_RENDER_DRM_DEVICE
+20:32:17.415 [[32mINF[0m] [[34mwlr[0m] [render/egl.c:208] Supported EGL client extensions: EGL_EXT_platform_base EGL_EXT_device_base EGL_EXT_device_query EGL_EXT_device_enumeration EGL_KHR_client_get_all_proc_addresses EGL_EXT_client_extensions EGL_KHR_debug EGL_KHR_platform_x11 EGL_EXT_platform_x11 EGL_EXT_platform_device EGL_MESA_platform_surfaceless EGL_EXT_explicit_device EGL_KHR_platform_wayland EGL_EXT_platform_wayland EGL_KHR_platform_gbm EGL_MESA_platform_gbm EGL_EXT_platform_xcb
+20:32:19.928 [[32mINF[0m] [[34mwlr[0m] [render/egl.c:367] Using EGL 1.5
+20:32:19.928 [[32mINF[0m] [[34mwlr[0m] [render/egl.c:368] Supported EGL display extensions: EGL_ANDROID_blob_cache EGL_ANDROID_native_fence_sync EGL_EXT_config_select_group EGL_EXT_create_context_robustness EGL_EXT_image_dma_buf_import EGL_EXT_image_dma_buf_import_modifiers EGL_EXT_query_reset_notification_strategy EGL_EXT_surface_compression EGL_IMG_context_priority EGL_KHR_cl_event2 EGL_KHR_config_attribs EGL_KHR_context_flush_control EGL_KHR_create_context EGL_KHR_create_context_no_error EGL_KHR_fence_sync EGL_KHR_get_all_proc_addresses EGL_KHR_gl_colorspace EGL_KHR_gl_renderbuffer_image EGL_KHR_gl_texture_2D_image EGL_KHR_gl_texture_3D_image EGL_KHR_gl_texture_cubemap_image EGL_KHR_image_base EGL_KHR_no_config_context EGL_KHR_partial_update EGL_KHR_reusable_sync EGL_KHR_surfaceless_context EGL_EXT_pixel_format_float EGL_KHR_wait_sync EGL_MESA_configless_context EGL_MESA_gl_interop EGL_MESA_image_dma_buf_export EGL_MESA_query_driver EGL_MESA_x11_native_visual_id 
+20:32:19.928 [[32mINF[0m] [[34mwlr[0m] [render/egl.c:370] Supported EGL device extensions: EGL_EXT_device_drm EGL_EXT_device_drm_render_node EGL_EXT_device_query_name EGL_EXT_device_persistent_id
+20:32:19.928 [[32mINF[0m] [[34mwlr[0m] [render/egl.c:373] EGL vendor: Mesa Project
+20:32:19.928 [[32mINF[0m] [[34mwlr[0m] [render/egl.c:376] EGL driver name: iris
+20:32:19.934 [[32mINF[0m] [[34mwlr[0m] [render/fx_renderer/fx_renderer.c:709] Creating umbrielfx renderer
+20:32:19.934 [[32mINF[0m] [[34mwlr[0m] [render/fx_renderer/fx_renderer.c:711] Using OpenGL ES 3.2 Mesa 26.2.6-arch1.1
+20:32:19.934 [[32mINF[0m] [[34mwlr[0m] [render/fx_renderer/fx_renderer.c:716] GL vendor: Intel
+20:32:19.934 [[32mINF[0m] [[34mwlr[0m] [render/fx_renderer/fx_renderer.c:717] GL renderer: Mesa Intel(R) UHD Graphics (CML GT2)
+20:32:19.934 [[32mINF[0m] [[34mwlr[0m] [render/fx_renderer/fx_renderer.c:718] Supported FX extensions: GL_EXT_blend_minmax GL_EXT_multi_draw_arrays GL_EXT_texture_filter_anisotropic GL_EXT_texture_compression_s3tc GL_EXT_texture_compression_dxt1 GL_EXT_texture_compression_rgtc GL_EXT_texture_format_BGRA8888 GL_OES_compressed_ETC1_RGB8_texture GL_OES_depth24 GL_OES_element_index_uint GL_OES_fbo_render_mipmap GL_OES_mapbuffer GL_OES_rgb8_rgba8 GL_OES_standard_derivatives GL_OES_stencil8 GL_OES_texture_3D GL_OES_texture_float GL_OES_texture_float_linear GL_OES_texture_half_float GL_OES_texture_half_float_linear GL_OES_texture_npot GL_OES_vertex_half_float GL_EXT_draw_instanced GL_EXT_texture_sRGB_decode GL_OES_EGL_image GL_OES_depth_texture GL_AMD_performance_monitor GL_OES_packed_depth_stencil GL_EXT_texture_type_2_10_10_10_REV GL_NV_conditional_render GL_OES_get_program_binary GL_APPLE_texture_max_level GL_EXT_discard_framebuffer GL_EXT_read_format_bgra GL_EXT_texture_storage GL_NV_pack_subimage GL_NV_texture_barrier GL_EXT_frag_depth GL_NV_fbo_co
+20:32:20.624 [[32mINF[0m] [[34mwlr[0m] [render/fx_renderer/fx_renderer.c:817] FX RENDERER: Shaders Initialized Successfully
+20:32:20.625 [[32mINF[0m] [[34mserver[0m] explicit synchronization enabled
+20:32:20.631 [[32mINF[0m] [[34mwlr[0m] [render/fx_renderer/effect_shader.c:403] Compiling border shader: /usr/local/share/umbriel/effects/border/pulse/shader.glsl
+20:32:20.647 [[32mINF[0m] [[34mwlr[0m] [render/fx_renderer/effect_shader.c:403] Compiling cursor shader: /usr/local/share/umbriel/effects/cursor/trail/shader.glsl
+20:32:20.792 [[32mINF[0m] [[34mwlr[0m] [render/fx_renderer/effect_shader.c:403] Compiling animation shader: /tmp/qss.cH45wS/home/.config/umbriel/tusche-pixel-dither.glsl
+20:32:20.802 [[32mINF[0m] [[34mwlr[0m] [render/fx_renderer/effect_shader.c:403] Compiling animation shader: /usr/local/share/umbriel/effects/animation/workspace_wipe/shader.glsl
+20:32:20.813 [[32mINF[0m] [[34mwlr[0m] [render/fx_renderer/effect_shader.c:403] Compiling animation shader: animation.builtin_fade
+20:32:20.827 [[32mINF[0m] [[34mwlr[0m] [../src/server/server.cpp:891] mod key: Alt (nested session)
+20:32:20.827 [[32mINF[0m] [[34mserver[0m] mod key: Alt (nested session)
+20:32:20.827 [[32mINF[0m] [[34mwlr[0m] [backend/headless/backend.c:17] Starting headless backend
+20:32:20.839 [[32mINF[0m] [[34moutput[0m] output 'HEADLESS-1': applied mode=1920x1080@60000mHz scale=1 transform=0
+20:32:20.839 [[32mINF[0m] [[34mworkspace[0m] workspace group for HEADLESS-1 with 1 workspaces
+20:32:20.839 [[32mINF[0m] [[34mserver[0m] running on WAYLAND_DISPLAY=wayland-0
+20:32:20.839 [[32mINF[0m] [[34mipc[0m] IPC listening on /tmp/qss.cH45wS/run/umbriel-wayland-0.sock
+20:32:20.871 [[32mINF[0m] [[34mxwayland[0m] Xwayland listening on DISPLAY=:1
+20:32:20.872 [[32mINF[0m] [[34mmain[0m] jemalloc: narenas=2 dirty_decay_ms=1000ms
+20:32:33.172 [[32mINF[0m] [[34mserver[0m] config reloaded (sections: layout; effects: workspace layout)
+20:32:33.441 [[32mINF[0m] [[34mserver[0m] config reloaded (sections: window rules; effects: view chrome)
+20:32:34.142 [[32mINF[0m] [[34mserver[0m] config reloaded (sections: keybinds; effects: none)
