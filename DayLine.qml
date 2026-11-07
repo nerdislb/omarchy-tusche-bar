@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Wayland
 import qs.Commons
 import qs.Commons as Commons
+import "bridge" as Bridge
 import qs.Ui
 
 // Optional minute-resolution day progress, inside the existing bar footprint.
@@ -24,7 +25,7 @@ Scope {
     anchors { left: true; right: true; top: line.top; bottom: !line.top }
     margins.top: 0
     margins.bottom: 0
-    implicitHeight: Math.max(2, Math.ceil(2 / scale))
+    implicitHeight: nowNotch.visible ? 5 : Math.max(2, Math.ceil(2 / scale))
     exclusionMode: ExclusionMode.Ignore
     mask: Region {}
     WlrLayershell.namespace: "tusche-bar-day-progress"
@@ -38,6 +39,7 @@ Scope {
     // colour of the sky at that time (night grey, dawn blue, red, midday
     // yellow, evening orange, night grey).
     Item {
+      id: progress
       y: line.top ? 0 : parent.height - height
       height: 1 / line.scale
       width: Math.floor(parent.width * (clock.date.getHours() * 60 + clock.date.getMinutes()) / 1440 * line.scale) / line.scale
@@ -60,5 +62,15 @@ Scope {
         }
       }
     }
+    Rectangle {
+      id: nowNotch
+      visible: !!Bridge.ModuleBus.engine && Bridge.ModuleBus.engine.options.daylineNow === "on"
+      x: Math.max(0, Math.min(line.width - width, progress.width - width / 2))
+      y: line.top ? 0 : line.height - height
+      width: 2
+      height: 5
+      color: Commons.Color.accent
+    }
+
   }
 }

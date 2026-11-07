@@ -14,7 +14,7 @@ let checks = 0;
 function test(label, run) { run(); checks++; console.log('PASS ' + label); }
 
 test('optional additions default off and never rebuild the native layout', () => {
-  for (const key of ['statusHints','seal','dayline']) {
+  for (const key of ['statusHints','seal','dayline','daylineNow','workspacePing']) {
     assert.equal(p.normalizeOptions({})[key], 'off');
     assert.equal(p.layoutDiffers({[key]:'on'},{}), false);
     assert.equal(p.keepLook(p.PRESETS[1].options,{[key]:'on'})[key], 'on');
@@ -83,4 +83,23 @@ test('atomic profile writer preserves layout, options, unrelated config and priv
     assert.deepEqual(JSON.parse(fs.readFileSync(file)).plugins[0].screenProfiles,{});
   } finally { fs.rmSync(dir,{recursive:true,force:true}); }
 });
+
+test('logo paths round-trip and custom images replace even the native menu', () => {
+  for (const file of ['', '/tmp/mark.svg', '/tmp/a logo.PNG']) {
+    assert.equal(p.normalizeOptions({logoImage:file}).logoImage,file);
+    assert.equal(p.optionValid('logoImage',file),true);
+  }
+  for (const file of ['relative.svg','/tmp/no.gif','/tmp/bad\n.svg',null])
+    assert.equal(p.optionValid('logoImage',file),false);
+  assert.equal(p.keepLook(p.PRESETS[1].options,{logoImage:'/tmp/mark.svg'}).logoImage,'/tmp/mark.svg');
+  assert.equal(p.layoutDiffers({logoImage:'/tmp/mark.svg'},{}),true);
+  assert.equal(p.layoutDiffers({workspaces:'pips',logoImage:'/tmp/mark.svg'},{workspaces:'pips'}),false);
+  const base={left:['omarchy.menu','omarchy.workspaces'],center:[],right:[]};
+  const built=p.build(base,{logoImage:'/tmp/mark.svg'},'/modules');
+  assert.equal(built.left[0].id,'tusche.workspaces');
+  assert.equal(built.left[0].variant,'none');
+  assert.equal(built.left[1],'omarchy.workspaces');
+  assert.equal(p.build(base,{logoImage:''},'/modules').left[0],'omarchy.menu');
+});
+
 console.log('PRESENTATION_RESULT '+checks);

@@ -3,6 +3,9 @@ var ELEMENTS = {
     label: "Device announcements",
     variants: [{ id: "off", label: "Off" }, { id: "on", label: "Announce output and Bluetooth changes on the OSD" }]
   },
+  logoImage: { label: "Logo image", variants: [{ id: "", label: "Drawn logo" }] },
+  daylineNow: { label: "Day progress notch", variants: [{ id: "off", label: "Off" }, { id: "on", label: "On" }] },
+  workspacePing: { label: "Workspace confirmation", variants: [{ id: "off", label: "Off" }, { id: "on", label: "On" }] },
   dayline: {
     label: "Day progress",
     variants: [{ id: "off", label: "Off" }, { id: "on", label: "Quiet line at the bar edge" }]
@@ -117,7 +120,7 @@ var ELEMENTS = {
 
 // Look options that sit on top of any preset: presets keep the current
 // value, and preset matching ignores them.
-var LOOK = ["edge", "keys", "frames", "glass", "glassMotion", "motion", "statusHints", "dayline", "seal", "sealIdle", "sealShare"]
+var LOOK = ["edge", "keys", "frames", "glass", "glassMotion", "motion", "statusHints", "dayline", "daylineNow", "workspacePing", "logoImage", "seal", "sealIdle", "sealShare"]
 
 // Presentation only: these never change the native layout, display geometry,
 // services or their settings. Native widgets ("today") keep their own renderer.
@@ -264,7 +267,7 @@ function build(base, options, moduleDir) {
   if (ws !== "today") {
     var entry = { id: "tusche.workspaces", source: moduleDir + "/Workspaces.qml", variant: ws, menu: true, logo: o.logo }
     if (!replaceGroup(layout, ["omarchy.menu", "omarchy.workspaces"], entry)) layout.left.unshift(entry)
-  } else if (o.logo !== "omarchy") {
+  } else if (o.logo !== "omarchy" || o.logoImage !== "") {
     // Native workspaces stay; only the menu logo becomes ours.
     var menu = { id: "tusche.workspaces", source: moduleDir + "/Workspaces.qml", variant: "none", menu: true, logo: o.logo }
     if (!replaceGroup(layout, ["omarchy.menu"], menu)) layout.left.unshift(menu)
@@ -321,11 +324,16 @@ function insertBefore(layout, id, entry) {
   return false
 }
 
+function optionValid(key, value) {
+  if (key === "logoImage") return typeof value === "string" && (value === "" || /^\/[^\x00-\x1f]*\.(svg|png)$/i.test(value))
+  return !!ELEMENTS[key] && ELEMENTS[key].variants.some(function(v) { return v.id === value })
+}
+
 function normalizeOptions(o) {
   var out = {}
   for (var key in ELEMENTS) {
     var v = o && o[key] ? String(o[key]) : ELEMENTS[key].variants[0].id
-    var ok = ELEMENTS[key].variants.some(function(x) { return x.id === v })
+    var ok = optionValid(key, v)
     out[key] = ok ? v : ELEMENTS[key].variants[0].id
   }
   return out
@@ -346,6 +354,9 @@ function matchPreset(options) {
 // as the user arranged it.
 function layoutDiffers(a, b) {
   var x = normalizeOptions(a), y = normalizeOptions(b)
+  // A custom image needs our menu host even when the workspaces stay native.
+  if (!!x.logoImage !== !!y.logoImage && ((x.workspaces === "today" && x.logo === "omarchy")
+      || (y.workspaces === "today" && y.logo === "omarchy"))) return true
   for (var key in ELEMENTS) if (LOOK.indexOf(key) === -1 && x[key] !== y[key]) return true
   return false
 }

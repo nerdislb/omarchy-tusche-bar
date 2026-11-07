@@ -57,6 +57,7 @@ QtObject {
  property int gapsOut: 6
  property var bar: ({sizeHorizontal:30})
  property var font: ({family:"monospace",body:12,bodySmall:10,caption:9,icon:14})
+ function barToken(key,fallback) { return fallback }
  function space(n) { return n }
  function duration(n) { return reduceMotion ? 0 : n }
 }''')
@@ -169,6 +170,7 @@ QtObject {
  property color barColor: "#eee9df"
  property bool barLight: true
  property string profile: ""
+ property bool pixel: false
  property bool umbriel: false
  signal metalPulse()
  function register(kind,item) { var n=Object.assign({},instances); n[kind]=(n[kind]||[]).concat([item]); instances=n }
@@ -223,6 +225,27 @@ Item {
  TestCase {
   name: "WorkspaceRendering"
   when: windowShown
+  function test_00_workspace_ping_is_bounded_and_optional() {
+   var item=createTemporaryObject(face,canvas,{workspacePing:true})
+   compare(item.pingOpacity,0)
+   item.active=2
+   wait(40)
+   verify(item.pingOpacity>0)
+   if(OUTPUT) grabImage(item).save(OUTPUT+"/ping-active.png")
+   wait(110)
+   compare(item.pingOpacity,0)
+   if(OUTPUT) grabImage(item).save(OUTPUT+"/ping-rest.png")
+   item.workspacePing=false
+   item.active=3
+   wait(40)
+   compare(item.pingOpacity,0)
+   item.workspacePing=true
+   Style.reduceMotion=true
+   item.active=4
+   wait(40)
+   compare(item.pingOpacity,0)
+   Style.reduceMotion=false
+  }
   function test_01_shared_geometry_owner_and_idle() {
    var first=createTemporaryObject(live,canvas,{x:10,y:10})
    var second=createTemporaryObject(live,canvas,{x:10,y:70})

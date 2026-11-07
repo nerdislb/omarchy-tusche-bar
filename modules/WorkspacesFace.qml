@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import qs.Commons
 import ".." as Root
@@ -9,6 +10,33 @@ Item {
   property string variant: "pips"
   property var ids: [1, 2, 3, 4, 5]
   property var occupiedIds: []
+  property bool workspacePing: false
+  property bool pingReady: false
+  property real pingOpacity: 0
+  Component.onCompleted: pingReady = true
+  onActiveChanged: {
+    if (pingReady && workspacePing && !Style.reduceMotion) pingAnimation.restart()
+  }
+  onWorkspacePingChanged: if (!workspacePing) { pingAnimation.stop(); pingOpacity = 0 }
+  Connections {
+    target: Style
+    function onReduceMotionChanged() { if (Style.reduceMotion) { pingAnimation.stop(); root.pingOpacity = 0 } }
+  }
+  SequentialAnimation {
+    id: pingAnimation
+    NumberAnimation { target: root; property: "pingOpacity"; from: 0; to: 1; duration: Style.duration(20) }
+    PauseAnimation { duration: Style.duration(60) }
+    NumberAnimation { target: root; property: "pingOpacity"; to: 0; duration: Style.duration(20) }
+  }
+  component Ping: Rectangle {
+    property bool current: false
+    anchors.centerIn: parent
+    width: Style.space(8); height: width
+    color: root.accent
+    opacity: current ? root.pingOpacity : 0
+    visible: opacity > 0
+    z: 2
+  }
   property int active: 1
   property var windowCounts: ({})
   property var urgentIds: []
@@ -133,6 +161,7 @@ Item {
         height: Style.space(8) + Style.space(8) * pips.grow + 2
         color: root.accent
         radius: Math.min(Style.cornerRadius, 2)
+        Ping { current: true }
         Text { renderType: Text.NativeRendering;
           anchors.centerIn: parent
           opacity: pips.grow
@@ -185,6 +214,7 @@ Item {
             font.pixelSize: Style.font.body
             color: parent.on || parent.urg ? root.barColor : Util.alpha(root.fg, parent.occ ? 0.9 : 0.45)
           }
+          Ping { current: parent.modelData === root.active }
           MouseArea { enabled: root.interactive; anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.workspacePicked(parent.modelData) }
         }
       }
@@ -218,6 +248,7 @@ Item {
         width: parent.box; height: parent.box
         color: root.barColor
         border.width: Math.max(1, Style.space(1.5)); border.color: root.accent
+        Ping { current: true }
         Text { renderType: Text.NativeRendering; anchors.centerIn: parent; text: root.active === 10 ? "0" : String(root.active); font.family: Style.font.family; font.bold: true; font.pixelSize: Style.font.body; color: root.strong }
       }
       MouseArea {
@@ -253,6 +284,7 @@ Item {
           width: parent.dot; height: parent.dot
           color: modelData === root.active ? root.accent : root.urgent(modelData) ? root.urgentColor : root.occupied(modelData) ? root.fg : root.dim
           opacity: root.occupied(modelData) || modelData === root.active ? 1 : 0.6
+          Ping { current: parent.modelData === root.active }
           MouseArea { enabled: root.interactive; anchors.fill: parent; anchors.margins: -2; cursorShape: Qt.PointingHandCursor; onClicked: root.workspacePicked(parent.modelData) }
         }
       }
@@ -300,6 +332,7 @@ Item {
             font.pixelSize: Style.font.bodySmall
             color: mapCell.act ? root.strong : root.dim
           }
+          Ping { current: mapCell.act }
           MouseArea {
             enabled: root.interactive
             anchors.fill: parent

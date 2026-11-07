@@ -131,7 +131,11 @@ def check_options(config):
         warn('bar options', 'node missing: options not checked')
         return
     options = entry.get('options') or {}
-    bad = [f'{k}={v} (falls back to {known[k][0]})' for k, v in options.items() if k in known and str(v) not in known[k]]
+    def valid(key, value):
+        if key == 'logoImage':
+            return isinstance(value, str) and (value == '' or re.fullmatch(r'/[^\x00-\x1f]*\.(?i:svg|png)', value))
+        return str(value) in known[key]
+    bad = [f'{k}={v} (falls back to {known[k][0]})' for k, v in options.items() if k in known and not valid(k, v)]
     unknown = [k for k in options if k not in known]
     if bad:
         warn('bar options', 'unknown values: ' + ', '.join(bad))

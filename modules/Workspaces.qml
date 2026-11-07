@@ -1,4 +1,7 @@
+pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Effects
+import QtQuick.Window
 import "../bridge" as Bridge
 import ".." as Root
 import "../WorkspaceGeometry.js" as WorkspaceGeometry
@@ -38,6 +41,7 @@ Item {
   readonly property string variant: baseVariant === "none" ? "none"
     : String(Bridge.ModuleBus.optionFor(root, "workspaces", baseVariant))
   readonly property bool showMenu: setting("menu", true) !== false
+  readonly property string logoImage: Bridge.ModuleBus.engine ? Bridge.ModuleBus.engine.options.logoImage : ""
   readonly property string logo: String(setting("logo", "omarchy"))
   readonly property int barSize: bar && bar.barSize ? bar.barSize : Style.bar.sizeHorizontal
   readonly property color fg: bar && bar.barForeground ? bar.barForeground : Commons.Color.bar.text
@@ -425,7 +429,7 @@ Item {
     readonly property bool inverted: !!source && (root.dropOpen || (!!dropLoader.item && dropLoader.item.cardPresence > 0.01))
     readonly property real tabY: Math.round(root.barSize * 0.17)
     Rectangle {
-      visible: menuSlot.inverted && (root.logo !== "nerdibeard" || root.variant === "logo")
+      visible: menuSlot.inverted && (root.logoImage !== "" || root.logo !== "nerdibeard" || root.variant === "logo")
       y: menuSlot.tabY
       width: parent.width
       height: parent.height - y
@@ -441,7 +445,7 @@ Item {
     Item {
       id: sealTab
       readonly property bool reduced: Style.reduceMotion
-      readonly property bool on: root.logo === "nerdibeard" && root.variant !== "logo" && menuSlot.inverted
+      readonly property bool on: root.logoImage === "" && root.logo === "nerdibeard" && root.variant !== "logo" && menuSlot.inverted
       readonly property bool target: reduced ? on && root.dropOpen : on
       visible: opacity > 0
       opacity: target ? 1 : 0
@@ -480,13 +484,33 @@ Item {
     Text { renderType: Text.NativeRendering;
       anchors.centerIn: parent
       anchors.verticalCenterOffset: menuSlot.inverted ? Math.round(root.barSize * 0.08) : 0
-      visible: root.variant !== "logo" && ["arch", "nerdibeard"].indexOf(root.logo) === -1
+      visible: !imageLogo.visible && root.variant !== "logo" && ["arch", "nerdibeard"].indexOf(root.logo) === -1
       text: ""
       font.family: "omarchy"
       font.pixelSize: Style.font.icon + (Style.fontPixelGrid ? 0 : 2)
       color: menuSlot.inverted ? menuSlot.source.text : root.strong
     }
 
+
+    Image {
+      id: imageLogo
+      anchors.centerIn: parent
+      anchors.verticalCenterOffset: menuSlot.inverted ? Math.round(root.barSize * 0.08) : 0
+      width: Style.barToken("icon-canvas", 16)
+      height: width
+      readonly property real dpr: Screen.devicePixelRatio
+      source: root.logoImage ? Util.fileUrl(root.logoImage) : ""
+      sourceSize: Qt.size(Math.ceil(width * dpr), Math.ceil(height * dpr))
+      fillMode: Image.PreserveAspectFit
+      visible: source.toString() !== "" && status === Image.Ready
+      scale: menuMouse.pressed ? 0.96 : 1
+      Behavior on scale { NumberAnimation { duration: Style.duration(80); easing.type: Easing.OutCubic } }
+      layer.enabled: menuSlot.inverted
+      layer.effect: MultiEffect {
+        colorization: 1
+        colorizationColor: menuSlot.source ? menuSlot.source.text : root.strong
+      }
+    }
 
     // Arch (the official mark, unaltered) and the Nerdibeard seal (logo
     // design round 04.10.). Loaded only when chosen, so each arrives with
@@ -516,7 +540,7 @@ Item {
       Connections { target: Bridge.ModuleBus; function onMetalPulse() { logoMetal.play() } }
     }
     Loader {
-      active: root.variant !== "logo" && root.logo === "arch"
+      active: !imageLogo.visible && root.variant !== "logo" && root.logo === "arch"
       sourceComponent: Component {
         ArchLogo {
           size: 18 * 1.18
@@ -527,7 +551,7 @@ Item {
       }
     }
     Loader {
-      active: root.variant !== "logo" && root.logo === "nerdibeard"
+      active: !imageLogo.visible && root.variant !== "logo" && root.logo === "nerdibeard"
       x: sealSpot.x; y: sealSpot.y
       sourceComponent: Component {
         SealLogo {
@@ -544,7 +568,7 @@ Item {
     // "logo": the frame carries the active workspace number.
     Item {
       anchors.centerIn: parent
-      visible: root.variant === "logo"
+      visible: !imageLogo.visible && root.variant === "logo"
       width: Math.round(root.barSize * 0.68); height: width
       Rectangle { anchors.fill: parent; color: "transparent"; border.width: Math.max(1, Style.space(1.5)); border.color: root.strong; radius: Math.min(Style.cornerRadius, 3) }
       Text { renderType: Text.NativeRendering;
@@ -573,6 +597,7 @@ Item {
     ids: root.ids
     occupiedIds: root.occupiedIds
     active: root.active
+    workspacePing: Bridge.ModuleBus.engine ? Bridge.ModuleBus.engine.options.workspacePing === "on" : false
     windowCounts: root.windowCounts
     urgentIds: root.urgentIds
     geometry: root.geometry

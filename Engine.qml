@@ -298,7 +298,7 @@ Item {
     return "ok"
   }
   function setVariant(element, variant) {
-    if (!Presets.ELEMENTS[element] || !Presets.ELEMENTS[element].variants.some(function(v) { return v.id === variant })) return "unknown element or variant"
+    if (!Presets.optionValid(element, variant)) return "unknown element or variant"
     var o = JSON.parse(JSON.stringify(options))
     o[String(element)] = String(variant)
     return apply(o)
