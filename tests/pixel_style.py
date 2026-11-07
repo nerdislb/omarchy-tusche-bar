@@ -113,18 +113,14 @@ class PixelStyle(unittest.TestCase):
         (plugin / 'installed-generation.json').write_text('{"generation":"test"}')
         hook = self.home / '.config/omarchy/hooks/theme-set.d/80-tusche-pixel'
         module.install_hook({'hook': hook}, True)
-        current = self.home / '.local/state/omarchy/current/theme'
-        import shutil
-        shutil.rmtree(current)
+        # The current theme is a generated directory, not a symlink to its name.
+        theme_name = self.home / '.local/state/omarchy/current/theme.name'
         for name, expected in [('abendraster', False), ('look-funk', False), ('look-tusche', False), ('abendrot', True)]:
-            theme = self.home / '.config/omarchy/themes' / name
-            theme.mkdir(parents=True)
-            current.symlink_to(theme)
+            theme_name.write_text(name + '\n')
             subprocess.run(['bash', str(hook)], env={**os.environ, 'HOME': str(self.home)}, check=True)
             marker = self.home / 'rethemed'
             self.assertEqual(marker.exists(), expected, name)
             marker.unlink(missing_ok=True)
-            current.unlink()
 
     def test_round_trip_restores_every_file(self):
         shell = self.home / '.config/omarchy/shell.toml'
