@@ -573,6 +573,9 @@ def restart_shell():
 HOOK = """#!/bin/bash
 # Written by the Tusche Bar's pixel style: after a theme switch, draw the new
 # theme's dot grid. Removed again when the Tusche style returns.
+# These themes supply their own backgrounds.
+theme=$(basename "$(readlink -f "$HOME/.local/state/omarchy/current/theme")")
+case "$theme" in *raster|look-*) exit 0 ;; esac
 plugin="$HOME/.config/omarchy/plugins/nerdibeard.tusche-bar"
 generation=$(jq -r .generation "$plugin/installed-generation.json" 2>/dev/null) || exit 0
 script="$plugin/generations/$generation/bin/pixel-style.py"

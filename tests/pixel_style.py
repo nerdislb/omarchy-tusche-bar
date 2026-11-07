@@ -100,6 +100,32 @@ class PixelStyle(unittest.TestCase):
         log = self.home / 'calls.log'
         return log.read_text().split('\n')[:-1] if log.exists() else []
 
+    def test_hook_preserves_theme_backgrounds(self):
+        # Execute the generated hook with a recorder for the actual retheme call.
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('pixel_style', SCRIPT)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        plugin = self.home / '.config/omarchy/plugins/nerdibeard.tusche-bar'
+        script = plugin / 'generations/test/bin/pixel-style.py'
+        script.parent.mkdir(parents=True)
+        script.write_text('from pathlib import Path\nPath.home().joinpath("rethemed").touch()\n')
+        (plugin / 'installed-generation.json').write_text('{"generation":"test"}')
+        hook = self.home / '.config/omarchy/hooks/theme-set.d/80-tusche-pixel'
+        module.install_hook({'hook': hook}, True)
+        current = self.home / '.local/state/omarchy/current/theme'
+        import shutil
+        shutil.rmtree(current)
+        for name, expected in [('abendraster', False), ('look-funk', False), ('look-tusche', False), ('abendrot', True)]:
+            theme = self.home / '.config/omarchy/themes' / name
+            theme.mkdir(parents=True)
+            current.symlink_to(theme)
+            subprocess.run(['bash', str(hook)], env={**os.environ, 'HOME': str(self.home)}, check=True)
+            marker = self.home / 'rethemed'
+            self.assertEqual(marker.exists(), expected, name)
+            marker.unlink(missing_ok=True)
+            current.unlink()
+
     def test_round_trip_restores_every_file(self):
         shell = self.home / '.config/omarchy/shell.toml'
         before = sha(shell)
