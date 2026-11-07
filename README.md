@@ -681,7 +681,7 @@ It does not restart browsers, change their profiles or modify other app hooks.
 
 The `nerdibeard.tusche-bar` entry in `shell.json` accepts three optional presentation settings:
 
-- `logoImage`: an absolute SVG or PNG path. An empty string restores the drawn `logo`. Images use the menu slot's icon canvas, decode at the screen's pixel ratio, retain their baked colors at rest and take the inverted tab's text color while the menu is open. An unreadable image falls back to the drawn logo. The menu keeps its existing click targets.
+- `logoImage`: an absolute SVG or PNG path. An empty string restores the drawn `logo`. Images use the menu slot's icon canvas, decode at the screen's pixel ratio, retain their baked colors while the menu slot takes its inverted tab appearance. An unreadable image falls back to the drawn logo. The menu keeps its existing click targets.
 - `daylineNow`: `off` (default) or `on`. With `dayline: "on"`, a 2×5 logical pixel accent notch marks the current minute. It uses the existing minute clock and reserves no extra screen space.
 - `workspacePing`: `off` (default) or `on`. A workspace change confirms the active pip with a 100 ms accent square. Reduced motion suppresses it; no animation runs at rest.
 

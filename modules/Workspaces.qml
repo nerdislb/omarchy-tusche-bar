@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Effects
 import QtQuick.Window
 import "../bridge" as Bridge
 import ".." as Root
@@ -505,11 +504,6 @@ Item {
       visible: source.toString() !== "" && status === Image.Ready
       scale: menuMouse.pressed ? 0.96 : 1
       Behavior on scale { NumberAnimation { duration: Style.duration(80); easing.type: Easing.OutCubic } }
-      layer.enabled: menuSlot.inverted
-      layer.effect: MultiEffect {
-        colorization: 1
-        colorizationColor: menuSlot.source ? menuSlot.source.text : root.strong
-      }
     }
 
     // Arch (the official mark, unaltered) and the Nerdibeard seal (logo
