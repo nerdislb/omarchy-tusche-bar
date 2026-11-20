@@ -601,8 +601,16 @@ def main():
         # 16-bit frames into 10-bit HEVC: the slow drift (mist, light) is far below one
         # 8-bit step per frame; at 8 bits the encoder held it back and let it jump at
         # key frames. HEVC Main10 keeps it smooth and is decoded in hardware widely.
+        # The RGB -> YCbCr step is spelled out (BT.709, limited range) and written into
+        # the stream: without it ffmpeg converts with BT.601 and leaves the file untagged,
+        # while players assume BT.709 for 1080p, which shifts saturated colours by a few steps.
+        # setparams puts primaries and transfer into the stream as well (the -color_* options
+        # alone only carry the matrix through libx265).
         ff = subprocess.Popen(['ffmpeg', '-loglevel', 'error', '-y', '-f', 'rawvideo', '-pix_fmt', 'rgb48le',
                                '-s', f'{W}x{H}', '-r', str(fps), '-i', '-',
+                               '-vf', 'scale=in_range=full:out_range=tv:out_color_matrix=bt709:flags=accurate_rnd+full_chroma_int,'
+                                      'setparams=colorspace=bt709:color_primaries=bt709:color_trc=bt709:range=tv',
+                               '-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709', '-color_range', 'tv',
                                '-c:v', 'libx265', '-preset', 'slow', '-crf', '20', '-pix_fmt', 'yuv420p10le',
                                # one key frame per loop, at the seam: a key frame refreshes the
                                # coding noise in detailed areas (about one 8-bit step), so it should

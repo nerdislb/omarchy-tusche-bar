@@ -1,7 +1,7 @@
 #!/bin/bash
 # Optional moving backgrounds for the Tusche & Papier themes: very quiet
 # 60-second loops (mist, light, wind; a rare bird or leaf) of the theme stills,
-# 1080p HEVC Main10, played by Omarchy as video backgrounds.
+# 1080p HEVC Main10 (BT.709, tagged), played by Omarchy as video backgrounds.
 #
 #   setup/motion-backgrounds.sh install [--from DIR]   download (or copy from DIR) and install
 #   setup/motion-backgrounds.sh remove                 remove them again
@@ -15,7 +15,7 @@
 set -euo pipefail
 
 here="$(cd "$(dirname "$0")" && pwd)"
-TAG="motion-backgrounds-1"
+TAG="motion-backgrounds-2"
 URL="https://github.com/nerdislb/omarchy-tusche-bar/releases/download/$TAG"
 SUMS="$here/motion-backgrounds.sha256"
 THEMES="$HOME/.config/omarchy/themes"
