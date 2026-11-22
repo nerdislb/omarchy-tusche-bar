@@ -22,7 +22,7 @@ PanelWindow {
     for (var i = 0; i < Quickshell.screens.length; i++) if (Quickshell.screens[i].name === name) return Quickshell.screens[i]
     return Quickshell.screens.length ? Quickshell.screens[0] : null
   }
-  visible: !!host && host.options.seal === "on" && !!host.edgeBar && host.edgeBar.barHidden && !remap.remapping
+  visible: !!host && host.options.seal === "on" && !!host.edgeBar && host.edgeBar.barHidden
   color: "transparent"; surfaceFormat.opaque: false
   anchors { top: true; right: true }
   margins { top: Style.space(8); right: Style.space(8) }
@@ -31,7 +31,7 @@ PanelWindow {
   WlrLayershell.namespace: "tusche-bar-focus-seal"
   WlrLayershell.layer: WlrLayer.Top
   WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-  ScreenMoveRemap { id: remap; window: sealWindow }
+  // No ScreenMoveRemap: Hyprland 0.57 moves layer surfaces with their monitor.
 
   // Facts: UPower's display device (the same public service the island reads) and
   // the workspaces that want you, from the bar's own workspace module or, with

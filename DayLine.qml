@@ -18,7 +18,7 @@ Scope {
     readonly property bool top: !root.bar || root.bar.position === "top"
     readonly property real scale: Math.max(1, devicePixelRatio)
     readonly property real barSize: root.bar && root.bar.barSizeFor ? root.bar.barSizeFor(screen.name) : root.bar ? root.bar.barSize : 0
-    visible: !!root.bar && !root.bar.barHidden && !remap.remapping && barSize > 0
+    visible: !!root.bar && !root.bar.barHidden && barSize > 0
       && (root.bar.position === "top" || root.bar.position === "bottom")
     color: "transparent"; surfaceFormat.opaque: false
     anchors { left: true; right: true; top: line.top; bottom: !line.top }
@@ -32,7 +32,8 @@ Scope {
     // builds whose Quickshell monitor metadata is unavailable.
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-    ScreenMoveRemap { id: remap; window: line }
+    // Hyprland 0.57 moves a layer surface with its monitor; Omarchy removed its
+    // ScreenMoveRemap, so no unmap/remap pulse is needed after a display move.
     Rectangle {
       y: line.top ? parent.height - height : 0
       height: 1 / line.scale

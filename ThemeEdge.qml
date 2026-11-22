@@ -68,7 +68,7 @@ Scope {
     }
     readonly property var hyprMonitor: Hyprland.monitorFor(screen)
     readonly property bool fullscreen: !hyprMonitor || !hyprMonitor.activeWorkspace || hyprMonitor.activeWorkspace.hasFullscreen
-    visible: (!!line || !!root.metal) && !lineGuard.remapping && !fullscreen
+    visible: (!!line || !!root.metal) && !fullscreen
     color: "transparent"
     surfaceFormat.opaque: false
     anchors { top: true; left: true; right: true }
@@ -80,8 +80,8 @@ Scope {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     mask: Region {}
-
-    ScreenMoveRemap { id: lineGuard; window: lineWin }
+    // Hyprland 0.57 moves the surface with its monitor (Omarchy's
+    // ScreenMoveRemap is gone), so there is no remap pulse to hide for.
 
     Rectangle {
       visible: !root.metal
@@ -151,7 +151,7 @@ Scope {
       if (!d) return 1
       return Math.max(d.haze ? d.haze.height || 0 : 0, d.glow ? d.glow.height || 0 : 0, d.shadow ? d.shadow.height || 0 : 0, 1)
     }
-    visible: (!!root.dry || root.lavur) && !underGuard.remapping && !fullscreen && height_ >= 2
+    visible: (!!root.dry || root.lavur) && !fullscreen && height_ >= 2
     color: "transparent"
     surfaceFormat.opaque: false
     anchors { top: true; left: true; right: true }
@@ -163,8 +163,6 @@ Scope {
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     mask: Region {}
-
-    ScreenMoveRemap { id: underGuard; window: underWin }
 
     Image {
       id: texture
