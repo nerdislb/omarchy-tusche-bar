@@ -86,6 +86,17 @@ amiga=false
 for id in "${old_ids[@]}"; do [[ -d "$plugins_dir/$id" ]] && amiga=true; done
 grep -q -E 'nerdibeard\.amiga-(bar|island)|"amiga\.' "$HOME/.config/omarchy/shell.json" 2>/dev/null && amiga=true
 $amiga && note "an Amiga Bar / Island setup was found – it is carried over to the Tusche names"
+# Every plugin that replaces omarchy.lock registers the same `lock` IPC target:
+# only one of them answers `omarchy-shell lock` and the shell warns about the
+# others at every start. That warning is not this install failing, so name the
+# rivals and leave the choice (which lock screen is yours) with the user.
+lock_ids="$(omarchy-shell shell listPlugins 2>/dev/null |
+  jq -r '.[] | select(.enabled == true and ((.clonedFrom // "") == "omarchy.lock" or .id == "omarchy.lock")) | .id' 2>/dev/null || true)"
+if (( $(grep -c . <<<"$lock_ids" || true) > 1 )); then
+  lock_list="$(tr '\n' ' ' <<<"$lock_ids" | sed 's/ $//; s/ /, /g')"
+  note "lock screens: $lock_list are all enabled – only one answers 'omarchy-shell lock'"
+  note "keep one: omarchy plugin disable <the others> && omarchy restart shell"
+fi
 
 # ---------------------------------------------------------------- 1 · backup
 stamp="$(date +%Y%m%d-%H%M%S)"

@@ -21,8 +21,9 @@ PluginBarApi {
   barSize: realBar ? realBar.barSize : 30
   transparent: realBar ? realBar.transparent : false
   foregroundAnimationEnabled: realBar ? realBar.foregroundAnimationEnabled : false
-  centerSectionRevealHeld: realBar ? realBar.centerSectionRevealHeld : false
-  _centerHoverRevealSuppressed: realBar ? realBar.centerHoverRevealSuppressed : false
+  // Omarchy 2026-11-12 dropped the bar-wide center hover peek (and its
+  // centerSectionRevealHeld / centerHoverRevealSuppressed knobs), so nothing
+  // here needs to mirror them.
   activePopout: realBar ? realBar.activePopout : null
   clickTargets: realBar ? realBar.clickTargets : []
   layoutConfig: realBar ? realBar.layoutConfig : ({})
@@ -36,7 +37,6 @@ PluginBarApi {
   _targetBelongsToWindow: function(item, window) { return realBar ? realBar.targetBelongsToWindow(item, window) : false }
   _moduleWidgets: function(id) { return id === memberId && host.mounted[id] ? [host.mounted[id]] : [] }
   _run: function(command) { if (realBar) realBar.run(command) }
-  _setCenterHoverRevealSuppressed: function(value) { if (realBar) realBar.setCenterHoverRevealSuppressed(value) }
   shell: QtObject {
     function serviceFor(id) { return null }
     function updateEntryInline(id, value) {
